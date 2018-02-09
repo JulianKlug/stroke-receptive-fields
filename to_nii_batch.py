@@ -1,11 +1,12 @@
 import os
 import subprocess
 
-mount = '/run/media/jk/Elements'
-main_dir = os.path.join(mount, 'MASTER/')
+# mount = '/run/media/jk/Elements'
+# main_dir = os.path.join(mount, 'MASTER/')
+main_dir = '/Users/julian/master/data'
 data_dir = os.path.join(main_dir, 'working_data')
 output_dir = os.path.join(main_dir, 'extracted_data/')
-dcm2niix_path = '/home/jk/master/dcm2niix/build/bin/dcm2niix'
+dcm2niix_path = '/Users/julian/master/dcm2niix/build/bin/dcm2niix'
 
 subjects = os.listdir(data_dir)
 
