@@ -30,8 +30,9 @@ recentered_image_to_conormalize= images(2,:);
 
 matlabbatch{1}.spm.spatial.normalise.estwrite.subj.vol = {strcat(c_main_image, ',1')}; % {'/Users/julian/master/data/test/spm/SPC_301mm_Std_Barlovic_Radojka_19480907.nii,1'};
 matlabbatch{1}.spm.spatial.normalise.estwrite.subj.resample = {strcat(c_image_to_conormalize, ',1')};
-matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.template = {strcat(ct_template ,',1')};
 
+% OPTIONS FROM CLINICAL_CT TOOLBOX
+matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.template = {strcat(ct_template ,',1')};
 matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.smosrc = 8;
 matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.smoref = 0;
 matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.regtype = 'mni';
@@ -56,6 +57,7 @@ matlabbatch{1}.spm.spatial.normalise.estwrite.woptions.vox = [2 2 2];
 % clinical ct
 matlabbatch{1}.spm.spatial.normalise.estwrite.woptions.interp = 4;
 matlabbatch{1}.spm.spatial.normalise.estwrite.woptions.prefix = 'w';
+
 
 spm('defaults', 'FMRI');
 spm_jobman('run', matlabbatch);

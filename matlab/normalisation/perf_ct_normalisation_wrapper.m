@@ -15,6 +15,8 @@ subjects = {
 'Barlovic_Radojka_19480907'
 };
 
+use_stripped_template = false;
+
 sequences = {
     'RAPID_CBF' ,...
     'RAPID_CBV', ...
@@ -24,7 +26,10 @@ sequences = {
 
 % Base image to co-register to
 base_image_dir = data_path;
-base_image_prefix = 'betted';
+base_image_prefix = '';
+if(use_stripped_template)
+    base_image_prefix = 'betted_';
+end
 base_image_ext = '.nii.gz';
 
 %% Initialise SPM defaults
@@ -34,7 +39,7 @@ for i = 1: numel ( subjects )
     modality = modalities(1).name;
 
     base_image = fullfile(base_image_dir, subjects{i}, modality, ...
-        strcat(base_image_prefix, '_SPC_301mm_Std_', subjects{i}, '.nii'));
+        strcat(base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '.nii'));
     if (~ exist(base_image))
         zipped_base_image = strcat(base_image, '.gz');
         gunzip(zipped_base_image);
@@ -43,7 +48,9 @@ for i = 1: numel ( subjects )
     % load coregistered data for each sequence without a prompt
     for j = 1: numel(sequences)
         input = fullfile(data_path, subjects{i}, modality, ...
-            strcat('coreg_', sequences{j}, '_' ,subjects{i}, '.nii'));
+                     strcat('coreg_', sequences{j}, '_' ,subjects{i}, '.nii'));
+
+
         % display which subject and sequence is being processed
         fprintf('Processing subject "%s" , "%s" (%s files )\n' ,...
             subjects{i}, char(sequences), sprintf('%d',size (input ,1)));
@@ -56,13 +63,18 @@ for i = 1: numel ( subjects )
         vox = [1 1 1];
         DelIntermediate = 0;
         AutoSetOrigin = 1;
-        useStrippedTemplate = true;
+        useStrippedTemplate = use_stripped_template;
+       
         
         base_image_to_warp = fullfile(base_image_dir, subjects{i}, modality, ...
-        strcat('w_', base_image_prefix, '_SPC_301mm_Std_', subjects{i}, '.nii'));
+        strcat('w_', base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '.nii'));
         copyfile(base_image, base_image_to_warp);
-        
-        ct_template = fullfile('/Users/julian/master/stroke-predict/matlab/scct_stripped.nii');
+    
+        if(use_stripped_template)
+            ct_template = fullfile('/Users/julian/master/stroke-predict/matlab/normalisation/scct_stripped.nii');
+        else
+            ct_template = fullfile('/Users/julian/master/stroke-predict/matlab/normalisation/scct.nii');            
+        end
         
 %         Script using modern SPM12 normalise function
         ct_normalize(base_image_to_warp, input, ct_template);

@@ -170,14 +170,14 @@ for i=1:size(V,1)
    matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.regtype = 'mni';
    matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.cutoff = 25;
    matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.nits = 16;
-   matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.reg = 1;
+   matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.reg = [0 0.001 0.5 0.05 0.2]; % 1;
    matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.preserve = 0;
    matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.bb = bb;
    matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.vox = vox; %2x2x2mm isotropic
    %matlabbatch{1}.spm.spatial.normalise.write.roptions.bb = [  -90 -126  -72;  90   90  108];
    %matlabbatch{1}.spm.spatial.normalise.write.roptions.vox = [2 2 2]; %2x2x2mm isotropic
    %matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.vox = [1 1 1];
-   matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.interp = 1;
+   matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.interp = 4; %1;
    matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.wrap = [0 0 0];
    matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.prefix = 'w';
    spm_jobman('run',matlabbatch);
