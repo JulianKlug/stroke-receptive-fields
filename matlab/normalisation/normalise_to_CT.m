@@ -18,12 +18,14 @@ end
 % convert to cormack units
 % c_main_image = h2cUnits(main_image);
 % c_image_to_conormalize = h2cUnits(image_to_conormalize);
+
+% generally conversion to cormack is not needed
 c_main_image = main_image;
 c_image_to_conormalize = image_to_conormalize;
 
 % set origin
 images = strvcat(deblank(c_main_image), deblank(c_image_to_conormalize));
-clinical_setorigin(images,3); %coregister to CT
+clinical_setorigin(images,3); % reset origin and coregister to CT_MNI
 
 recentered_base_image = images(1,:);
 recentered_image_to_conormalize= images(2,:);

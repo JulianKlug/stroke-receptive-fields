@@ -77,9 +77,10 @@ for i = 1: numel ( subjects )
         end
         
 %         Script using modern SPM12 normalise function
-        ct_normalize(base_image_to_warp, input, ct_template);
+        normalise_to_CT(base_image_to_warp, input, ct_template);
 
-%         Script based on Clinical_CT toolbox based on SPM8 normalise
+%         Script based on Clinical_CT toolbox based on SPM8 normalise 
+%           --> not successful
 %         perf_clinical_ctnorm(base_image_to_warp, lesionMask, input, vox, bb,DelIntermediate, mask, useStrippedTemplate, AutoSetOrigin);
     end  
         

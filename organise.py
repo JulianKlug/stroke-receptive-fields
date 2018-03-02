@@ -41,7 +41,8 @@ for subject in subjects:
 
         # copy lesions file into subject dir
         lesion_path = os.path.join(main_dir, 'working_data', subject, 'VOI lesion.nii')
-        new_lesion_path = os.path.join(output_dir, subject, 'VOI_lesion.nii')
+        new_lesion_name = 'VOI_lesion_' + subject + '.nii'
+        new_lesion_path = os.path.join(output_dir, subject, new_lesion_name)
         if not os.path.exists(new_lesion_path):
             # print(new_lesion_path)
             subprocess.run(['cp', lesion_path, new_lesion_path])
