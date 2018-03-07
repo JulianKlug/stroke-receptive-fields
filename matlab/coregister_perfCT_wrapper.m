@@ -8,10 +8,10 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/master/data/preprocessing';
+data_path = '/Users/julian/master/data/preprocessing_test';
 % Subject folders
 subjects = {
-'Comte_Paulette_19280309'
+'Barlovic_Radojka_19480907'
 };
 
 
@@ -48,12 +48,12 @@ for i = 1: numel ( subjects )
             strcat(sequences{j}, '_' ,subjects{i}, '.nii'));
         % display which subject and sequence is being processed
         fprintf('Processing subject "%s" , "%s" (%s files )\n' ,...
-            subjects{i}, char(sequences), sprintf('%d',size (input ,1)));
+            subjects{i}, char(sequences{i}), sprintf('%d',size (input ,1)));
         %% SAVE AND RUN JOB
         %
-        coregistration = coregister_job(base_image, input);
+        coregistration = coregister_job(base_image, input, {});
         log_file = fullfile(data_path, subjects{i}, modality, ...
-            'logs',strcat(sequences{j}, '_coreg.mat'))
+            'logs',strcat(sequences{j}, '_coreg.mat'));
         mkdir(fullfile(data_path, subjects{i}, modality, 'logs'));
         save(log_file, 'coregistration');
         spm('defaults', 'FMRI');

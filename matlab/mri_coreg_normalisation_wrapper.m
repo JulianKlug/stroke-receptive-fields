@@ -11,7 +11,7 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/master/data/preprocessing_mri_test';
+data_path = '/Users/julian/master/data/preprocessing_mri_coreg';
 % Subject folders
 subjects = {
 'Barlovic_Radojka_19480907'
@@ -54,7 +54,8 @@ for i = 1: numel ( subjects )
         strcat(base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '.nii'));
     copyfile(original_base_image, base_image);
     
-%     Create a new image that will be recentered with setOrigin()
+    % Create a new image that will be recentered with setOrigin() $
+    % (but not co-registered)
     center_base_image = fullfile(base_image_dir, subjects{i}, mri_dir, ...
         strcat('c_',base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '.nii'));
     copyfile(original_base_image, center_base_image);
@@ -118,9 +119,8 @@ for i = 1: numel ( subjects )
     
     % Normalisation script
     % based on Rorden Lab's clinical toolbox
-    % adapted for SPM12 and perfusion CT   
-    normalise_to_CT(center_base_image, coreg_mri_input, ct_template);
-    normalise_to_CT(center_base_image, coreg_lesion_map, ct_template);
+    % adapted for SPM12 and perfusion CT
+    normalise_to_CT(center_base_image, {coreg_mri_input, coreg_lesion_map}, ct_template);
         
 end
 

@@ -1,7 +1,7 @@
 %% Normalisation to a CT template
 % ARGUMENTS : 
 % main_image : image to normalise
-% images_to_conormalize : cell array of other images for which the
+% images_to_conormalize : array of other images for which the
 % transformation should be applied to
 
 function normalise_to_CT(main_image, images_to_conormalize, ct_template)
@@ -34,7 +34,7 @@ c_image_to_conormalize = images_to_conormalize;
 images = strvcat(deblank(c_main_image));
 
 for idx = 1:numel(c_image_to_conormalize)
-    images = strvcat(images, c_image_to_conormalize{idx});
+    images = strvcat(images, c_image_to_conormalize[idx]);
 end
 
 clinical_setorigin(images,3); % reset origin and coregister to CT_MNI
@@ -42,13 +42,10 @@ clinical_setorigin(images,3); % reset origin and coregister to CT_MNI
 recentered_base_image = images(1,:);
 recentered_image_to_conormalize= images(2,:);
 
-images_to_resample = {strcat(c_main_image, ',1')};
-for idx = 1:numel(c_image_to_conormalize)
-    images_to_resample{end +1} = strcat(c_image_to_conormalize{idx}, ',1');
-end
+images_to_resample = { }
 
 matlabbatch{1}.spm.spatial.normalise.estwrite.subj.vol = {strcat(c_main_image, ',1')}; % {'/Users/julian/master/data/test/spm/SPC_301mm_Std_Barlovic_Radojka_19480907.nii,1'};
-matlabbatch{1}.spm.spatial.normalise.estwrite.subj.resample = images_to_resample';  %{strcat(c_image_to_conormalize, ',1')};
+matlabbatch{1}.spm.spatial.normalise.estwrite.subj.resample = {strcat(c_image_to_conormalize, ',1')};
 
 % OPTIONS FROM CLINICAL_CT TOOLBOX
 matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.template = {strcat(ct_template ,',1')};
