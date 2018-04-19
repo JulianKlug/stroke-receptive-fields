@@ -69,7 +69,7 @@ def receptive_field_log_model(input_data_array, output_data_array, receptive_fie
 
     return log_reg
 
-def reconstruct(input, model, receptive_field_dimensions):
+def predict(input, model, receptive_field_dimensions):
     # Dimensions of the receptive field defined as distance to center point in every direction
     rf_x, rf_y, rf_z = receptive_field_dimensions
 

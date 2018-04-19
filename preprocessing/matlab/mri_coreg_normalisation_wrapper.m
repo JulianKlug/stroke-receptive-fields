@@ -11,7 +11,7 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/master/data/preprocessing_mri_coreg';
+data_path = '/Users/julian/master/data/reorganised_test';
 % Subject folders
 subjects = {
 'Barlovic_Radojka_19480907'

@@ -16,7 +16,6 @@ input_image_path = os.path.join(input_dir, 'wcoreg_RAPID_TMax_[s]_Barlovic_Radoj
 input_img = nib.load(input_image_path)
 input_data = input_img.get_data()
 
-
 output_image_path = os.path.join(output_dir, 'wcoreg_VOI_lesion_Barlovic_Radojka_19480907.nii')
 output_img = nib.load(output_image_path)
 output_data = output_img.get_data()
@@ -28,10 +27,11 @@ rf_dim = [1,1,1]
 
 model = lr.receptive_field_log_model(IN, OUT, rf_dim)
 
-predicted = lr.reconstruct(input_data, model, rf_dim)
+predicted = lr.predict(input_data, model, rf_dim)
 
-predicted_img = nib.Nifti1Image(predicted, affine=np.eye(4))
-nib.save(predicted_img, os.path.join(data_dir,'test4d.nii'))
+coordinate_space = input_img.affine
+predicted_img = nib.Nifti1Image(predicted, affine=coordinate_space)
+nib.save(predicted_img, os.path.join(data_dir,'predicted.nii'))
 
 
-visual.display(predicted)
+# visual.display(predicted)
