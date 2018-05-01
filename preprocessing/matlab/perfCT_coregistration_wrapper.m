@@ -8,12 +8,24 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/master/data/reorganised_test';
-% Subject folders
-subjects = {
-'Barlovic_Radojka_19480907'
-};
+data_path = '/Users/julian/master/data/preprocessed';
 
+if ~(exist(data_path))
+    fprintf('Data directory does not exist. Please enter a valid directory.')
+end
+
+% Subject folders
+
+% Select individual subjects
+% subjects = {
+% 'patient1'
+% };
+
+% Or select subjects based on folders in data_path
+d = dir(data_path);
+isub = [d(:).isdir]; %# returns logical vector
+subjects = {d(isub).name}';
+subjects(ismember(subjects,{'.','..'})) = [];
 
 sequences = {
     'RAPID_CBF' ,...
@@ -48,7 +60,7 @@ for i = 1: numel ( subjects )
             strcat(sequences{j}, '_' ,subjects{i}, '.nii'));
         % display which subject and sequence is being processed
         fprintf('Processing subject "%s" , "%s" (%s files )\n' ,...
-            subjects{i}, char(sequences{i}), sprintf('%d',size (input ,1)));
+            subjects{i}, char(sequences{j}), sprintf('%d',size (input ,1)));
         %% SAVE AND RUN JOB
         %
         coregistration = coregister_job(base_image, input, {});

@@ -9,13 +9,32 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/master/data/reorganised_test';
-% Subject folders
-subjects = {
-'Barlovic_Radojka_19480907'
-};
+data_path = '/Users/julian/master/data/preprocessed';
 
-use_stripped_template = false;
+if ~(exist(data_path))
+    fprintf('Data directory does not exist. Please enter a valid directory.')
+end
+
+% Subject folders
+
+% Select individual subjects
+% subjects = {
+% 'patient1'
+% };
+
+% Or select subjects based on folders in data_path
+d = dir(data_path);
+isub = [d(:).isdir]; %# returns logical vector
+subjects = {d(isub).name}';
+subjects(ismember(subjects,{'.','..'})) = [];
+
+use_stripped_template = false; % normalisation works better with skull
+template_dir = '/Users/julian/master/stroke-predict/preprocessing/matlab/normalisation';
+if(use_stripped_template)
+    ct_template = fullfile(template_dir, 'scct_stripped.nii');
+else
+    ct_template = fullfile(template_dir, 'scct.nii');
+end
 
 sequences = {
     'RAPID_CBF' ,...
@@ -32,6 +51,7 @@ if(use_stripped_template)
 end
 base_image_ext = '.nii.gz';
 
+addpath(template_dir, data_path)
 %% Initialise SPM defaults
 %% Loop to load data from folders and run the job
 for i = 1: numel ( subjects )
@@ -64,19 +84,12 @@ for i = 1: numel ( subjects )
     strcat('reor_', base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '.nii'));
     copyfile(base_image, base_image_to_warp);
 
-    if(use_stripped_template)
-        ct_template = fullfile('/Users/julian/master/stroke-predict/matlab/normalisation/scct_stripped.nii');
-    else
-        ct_template = fullfile('/Users/julian/master/stroke-predict/matlab/normalisation/scct.nii');            
-    end
-
 %         Script using modern SPM12 normalise function
     normalise_to_CT(base_image_to_warp, input, ct_template);
 
     
-%         Script based on Clinical_CT toolbox based on SPM8 normalise 
+%% (SHOULD NOT BE USED ANYMORE) Script based on Clinical_CT toolbox based on SPM8 normalise 
 %           --> not successful
-% 
 %     lesionMask = '';
 %     mask = 1;
 %     bb = [-78 -112 -50

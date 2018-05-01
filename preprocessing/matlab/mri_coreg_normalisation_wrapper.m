@@ -11,13 +11,32 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/master/data/reorganised_test';
-% Subject folders
-subjects = {
-'Barlovic_Radojka_19480907'
-};
+data_path = '/Users/julian/master/data/preprocessed';
 
-use_stripped_template = false; % normalisation with non betted image works best
+if ~(exist(data_path))
+    fprintf('Data directory does not exist. Please enter a valid directory.')
+end
+
+% Subject folders
+
+% Select individual subjects
+% subjects = {
+% 'patient1'
+% };
+
+% Or select subjects based on folders in data_path
+d = dir(data_path);
+isub = [d(:).isdir]; %# returns logical vector
+subjects = {d(isub).name}';
+subjects(ismember(subjects,{'.','..'})) = [];
+
+use_stripped_template = false; % normalisation works better with skull
+template_dir = '/Users/julian/master/stroke-predict/preprocessing/matlab/normalisation';
+if(use_stripped_template)
+    ct_template = fullfile(template_dir, 'scct_stripped.nii');
+else
+    ct_template = fullfile(template_dir, 'scct.nii');
+end
 
 % Base image to co-register to
 base_image_dir = data_path;
@@ -27,6 +46,7 @@ if(use_stripped_template)
 end
 base_image_ext = '.nii.gz';
 
+addpath(template_dir, data_path)
 %% Initialise SPM defaults
 %% Loop to load data from folders and run the job
 for i = 1: numel ( subjects )
@@ -105,12 +125,6 @@ for i = 1: numel ( subjects )
 
     %% RUN NORMALISATION
     %
-    
-    if (use_stripped_template)
-        ct_template = fullfile('/Users/julian/master/stroke-predict/matlab/normalisation/scct_stripped.nii');
-    else
-        ct_template = fullfile('/Users/julian/master/stroke-predict/matlab/normalisation/scct.nii');
-    end
     
     if ~exist(ct_template) %file does not exist
         vols = spm_select(inf,'image','Select template to co-register and normalise to');
