@@ -17,3 +17,10 @@ CT :
 MRI :
 
 - matlab/mri_coreg_normalisation_wrapper.m : recenter subject CT, co-register T2 to subject CT, co-register T2 to CT-MNI and normalise to CT-MNI
+
+## Requirements
+
+- matlab
+- spm12 : http://www.fil.ion.ucl.ac.uk/spm/software/spm12/
+- Clinical Toolbox for SPM (https://www.nitrc.org/projects/clinicaltbx/) [Has to be in the folder spm12/toolbox]
+- dcm2niix : https://github.com/rordenlab/dcm2niix
