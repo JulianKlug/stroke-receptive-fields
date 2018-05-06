@@ -12,9 +12,9 @@ import data_loader
 main_dir = '/Users/julian/master/data'
 data_dir = os.path.join(main_dir, 'analysis_test2')
 
-input_dir = os.path.join(data_dir, 'pt1/Ct2_Cerebral_20160103')
+input_dir = os.path.join(data_dir, 'Barlovic_Radojka_19480907/Ct2_Cerebral_20160103')
 
-input_image_path = os.path.join(input_dir, 'wcoreg_RAPID_TMax_[s]_.nii')
+input_image_path = os.path.join(input_dir, 'wcoreg_RAPID_TMax_[s]_Barlovic_Radojka_19480907.nii')
 input_img = nib.load(input_image_path)
 # input_data = input_img.get_data()
 
@@ -28,7 +28,7 @@ input_data = IN[0]
 
 rf_dim = [1, 1, 1]
 
-model_path = os.path.join(data_dir, '5pOverSampled_test.pkl')
+model_path = os.path.join(data_dir, 'RFC1.pkl')
 model = joblib.load(model_path)
 predicted = rf.predict(input_data, model, rf_dim)
 print('Predicted shape', predicted.shape)
@@ -36,7 +36,7 @@ print('Predicted lesion size', np.sum(predicted))
 
 coordinate_space = input_img.affine
 predicted_img = nib.Nifti1Image(predicted, affine=coordinate_space)
-nib.save(predicted_img, os.path.join(data_dir,'5pOverSampled_test.nii'))
+nib.save(predicted_img, os.path.join(data_dir,'RFC1.nii'))
 
 
 visual.display(predicted)
