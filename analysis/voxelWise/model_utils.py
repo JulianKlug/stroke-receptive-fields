@@ -4,7 +4,7 @@ from sklearn import linear_model
 from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import f1_score, fbeta_score, jaccard_similarity_score, roc_auc_score
+from sklearn.metrics import f1_score, fbeta_score, jaccard_similarity_score, roc_auc_score, precision_score
 from collections import Counter
 import receptiveField as rf
 
@@ -46,6 +46,9 @@ def stats(model, X_test, y_test):
 
     roc_auc = roc_auc_score(y_test, y_pred)
     print('ROC AUC score: ', roc_auc)
+
+    precision = precision_score(y_test, y_pred, average=None)
+    print('Precision score: ', precision)
 
     f1 = f1_score(y_test, y_pred)
     print('F1 score: ', f1)
