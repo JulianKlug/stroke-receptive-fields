@@ -4,6 +4,7 @@ from sklearn import linear_model
 from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
 from sklearn.metrics import f1_score, fbeta_score, jaccard_similarity_score, roc_auc_score, precision_score
 from collections import Counter
 import receptiveField as rf
@@ -13,8 +14,14 @@ def create(model_dir, model_name, input_data_list, output_data_list, receptive_f
     rf_inputs, rf_outputs = rf.reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
 
     # Create linear regression object
-    model = linear_model.LogisticRegression(verbose = 1, max_iter = 1000000000)
+    # model = linear_model.LogisticRegression(verbose = 1, max_iter = 1000000000)
     # model = RandomForestClassifier(verbose = 1)
+    model = XGBClassifier(verbose_eval=True)
+
+    # Reduce amount of data initially processed
+    X_retained, X_rest, y_retained, y_rest = train_test_split(rf_inputs, rf_outputs, test_size = 0.7, random_state = 42)
+    rf_inputs = X_retained
+    rf_outputs = y_retained
 
     X_train, X_test, y_train, y_test = train_test_split(rf_inputs, rf_outputs, test_size=0.33, random_state=42)
     X_train, y_train = balance(X_train, y_train)
@@ -32,8 +39,8 @@ def create(model_dir, model_name, input_data_list, output_data_list, receptive_f
 
 def stats(model, X_test, y_test):
     # The coefficients
-    print('Coefficients: \n', model.coef_)
-    print('Intercept: \n', model.intercept_)
+    # print('Coefficients: \n', model.coef_)
+    # print('Intercept: \n', model.intercept_)
 
     # Use score method to get accuracy of model
     score = model.score(X_test, y_test)
@@ -54,13 +61,13 @@ def stats(model, X_test, y_test):
     print('F1 score: ', f1)
 
 def balance(X, y):
-    from imblearn.under_sampling import RandomUnderSampler
-    rus = RandomUnderSampler(random_state=0)
-    X_resampled, y_resampled = rus.fit_sample(X, y)
+    # from imblearn.under_sampling import RandomUnderSampler
+    # rus = RandomUnderSampler(random_state=0)
+    # X_resampled, y_resampled = rus.fit_sample(X, y)
 
-    # from imblearn.over_sampling import RandomOverSampler
-    # ros = RandomOverSampler(random_state=0)
-    # X_resampled, y_resampled = ros.fit_sample(X, y)
+    from imblearn.over_sampling import RandomOverSampler
+    ros = RandomOverSampler(random_state=0)
+    X_resampled, y_resampled = ros.fit_sample(X, y)
     print('Balancing Data.')
     print('Remaining data points after balancing: ', sorted(Counter(y_resampled).items()))
     return (X_resampled, y_resampled)
