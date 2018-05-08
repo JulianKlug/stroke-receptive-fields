@@ -17,7 +17,7 @@ def load(data_dir):
     output_img = nib.load(output_image_path)
     output_data = output_img.get_data()
 
-    IN = [input]
+    IN = [input_matrix]
     OUT = [output_data]
 
     return IN, OUT
