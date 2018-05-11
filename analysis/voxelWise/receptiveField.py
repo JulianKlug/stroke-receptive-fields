@@ -85,7 +85,7 @@ def predict(input_data, model, receptive_field_dimensions):
         linear_input = np.reshape(input_field, input_field.size)
         linear_input = np.reshape(linear_input, (1, -1)) # as this is only one sample
 
-        output[x, y, z] = model.predict(linear_input)
+        output[x, y, z] = model.predict_proba(linear_input)[0][1]
 
     return output
 
