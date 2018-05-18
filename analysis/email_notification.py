@@ -13,14 +13,14 @@ class NotificationSystem():
         message = 'Email password for ' + self.email_address + ' :'
         self.password = getpass(message)
 
-    def send_message(self, title, message):
+    def send_message(self, title, body):
         if not self.be_notified :
             return
         smtp_server = smtplib.SMTP('smtp.gmail.com', 587)
         smtp_server.ehlo()
         smtp_server.starttls()
         smtp_server.login(self.email_address, self.password)
-        content = 'Subject: ' + title + '\n' + message
+        content = 'Subject: ' + title + '\n' + body
         smtp_server.sendmail(self.email_address, 'tensu.wave@gmail.com', content)
 
         smtp_server.quit()
