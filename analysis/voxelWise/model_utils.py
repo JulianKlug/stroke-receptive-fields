@@ -60,7 +60,7 @@ def evaluate_model(model_dir, model_name, input_data_list, output_data_list, rec
     # scoring = ('accuracy', 'roc_auc', 'f1')
     # results = cross_validate(model, X, y, cv = kf, n_jobs = 20, scoring = scoring)
     #
-    results = repeated_kfold_cv(X, y, model)
+    results = repeated_kfold_cv(model, X, y)
     accuracy = np.median(results['test_accuracy'])
     roc_auc = np.median(results['test_roc_auc'])
     f1 = np.median(results['test_f1'])
@@ -74,15 +74,15 @@ def evaluate_model(model_dir, model_name, input_data_list, output_data_list, rec
 
     return accuracy, roc_auc, f1
 
-def repeated_kfold_cv(X, y, model, n_repeats = 1, n_folds = 2):
+def repeated_kfold_cv(model, X, y, n_repeats = 1, n_folds = 2):
     """
     Repeated KFold Crossvalidation
     Advantage over sklearns implementation: returns TP and FP rates (useful for plotting ROC curve)
 
     Args:
+        model: model to crossvalidate (must implement sklearns interface)
         X: data to validate
         y: dependent variables of data
-        model: model to crossvalidate (must implement sklearns interface)
         n_repeats (optional, default 1): repeats of kfold CV
         n_folds (optional, default 5): number of folfs in kfold (ie. k)
 
