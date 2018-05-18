@@ -35,15 +35,11 @@ mri_sequences = ['wcoreg_VOI_lesion']
 IN, OUT = data_loader.load(data_dir, ct_sequences, mri_sequences)
 # IN, OUT = manual_data.load(data_dir)
 
-
-rf_dim = [1, 1, 1]
-
-# trained_model, X_test, y_test = model_utils.create(model_dir, model_name, IN, OUT, rf_dim)
-# score, roc_auc, f1 = model_utils.stats(trained_model, X_test, y_test)
+rf = 0
+rf_dim = [rf, rf, rf]
 
 score, roc_auc, f1 = model_utils.evaluate_model(model_dir, model_name, IN, OUT, rf_dim)
 
-
 title = model_name + ' finished Cross-Validation'
-body = 'accuracy: ' + str(score) + '\n' + 'ROC AUC: ' + str(roc_auc) + '\n' + 'F1: ' + str(f1) + '\n'
+body = 'accuracy ' + str(score) + '\n' + 'ROC AUC ' + str(roc_auc) + '\n' + 'F1 ' + str(f1)
 notification_system.send_message(title, body)
