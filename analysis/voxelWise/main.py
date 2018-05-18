@@ -11,7 +11,7 @@ from email_notification import NotificationSystem
 
 main_dir = 'home/klug/data'
 data_dir = os.path.join(main_dir, 'preprocessed')
-model_dir = 'home/klug/data'
+model_dir = 'home/klug/models'
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 
