@@ -74,7 +74,7 @@ def evaluate_model(model_dir, model_name, input_data_list, output_data_list, rec
 
     return accuracy, roc_auc, f1
 
-def repeated_kfold_cv(model, X, y, n_repeats = 1, n_folds = 2):
+def repeated_kfold_cv(model, X, y, n_repeats = 1, n_folds = 5):
     """
     Repeated KFold Crossvalidation
     Advantage over sklearns implementation: returns TP and FP rates (useful for plotting ROC curve)
