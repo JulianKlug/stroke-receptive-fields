@@ -48,10 +48,10 @@ def evaluate_model(model_dir, model_name, input_data_list, output_data_list, rec
     model_path = os.path.join(model_dir, model_name)
     rf_inputs, rf_outputs = rf.reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
 
-    model = XGBClassifier(verbose_eval=True)
+    model = XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
 
     # Reduce amount of data initially processed
-    remaining_fraction = 0.3
+    remaining_fraction = 0.1
     print('Discarding ' + str((1 - remaining_fraction)* 100) + '% of data for faster training')
     X_retained, X_rest, y_retained, y_rest = train_test_split(rf_inputs, rf_outputs, test_size = 0.7, random_state = 42)
     X, y = balance(X_retained, y_retained)
@@ -70,7 +70,7 @@ def evaluate_model(model_dir, model_name, input_data_list, output_data_list, rec
     print('F1 score: ', f1)
 
     model_name_pure = model_name.split('.')[0]
-    np.save(os.path.join(model_dir, model_name_pure + '_cv_scores.npy'), results)
+    np.save(os.path.join(model_dir, model_name_pure + '_' + str(receptive_field_dimensions[0]) + '_cv_scores.npy'), results)
 
     return accuracy, roc_auc, f1
 
