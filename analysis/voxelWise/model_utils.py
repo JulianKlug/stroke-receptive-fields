@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import linear_model
 from sklearn.externals import joblib
+from sklearn import preprocessing
 from sklearn.model_selection import train_test_split, KFold, RepeatedKFold, cross_val_score, cross_validate
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
@@ -55,6 +56,9 @@ def evaluate_model(model_dir, model_name, input_data_list, output_data_list, rec
     print('Discarding ' + str((1 - remaining_fraction)* 100) + '% of data for faster training')
     X_retained, X_rest, y_retained, y_rest = train_test_split(rf_inputs, rf_outputs, test_size = 0.7, random_state = 42)
     X, y = X_retained, y_retained
+
+    X_scaled = preprocessing.scale(X)
+    X = preprocessing.normalize(X_scaled)
 
     # kf = RepeatedKFold(n_splits = 5, n_repeats = 100, random_state = 42)
     # scoring = ('accuracy', 'roc_auc', 'f1')
