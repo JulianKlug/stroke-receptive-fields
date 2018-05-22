@@ -48,7 +48,7 @@ def evaluate_model(model_dir, model_name, input_data_list, output_data_list, rec
     model_path = os.path.join(model_dir, model_name)
     rf_inputs, rf_outputs = rf.reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
 
-    model = XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
+    model = XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'gpu_hist')
 
     # Reduce amount of data initially processed
     remaining_fraction = 0.1
