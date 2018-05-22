@@ -54,7 +54,7 @@ def evaluate_model(model_dir, model_name, input_data_list, output_data_list, rec
     remaining_fraction = 0.1
     print('Discarding ' + str((1 - remaining_fraction)* 100) + '% of data for faster training')
     X_retained, X_rest, y_retained, y_rest = train_test_split(rf_inputs, rf_outputs, test_size = 0.7, random_state = 42)
-    X, y = balance(X_retained, y_retained)
+    X, y = X_retained, y_retained
 
     # kf = RepeatedKFold(n_splits = 5, n_repeats = 100, random_state = 42)
     # scoring = ('accuracy', 'roc_auc', 'f1')
@@ -113,7 +113,9 @@ def repeated_kfold_cv(model, X, y, n_repeats = 1, n_folds = 5):
         kf = KFold(n_splits = n_folds, shuffle = True, random_state = j)
         for train, test in kf.split(X, y):
             print('Evaluating split : ' + str(f))
-            probas_ = model.fit(X[train], y[train]).predict_proba(X[test])
+            X_train, y_train = balance(X[train], y[train])
+
+            probas_ = model.fit(X_train, y_train).predict_proba(X[test])
             # Compute ROC curve, area under the curve, f1, and accuracy
             threshold = 0.5 # threshold choosen ot evaluate f1 and accuracy of model
             fpr, tpr, thresholds = roc_curve(y[test], probas_[:, 1])
