@@ -1,5 +1,7 @@
 import numpy as np
 
+# As created by https://gist.github.com/seberg/3866040
+
 def rolling_window(array, window=(0,), asteps=None, wsteps=None, axes=None, toend=True):
     """Create a view of `array` which for every point gives the n-dimensional
     neighbourhood of size window. New dimensions are added at the end of
