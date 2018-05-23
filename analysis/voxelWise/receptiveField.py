@@ -16,7 +16,7 @@ def reshape_to_receptive_field(input_data_list, output_data_list, receptive_fiel
     #
     window_d_x, window_d_y, window_d_z  = 2 * np.array(receptive_field_dimensions) + 1
     print('Receptive field window dimensions are: ', window_d_x, window_d_y, window_d_z )
-    inputs = np.empty((input_data_list[0][:,:,:,0].size, window_d_x * window_d_y * window_d_z))
+    inputs = np.empty((input_data_list[0][:,:,:,0].size, window_d_x * window_d_y * window_d_z, input_data_list[0][0,0,0,:].size))
     output = np.empty(input_data_list[0][:,:,:,0].size)
 
     # Iterate through all images
@@ -43,7 +43,7 @@ def reshape_to_receptive_field(input_data_list, output_data_list, receptive_fiel
 
             # Reshape to linear input
             linear_input_field = np.reshape(input_fields[x, y, z], input_fields[x, y, z].size)
-            inputs[index,:] = linear_input_field
+            inputs[index, :, :] = linear_input_field
             # inputs.append(linear_input_field)
 
             output_voxel = np.array([output_data[x, y, z]])
@@ -76,6 +76,9 @@ def reshape_to_receptive_field(input_data_list, output_data_list, receptive_fiel
 
     # inputs = np.array(inputs)
     # output = np.array(output)
+
+    inputs = np.squeeze(inputs)
+    output = np.squeeze(output)
 
     print('Entire dataset. Input shape: ', inputs.shape,
           ' and output shape: ', output.shape)
