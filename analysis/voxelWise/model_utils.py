@@ -46,7 +46,15 @@ def create(model_dir, model_name, input_data_list, output_data_list, receptive_f
 
 def evaluate_model(model_dir, model_name, input_data_list, output_data_list, receptive_field_dimensions):
     model_path = os.path.join(model_dir, model_name)
+    import psutil, timeit
+    print(psutil.virtual_memory())
+    print(psutil.swap_memory())
+    start = timeit.timeit()
     rf_inputs, rf_outputs = rf.reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
+    end = timeit.timeit()
+    print('Reshaped to receptive fields in: ', end - start)
+    print(psutil.virtual_memory())
+    print(psutil.swap_memory())
 
     model = XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
 

@@ -1,3 +1,8 @@
+import sys
+sys.path.insert(0, '../')
+
+from rolling_window import rolling_window
+
 import numpy as np
 import itertools
 
@@ -6,14 +11,20 @@ def reshape_to_receptive_field(input_data_list, output_data_list, receptive_fiel
     rf_x, rf_y, rf_z = receptive_field_dimensions
 
     # Declare final lists going into model
-    inputs = []
-    output = []
+    # inputs = []
+    # output = []
+    #
+    window_d_x, window_d_y, window_d_z  = 2 * np.array(receptive_field_dimensions) + 1
+    print('Receptive field window dimensions are: ', window_d_x, window_d_y, window_d_z )
+    inputs = np.empty((input_data_list[0][:,:,:,0].size, window_d_x * window_d_y * window_d_z))
+    output = np.empty(input_data_list[0][:,:,:,0].size)
 
     # Iterate through all images
     for i in range(0, len(input_data_list)):
 
         input_data = input_data_list[i]
         output_data = output_data_list[i]
+        index = 0
 
         if (input_data[:,:,:,0].shape != output_data.shape):
             raise ValueError('Input and output do not have the same shape.', input_data[:,:,:,0].shape, output_data.shape)
@@ -24,30 +35,47 @@ def reshape_to_receptive_field(input_data_list, output_data_list, receptive_fiel
         padding = max([rf_x, rf_y, rf_z])
         padded_input_data = pad(input_data, padding)
 
-        # iterate through all pixels in image and put receptive field as input for this output pixel
+        input_fields = rolling_window(padded_input_data, (window_d_x, window_d_y, window_d_z, 0))
+
         for x, y, z in itertools.product(range(n_x),
                                          range(n_y),
                                          range(n_z)):
-        # for x, y, z in itertools.product(range(2),
-        #                                  range(2),
-        #                                  range(2)):
-            px = x + padding; py = y + padding; pz = z + padding
 
-            output_voxel = np.array([output_data[x,y,z]])
-            output.append(output_voxel)
+            # Reshape to linear input
+            linear_input_field = np.reshape(input_fields[x, y, z], input_fields[x, y, z].size)
+            inputs[index,:] = linear_input_field
+            # inputs.append(linear_input_field)
 
-            input_field = padded_input_data[
-                px - rf_x : px + rf_x + 1,
-                py - rf_y : py + rf_y + 1,
-                pz - rf_z : pz + rf_z + 1,
-                :
-            ]
-            linear_input = np.reshape(input_field, input_field.size)
-            inputs.append(linear_input)
+            output_voxel = np.array([output_data[x, y, z]])
+            output[index] = output_voxel
+            index += 1
+            # output.append(output_voxel)
 
 
-    inputs = np.array(inputs)
-    output = np.array(output)
+        # # iterate through all pixels in image and put receptive field as input for this output pixel
+        # for x, y, z in itertools.product(range(n_x),
+        #                                  range(n_y),
+        #                                  range(n_z)):
+        # # for x, y, z in itertools.product(range(2),
+        # #                                  range(2),
+        # #                                  range(2)):
+        #     px = x + padding; py = y + padding; pz = z + padding
+        #
+        #     output_voxel = np.array([output_data[x,y,z]])
+        #     output.append(output_voxel)
+        #
+        #     input_field = padded_input_data[
+        #         px - rf_x : px + rf_x + 1,
+        #         py - rf_y : py + rf_y + 1,
+        #         pz - rf_z : pz + rf_z + 1,
+        #         :
+        #     ]
+        #     linear_input = np.reshape(input_field, input_field.size)
+        #     inputs.append(linear_input)
+
+
+    # inputs = np.array(inputs)
+    # output = np.array(output)
 
     print('Entire dataset. Input shape: ', inputs.shape,
           ' and output shape: ', output.shape)
