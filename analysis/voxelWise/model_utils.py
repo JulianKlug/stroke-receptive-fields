@@ -179,8 +179,8 @@ def plot_roc(tprs, fprs):
 
     plt.xlim([-0.05, 1.05])
     plt.ylim([-0.05, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
+    plt.xlabel('1 - Specificity (False Positive Rate)')
+    plt.ylabel('Sensibility (True Positive Rate)')
     plt.title('Receiver operating characteristic')
     plt.legend(loc="lower right")
     plt.ion()
