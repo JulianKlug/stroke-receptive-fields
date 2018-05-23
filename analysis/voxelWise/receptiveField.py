@@ -16,9 +16,11 @@ def reshape_to_receptive_field(input_data_list, output_data_list, receptive_fiel
     #
     window_d_x, window_d_y, window_d_z  = 2 * np.array(receptive_field_dimensions) + 1
     print('Receptive field window dimensions are: ', window_d_x, window_d_y, window_d_z )
-    # Initialize the inputs array as long as there are voxels in an image, and on the second dimensions as many voxels as there are in a receptive field
-    inputs = np.empty((input_data_list[0][:,:,:,0].size, window_d_x * window_d_y * window_d_z * input_data_list[0][0,0,0,:].size))
-    output = np.empty(input_data_list[0][:,:,:,0].size)
+    # Initialize the inputs array as long as there will be receptive fields, and on the second dimensions as many voxels as there are in a receptive field
+    n_receptive_fields = input_data_list[0][:, :, :, 0].size * len(input_data_list) # ie voxels per image times number of images
+    receptive_field_size = window_d_x * window_d_y * window_d_z * input_data_list[0][0,0,0,:].size
+    inputs = np.empty((n_receptive_fields, receptive_field_size))
+    output = np.empty(n_receptive_fields)
 
     # Iterate through all images
     for i in range(0, len(input_data_list)):
