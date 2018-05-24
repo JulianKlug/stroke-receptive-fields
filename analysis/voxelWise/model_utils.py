@@ -1,4 +1,4 @@
-import os
+import os, timeit
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import linear_model
@@ -17,21 +17,15 @@ def create(model_dir, model_name, input_data_list, output_data_list, receptive_f
     # Create model object
     # model = linear_model.LogisticRegression(verbose = 1, max_iter = 1000000000)
     # model = RandomForestClassifier(verbose = 1)
-    model = XGBClassifier(verbose_eval=True)
+    model = XGBClassifier(verbose_eval=False)
 
     # Reduce amount of data initially processed
     remaining_fraction = 0.3
     print('Discarding ' + str((1 - remaining_fraction)* 100) + '% of data for faster training')
     X_retained, X_rest, y_retained, y_rest = train_test_split(rf_inputs, rf_outputs, test_size = 0.7, random_state = 42)
-    rf_inputs = X_retained
-    rf_outputs = y_retained
 
-    # Split off the test set
-    # X_train, X_test, y_train, y_test = train_test_split(rf_inputs, rf_outputs, test_size=0.33, random_state=42)
-    # X_train, y_train = balance(X_train, y_train)
-
-    X_train = rf_inputs
-    y_train = rf_outputs
+    # Balancing the data for training
+    X_train, y_train = balance(X_retained, y_retained)
 
     # Train the model using the training sets
     model.fit(X_train, y_train)
@@ -39,22 +33,15 @@ def create(model_dir, model_name, input_data_list, output_data_list, receptive_f
     print('Saving model as : ', model_path)
     joblib.dump(model, model_path)
     model_name_pure = model_name.split('.')[0]
-    # np.save(os.path.join(model_dir, model_name_pure + '_X_test.npy'), X_test)
-    # np.save(os.path.join(model_dir, model_name_pure + '_Y_test.npy'), y_test)
 
     return model
 
 def evaluate_model(model_dir, model_name, input_data_list, output_data_list, receptive_field_dimensions):
     model_path = os.path.join(model_dir, model_name)
-    import psutil, timeit
-    print(psutil.virtual_memory())
-    print(psutil.swap_memory())
-    start = timeit.timeit()
+    start = timeit.default_timer()
     rf_inputs, rf_outputs = rf.reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
-    end = timeit.timeit()
+    end = timeit.default_timer()
     print('Reshaped to receptive fields in: ', end - start)
-    print(psutil.virtual_memory())
-    print(psutil.swap_memory())
 
     model = XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
 
