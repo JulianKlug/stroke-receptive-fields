@@ -7,7 +7,9 @@ import numpy as np
 import itertools
 
 def reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions) :
-    temp = short_new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
+    temp = shorter_new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
+
+    # temp = short_new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
     # a_temp, b_temp = short_new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
     # a_temp2, b_temp2 = new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
     #
@@ -16,6 +18,34 @@ def reshape_to_receptive_field(input_data_list, output_data_list, receptive_fiel
     # temp = old_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
 
     return temp
+
+def shorter_new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions) :
+    # Dimensions of the receptive field defined as distance to center point in every direction
+    rf_x, rf_y, rf_z = receptive_field_dimensions
+    window_d_x, window_d_y, window_d_z  = 2 * np.array(receptive_field_dimensions) + 1
+    print('Receptive field window dimensions are: ', window_d_x, window_d_y, window_d_z )
+
+    n_subjects = len(input_data_list)
+    n_receptive_fields = input_data_list[0][:, :, :, 0].size * n_subjects  # ie voxels per image times number of images
+    receptive_field_size = window_d_x * window_d_y * window_d_z * input_data_list[0][0,0,0,:].size
+    n_x, n_y, n_z, n_c = input_data_list[0].shape
+    n_voxels_per_subject = n_x * n_y * n_z
+
+
+    # pad all images to allow for an receptive field even at the borders
+    padding = max([rf_x, rf_y, rf_z])
+    padded_data = [pad(x, padding) for x in input_data_list]
+
+    input_fields = np.array([rolling_window(x, (window_d_x, window_d_y, window_d_z, 0)) for x in padded_data])
+
+    inputs = input_fields.reshape((n_subjects * n_voxels_per_subject, receptive_field_size))
+
+    outputs = np.array(output_data_list).reshape(n_subjects * n_voxels_per_subject)
+
+    print('Entire dataset. Input shape: ', inputs.shape,
+          ' and output shape: ', outputs.shape)
+
+    return inputs, outputs
 
 def short_new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions) :
     # Dimensions of the receptive field defined as distance to center point in every direction
