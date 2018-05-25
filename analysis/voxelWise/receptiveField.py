@@ -8,10 +8,10 @@ import itertools
 
 def reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions) :
     temp = short_new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
+    # a_temp, b_temp = short_new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
     # a_temp2, b_temp2 = new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
-
+    #
     # print('comparing inpout, output', np.array_equal(a_temp, a_temp2), np.array_equal(b_temp, b_temp2))
-
 
     # temp = old_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
 
@@ -53,7 +53,7 @@ def short_new_reshape_to_receptive_field(input_data_list, output_data_list, rece
         # (do not use the 4th dimension for patches, as this is the perfusion parameter channel)
         input_fields = rolling_window(padded_input_data, (window_d_x, window_d_y, window_d_z, 0))
         # Reshape to linear input
-        linear_input_fields = input_fields.reshape((n_voxels_per_subject, n_c))
+        linear_input_fields = input_fields.reshape((n_voxels_per_subject, receptive_field_size))
         inputs[index : index + n_voxels_per_subject] = linear_input_fields
 
         # Reshape to linear output
@@ -117,13 +117,6 @@ def new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_
             output[index] = output_voxel
             index += 1
             # output.append(output_voxel)
-
-        lin_reshape = input_fields.reshape((n_x * n_y * n_z, n_c))
-        lin_reshape_out = output_data.reshape(n_x * n_y * n_z)
-        print('ooooooooooooo', lin_reshape.shape, inputs.shape, np.array_equal(lin_reshape, inputs))
-        print('iiiiiiiii', lin_reshape_out.shape, lin_reshape_out.shape, np.array_equal(lin_reshape_out, output))
-
-
 
 
     # inputs = np.squeeze(inputs)
