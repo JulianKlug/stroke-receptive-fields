@@ -36,11 +36,12 @@ def shorter_new_reshape_to_receptive_field(input_data_list, output_data_list, re
     padding = max([rf_x, rf_y, rf_z])
     padded_data = [pad(x, padding) for x in input_data_list]
 
-    input_fields = np.array([rolling_window(x, (window_d_x, window_d_y, window_d_z, 0)) for x in padded_data])
+    # TODO stack subjects first and then use rolling_window with dimension 1 as 0, (0, window_d_x, window_d_y, window_d_z, 0)
+    input_fields = np.stack([rolling_window(x, (window_d_x, window_d_y, window_d_z, 0)) for x in padded_data])
 
     inputs = input_fields.reshape((n_subjects * n_voxels_per_subject, receptive_field_size))
 
-    outputs = np.array(output_data_list).reshape(n_subjects * n_voxels_per_subject)
+    outputs = np.stack(output_data_list).reshape(n_subjects * n_voxels_per_subject)
 
     print('Entire dataset. Input shape: ', inputs.shape,
           ' and output shape: ', outputs.shape)
@@ -263,7 +264,7 @@ def predict(input_data, model, receptive_field_dimensions):
         # output[x, y, z] = (1 - model.predict_proba(linear_input)[0][1])
 
     return output
-
+# TODO use np funciton
 def pad(image_with_channels, padding):
     """
     Pad input image with 0 (neutral) border to be able to get an receptive field at corner voxels
