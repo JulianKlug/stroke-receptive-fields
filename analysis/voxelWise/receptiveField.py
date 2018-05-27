@@ -6,48 +6,51 @@ from rolling_window import rolling_window
 import numpy as np
 import itertools
 
-def reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions) :
-    temp = shorter_new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
+def reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions) :
+    temp = shorter_new_reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions)
 
-    # temp = short_new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
-    # a_temp, b_temp = short_new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
-    # a_temp2, b_temp2 = new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
+    # temp = short_new_reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions)
+    # a_temp, b_temp = short_new_reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions)
+    # a_temp2, b_temp2 = new_reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions)
     #
     # print('comparing inpout, output', np.array_equal(a_temp, a_temp2), np.array_equal(b_temp, b_temp2))
 
-    # temp = old_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
+    # temp = old_reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions)
 
     return temp
 
-def shorter_new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions) :
+def shorter_new_reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions) :
     # Dimensions of the receptive field defined as distance to center point in every direction
     rf_x, rf_y, rf_z = receptive_field_dimensions
     window_d_x, window_d_y, window_d_z  = 2 * np.array(receptive_field_dimensions) + 1
     print('Receptive field window dimensions are: ', window_d_x, window_d_y, window_d_z )
 
-    n_subjects = len(input_data_list)
-    n_receptive_fields = input_data_list[0][:, :, :, 0].size * n_subjects  # ie voxels per image times number of images
-    receptive_field_size = window_d_x * window_d_y * window_d_z * input_data_list[0][0,0,0,:].size
-    n_x, n_y, n_z, n_c = input_data_list[0].shape
+    n_subjects = input_data_array.shape[0]
+    n_receptive_fields = input_data_array[0, :, :, :, 0].size * n_subjects  # ie voxels per image times number of images
+    receptive_field_size = window_d_x * window_d_y * window_d_z * input_data_array[0,0,0,0,:].size
+    n_x, n_y, n_z, n_c = input_data_array[0].shape
     n_voxels_per_subject = n_x * n_y * n_z
 
     # pad all images to allow for an receptive field even at the borders
     padding = max([rf_x, rf_y, rf_z])
-    padded_data = [pad(x, padding) for x in input_data_list]
+    padded_data = np.pad(input_data_array, ((0,0), (padding, padding), (padding, padding), (padding, padding), (0,0)), mode='constant', constant_values=0)
+    # padded_data = [pad(x, padding) for x in input_data_array]
 
     # TODO stack subjects first and then use rolling_window with dimension 1 as 0, (0, window_d_x, window_d_y, window_d_z, 0)
-    input_fields = np.stack([rolling_window(x, (window_d_x, window_d_y, window_d_z, 0)) for x in padded_data])
+
+    input_fields = rolling_window(padded_data, (0, window_d_x, window_d_y, window_d_z, 0))
+    # input_fields = np.stack([rolling_window(x, (window_d_x, window_d_y, window_d_z, 0)) for x in padded_data])
 
     inputs = input_fields.reshape((n_subjects * n_voxels_per_subject, receptive_field_size))
 
-    outputs = np.stack(output_data_list).reshape(n_subjects * n_voxels_per_subject)
+    outputs = np.stack(output_data_array).reshape(n_subjects * n_voxels_per_subject)
 
     print('Entire dataset. Input shape: ', inputs.shape,
           ' and output shape: ', outputs.shape)
 
     return inputs, outputs
 
-def short_new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions) :
+def short_new_reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions) :
     # Dimensions of the receptive field defined as distance to center point in every direction
     rf_x, rf_y, rf_z = receptive_field_dimensions
     window_d_x, window_d_y, window_d_z  = 2 * np.array(receptive_field_dimensions) + 1
@@ -55,8 +58,8 @@ def short_new_reshape_to_receptive_field(input_data_list, output_data_list, rece
 
     # Declare final array going into model
     # Initialize the inputs array as long as there will be receptive fields, and on the second dimensions as many voxels as there are in a receptive field
-    n_receptive_fields = input_data_list[0][:, :, :, 0].size * len(input_data_list) # ie voxels per image times number of images
-    receptive_field_size = window_d_x * window_d_y * window_d_z * input_data_list[0][0,0,0,:].size
+    n_receptive_fields = input_data_array[0][:, :, :, 0].size * len(input_data_array) # ie voxels per image times number of images
+    receptive_field_size = window_d_x * window_d_y * window_d_z * input_data_array[0][0,0,0,:].size
     inputs = np.empty((n_receptive_fields, receptive_field_size))
     outputs = np.empty(n_receptive_fields)
 
@@ -64,10 +67,10 @@ def short_new_reshape_to_receptive_field(input_data_list, output_data_list, rece
 
 
     # Iterate through all images
-    for i in range(0, len(input_data_list)):
+    for i in range(0, len(input_data_array)):
 
-        input_data = input_data_list[i]
-        output_data = output_data_list[i]
+        input_data = input_data_array[i]
+        output_data = output_data_array[i]
 
         if (input_data[:,:,:,0].shape != output_data.shape):
             raise ValueError('Input and output do not have the same shape.', input_data[:,:,:,0].shape, output_data.shape)
@@ -99,7 +102,7 @@ def short_new_reshape_to_receptive_field(input_data_list, output_data_list, rece
     return inputs, outputs
 
 
-def new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions) :
+def new_reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions) :
     # Dimensions of the receptive field defined as distance to center point in every direction
     rf_x, rf_y, rf_z = receptive_field_dimensions
     window_d_x, window_d_y, window_d_z  = 2 * np.array(receptive_field_dimensions) + 1
@@ -107,8 +110,8 @@ def new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_
 
     # Declare final array going into model
     # Initialize the inputs array as long as there will be receptive fields, and on the second dimensions as many voxels as there are in a receptive field
-    n_receptive_fields = input_data_list[0][:, :, :, 0].size * len(input_data_list) # ie voxels per image times number of images
-    receptive_field_size = window_d_x * window_d_y * window_d_z * input_data_list[0][0,0,0,:].size
+    n_receptive_fields = input_data_array[0][:, :, :, 0].size * len(input_data_array) # ie voxels per image times number of images
+    receptive_field_size = window_d_x * window_d_y * window_d_z * input_data_array[0][0,0,0,:].size
     inputs = np.empty((n_receptive_fields, receptive_field_size))
     output = np.empty(n_receptive_fields)
 
@@ -116,10 +119,10 @@ def new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_
 
 
     # Iterate through all images
-    for i in range(0, len(input_data_list)):
+    for i in range(0, len(input_data_array)):
 
-        input_data = input_data_list[i]
-        output_data = output_data_list[i]
+        input_data = input_data_array[i]
+        output_data = output_data_array[i]
 
         if (input_data[:,:,:,0].shape != output_data.shape):
             raise ValueError('Input and output do not have the same shape.', input_data[:,:,:,0].shape, output_data.shape)
@@ -160,7 +163,7 @@ def new_reshape_to_receptive_field(input_data_list, output_data_list, receptive_
 
     return inputs, output
 
-def old_reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions) :
+def old_reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions) :
     # Dimensions of the receptive field defined as distance to center point in every direction
     rf_x, rf_y, rf_z = receptive_field_dimensions
 
@@ -172,10 +175,10 @@ def old_reshape_to_receptive_field(input_data_list, output_data_list, receptive_
     print('Receptive field window dimensions are: ', window_d_x, window_d_y, window_d_z )
 
     # Iterate through all images
-    for i in range(0, len(input_data_list)):
+    for i in range(0, len(input_data_array)):
 
-        input_data = input_data_list[i]
-        output_data = output_data_list[i]
+        input_data = input_data_array[i]
+        output_data = output_data_array[i]
 
         if (input_data[:,:,:,0].shape != output_data.shape):
             raise ValueError('Input and output do not have the same shape.', input_data[:,:,:,0].shape, output_data.shape)
