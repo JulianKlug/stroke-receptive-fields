@@ -36,10 +36,10 @@ def create(model_dir, model_name, input_data_list, output_data_list, receptive_f
 
     return model
 
-def evaluate_model(model_dir, model_name, input_data_list, output_data_list, receptive_field_dimensions):
+def evaluate_model(model_dir, model_name, input_data_array, output_data_array, receptive_field_dimensions):
     model_path = os.path.join(model_dir, model_name)
     start = timeit.default_timer()
-    rf_inputs, rf_outputs = rf.reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
+    rf_inputs, rf_outputs = rf.reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions)
     end = timeit.default_timer()
     print('Reshaped to receptive fields in: ', end - start)
 

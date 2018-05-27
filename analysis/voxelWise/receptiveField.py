@@ -31,7 +31,6 @@ def shorter_new_reshape_to_receptive_field(input_data_list, output_data_list, re
     n_x, n_y, n_z, n_c = input_data_list[0].shape
     n_voxels_per_subject = n_x * n_y * n_z
 
-
     # pad all images to allow for an receptive field even at the borders
     padding = max([rf_x, rf_y, rf_z])
     padded_data = [pad(x, padding) for x in input_data_list]
