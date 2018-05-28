@@ -12,13 +12,13 @@ import data_loader
 main_dir = '/Users/julian/master/data/'
 data_dir = os.path.join(main_dir, 'analysis_test2')
 model_dir = os.path.join(data_dir, 'temp_stride_test')
-model_name = 'old_rf0'
+model_name = 'gl_shorter_new_test_rf0'
 model_extension = '.pkl'
 model_path = os.path.join(model_dir, model_name + model_extension)
 
 input_dir = os.path.join(data_dir, '')
 
-input_image_path = os.path.join(input_dir, 'Barlovic_Radojka_19480907/Ct2_Cerebral_20160103/wcoreg_RAPID_MTT_[s]_Barlovic_Radojka_19480907.nii')
+input_image_path = os.path.join(input_dir, 'patient/Ct2_Cerebral_20160103/wcoreg_RAPID_MTT_[s]_patient_19480907.nii')
 input_img = nib.load(input_image_path)
 # input_data = input_img.get_data()
 
@@ -49,7 +49,7 @@ print('Predicted lesion size', np.sum(predicted))
 coordinate_space = input_img.affine
 image_extension = '.nii'
 predicted_img = nib.Nifti1Image(predicted, affine=coordinate_space)
-nib.save(predicted_img, os.path.join(model_dir, model_name + '_oldPred_2' + image_extension))
+nib.save(predicted_img, os.path.join(model_dir, model_name + '' + image_extension))
 
 
 visual.display(predicted)
