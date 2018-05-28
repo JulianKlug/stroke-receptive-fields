@@ -17,7 +17,7 @@ def create(model_dir, model_name, input_data_list, output_data_list, receptive_f
     # Create model object
     # model = linear_model.LogisticRegression(verbose = 1, max_iter = 1000000000)
     # model = RandomForestClassifier(verbose = 1)
-    model = XGBClassifier(verbose_eval=False)
+    model = XGBClassifier(verbose_eval=True)
 
     # Reduce amount of data initially processed
     remaining_fraction = 0.3
@@ -46,16 +46,11 @@ def evaluate_model(model_dir, model_name, input_data_array, output_data_array, r
     model = XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
 
     # Reduce amount of data initially processed
-    # # TODO: train test split might create copy of data and might thus elevate RAM usage
-    # remaining_fraction = 0.1
-    # print('Discarding ' + str((1 - remaining_fraction)* 100) + '% of data for faster training')
-    # X_retained, X_rest, y_retained, y_rest = train_test_split(rf_inputs, rf_outputs, test_size = 0.7, random_state = 42)
-    # X, y = X_retained, y_retained
+    remaining_fraction = 0.3
+    print('Discarding ' + str((1 - remaining_fraction)* 100) + '% of data for faster training')
+    X_retained, X_rest, y_retained, y_rest = train_test_split(rf_inputs, rf_outputs, test_size = 0.7, random_state = 42)
+    X, y = X_retained, y_retained
 
-    # kf = RepeatedKFold(n_splits = 5, n_repeats = 100, random_state = 42)
-    # scoring = ('accuracy', 'roc_auc', 'f1')
-    # results = cross_validate(model, X, y, cv = kf, n_jobs = 20, scoring = scoring)
-    #
     results = repeated_kfold_cv(model, X, y)
     accuracy = np.median(results['test_accuracy'])
     roc_auc = np.median(results['test_roc_auc'])
@@ -110,8 +105,7 @@ def repeated_kfold_cv(model, X, y, n_repeats = 1, n_folds = 5):
         kf = KFold(n_splits = n_folds, shuffle = True, random_state = j)
         for train, test in kf.split(X, y):
             print('Evaluating split : ' + str(f))
-            # X_train, y_train = balance(X[train], y[train])
-            X_train, y_train = X[train], y[train]
+            X_train, y_train = balance(X[train], y[train])
 
             probas_ = model.fit(X_train, y_train).predict_proba(X[test])
             # Compute ROC curve, area under the curve, f1, and accuracy
