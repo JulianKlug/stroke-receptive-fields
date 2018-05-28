@@ -46,6 +46,7 @@ def evaluate_model(model_dir, model_name, input_data_array, output_data_array, r
     model = XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
 
     # Reduce amount of data initially processed
+    # # TODO: train test split might create copy of data and might thus elevate RAM usage
     remaining_fraction = 0.1
     print('Discarding ' + str((1 - remaining_fraction)* 100) + '% of data for faster training')
     X_retained, X_rest, y_retained, y_rest = train_test_split(rf_inputs, rf_outputs, test_size = 0.7, random_state = 42)
@@ -105,6 +106,7 @@ def repeated_kfold_cv(model, X, y, n_repeats = 1, n_folds = 5):
         print('Crossvalidation: Running ' + str(iteration) + ' of a total of ' + str(n_repeats))
 
         f = 0
+        # TODO: implement patient wise
         kf = KFold(n_splits = n_folds, shuffle = True, random_state = j)
         for train, test in kf.split(X, y):
             print('Evaluating split : ' + str(f))
