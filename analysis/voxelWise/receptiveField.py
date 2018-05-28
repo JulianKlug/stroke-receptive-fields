@@ -34,12 +34,8 @@ def shorter_new_reshape_to_receptive_field(input_data_array, output_data_array, 
     # pad all images to allow for an receptive field even at the borders
     padding = max([rf_x, rf_y, rf_z])
     padded_data = np.pad(input_data_array, ((0,0), (padding, padding), (padding, padding), (padding, padding), (0,0)), mode='constant', constant_values=0)
-    # padded_data = [pad(x, padding) for x in input_data_array]
-
-    # TODO stack subjects first and then use rolling_window with dimension 1 as 0, (0, window_d_x, window_d_y, window_d_z, 0)
 
     input_fields = rolling_window(padded_data, (0, window_d_x, window_d_y, window_d_z, 0))
-    # input_fields = np.stack([rolling_window(x, (window_d_x, window_d_y, window_d_z, 0)) for x in padded_data])
 
     inputs = input_fields.reshape((n_subjects * n_voxels_per_subject, receptive_field_size))
 
