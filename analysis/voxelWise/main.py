@@ -3,6 +3,7 @@ sys.path.insert(0, '../')
 
 import os
 import numpy as np
+import timeit
 import model_utils
 import visual
 import data_loader
@@ -28,8 +29,8 @@ if os.path.isfile(model_path):
 notification_system = NotificationSystem()
 
 # ct_sequences = ['wcoreg_RAPID_TMax_[s]', 'wcoreg_RAPID_MTT_[s]', 'wcoreg_RAPID_CBV', 'wcoreg_RAPID_CBF']
-# ct_sequences = ['wcoreg_RAPID_Tmax', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV', 'wcoreg_RAPID_rCBF']
-ct_sequences = ['wcoreg_RAPID_TMax_[s]']
+ct_sequences = ['wcoreg_RAPID_Tmax', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV', 'wcoreg_RAPID_rCBF']
+# ct_sequences = ['wcoreg_RAPID_TMax_[s]']
 mri_sequences = ['wcoreg_VOI_lesion']
 
 IN, OUT = data_loader.load(data_dir, ct_sequences, mri_sequences)
@@ -38,8 +39,11 @@ IN, OUT = data_loader.load(data_dir, ct_sequences, mri_sequences)
 rf = 0
 rf_dim = [rf, rf, rf]
 
+start = timeit.default_timer()
 score, roc_auc, f1 = model_utils.evaluate_model(model_dir, model_name, IN, OUT, rf_dim)
+elapsed = timeit.default_timer() - start
+print('Evaluation done in: ', elapsed)
 
 title = model_name + ' finished Cross-Validation'
-body = 'accuracy ' + str(score) + '\n' + 'ROC AUC ' + str(roc_auc) + '\n' + 'F1 ' + str(f1)
+body = 'accuracy ' + str(score) + '\n' + 'ROC AUC ' + str(roc_auc) + '\n' + 'F1 ' + str(f1) + '\n' + 'RF ' + str(rf) + '\n' + 'Time elapsed ' + str(elapsed)
 notification_system.send_message(title, body)
