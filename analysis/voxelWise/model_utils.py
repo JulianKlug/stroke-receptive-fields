@@ -38,20 +38,11 @@ def create(model_dir, model_name, input_data_list, output_data_list, receptive_f
 
 def evaluate_model(model_dir, model_name, input_data_array, output_data_array, receptive_field_dimensions):
     model_path = os.path.join(model_dir, model_name)
-    start = timeit.default_timer()
-    rf_inputs, rf_outputs = rf.reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions)
-    end = timeit.default_timer()
-    print('Reshaped to receptive fields in: ', end - start)
+
 
     model = XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
 
-    # Reduce amount of data initially processed
-    remaining_fraction = 0.3
-    print('Discarding ' + str((1 - remaining_fraction)* 100) + '% of data for faster training')
-    X_retained, X_rest, y_retained, y_rest = train_test_split(rf_inputs, rf_outputs, test_size = 0.7, random_state = 42)
-    X, y = X_retained, y_retained
-
-    results = repeated_kfold_cv(model, X, y)
+    results = repeated_kfold_cv(model, input_data_array, output_data_array, receptive_field_dimensions)
     accuracy = np.median(results['test_accuracy'])
     roc_auc = np.median(results['test_roc_auc'])
     f1 = np.median(results['test_f1'])
@@ -65,15 +56,15 @@ def evaluate_model(model_dir, model_name, input_data_array, output_data_array, r
 
     return accuracy, roc_auc, f1
 
-def repeated_kfold_cv(model, X, y, n_repeats = 1, n_folds = 5):
+def repeated_kfold_cv(model, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5):
     """
-    Repeated KFold Crossvalidation
+    Patient wise Repeated KFold Crossvalidation
     Advantage over sklearns implementation: returns TP and FP rates (useful for plotting ROC curve)
 
     Args:
         model: model to crossvalidate (must implement sklearns interface)
-        X: data to validate
-        y: dependent variables of data
+        X: data to validate for all subjects in form of an np array [subject, x, y, z, c]
+        y: dependent variables of data in a form of an np array [subject, x, y, z]
         n_repeats (optional, default 1): repeats of kfold CV
         n_folds (optional, default 5): number of folfs in kfold (ie. k)
 
@@ -101,18 +92,32 @@ def repeated_kfold_cv(model, X, y, n_repeats = 1, n_folds = 5):
         print('Crossvalidation: Running ' + str(iteration) + ' of a total of ' + str(n_repeats))
 
         f = 0
-        # TODO: implement patient wise
         kf = KFold(n_splits = n_folds, shuffle = True, random_state = j)
         for train, test in kf.split(X, y):
             print('Evaluating split : ' + str(f))
-            X_train, y_train = balance(X[train], y[train])
+            print('spit', X[train].shape, y[train].shape)
 
-            probas_ = model.fit(X_train, y_train).predict_proba(X[test])
+            start = timeit.default_timer()
+            rf_inputs, rf_outputs = rf.reshape_to_receptive_field(X[train], y[train], receptive_field_dimensions)
+            end = timeit.default_timer()
+            print('Reshaped to receptive fields in: ', end - start)
+
+            X_train, y_train = balance(rf_inputs, rf_outputs)
+
+            # Reduce amount of data initially processed
+            remaining_fraction = 0.3
+            print('Discarding ' + str((1 - remaining_fraction)* 100) + '% of data for faster training')
+            X_retained, X_rest, y_retained, y_rest = train_test_split(rf_inputs, rf_outputs, test_size = 1-remaining_fraction, random_state = 42)
+
+            fittedModel = model.fit(X_retained, y_retained)
+
+            X_test, y_test = rf.reshape_to_receptive_field(X[test], y[test], receptive_field_dimensions)
+            probas_= fittedModel.predict_proba(X_test)
             # Compute ROC curve, area under the curve, f1, and accuracy
             threshold = 0.5 # threshold choosen ot evaluate f1 and accuracy of model
-            fpr, tpr, thresholds = roc_curve(y[test], probas_[:, 1])
-            accuracies.append(accuracy_score(y[test], probas_[:, 1] > threshold))
-            f1_scores.append(f1_score(y[test], probas_[:, 1] > threshold))
+            fpr, tpr, thresholds = roc_curve(y_test, probas_[:, 1])
+            accuracies.append(accuracy_score(y_test, probas_[:, 1] > threshold))
+            f1_scores.append(f1_score(y_test, probas_[:, 1] > threshold))
             roc_auc = auc(fpr, tpr)
             aucs.append(roc_auc)
             tprs.append(tpr)
