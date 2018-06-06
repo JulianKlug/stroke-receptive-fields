@@ -53,22 +53,7 @@ def mask_lesions_wrapper(data_dir):
 
             mask_lesion(lesion_mask[0], lesion_dir, lesion_mask_path[0], brain_mask_path[0])
 
-            # try:
-            # except :
-            #     print('Not all images found for subject ', subject)
-
-
-
-            # try:
-            #     print('Processing subject ', subject)
-            #     subprocess.run(['fslmaths', lesion_mask_path, '-mul', brain_mask_path, 'masked_' + lesion_mask], cwd = modality_dir)
-            #     subprocess.run(['gunzip', os.path.join('Neuro_Cerebrale_64Ch', 'masked_' + lesion_mask)], cwd = modality_dir)
-            #     subprocess.run(['rm', os.path.join('Neuro_Cerebrale_64Ch', 'masked_' + lesion_mask + '.gz')], cwd = modality_dir)
-            #
-            # except :
-            #     print('Not all images found for subject ', subject)
-
-
-main_dir = '/Users/julian/master/data'
-data_dir = os.path.join(main_dir, 'masking_test')
+# main_dir = '/Users/julian/master/data'
+# data_dir = os.path.join(main_dir, 'masking_test')
+data_dir = '/home/klug/data/preprocessed_original_masked'
 mask_lesions_wrapper(data_dir)

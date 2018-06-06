@@ -70,5 +70,5 @@ def createBrainMaskWrapper(data_dir):
                     print('Processed subject:', subject)
 
 
-dir = '/Users/julian/master/data/masking_test'
+dir = '/home/klug/data/preprocessed_original_masked'
 createBrainMaskWrapper(dir)
