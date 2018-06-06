@@ -9,9 +9,9 @@ import data_loader
 import manual_data
 from email_notification import NotificationSystem
 
-main_dir = '/home/klug/data'
-data_dir = os.path.join(main_dir, 'preprocessed')
-model_dir = '/home/klug/models'
+main_dir = '/Users/julian/master/data'
+data_dir = os.path.join(main_dir, 'analysis_test2')
+model_dir = data_dir
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 

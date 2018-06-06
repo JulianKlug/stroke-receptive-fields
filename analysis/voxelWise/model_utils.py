@@ -27,6 +27,7 @@ def create(model_dir, model_name, input_data_list, output_data_list, receptive_f
     # Balancing the data for training
     X_train, y_train = balance(X_retained, y_retained)
 
+
     # Train the model using the training sets
     model.fit(X_train, y_train)
 
@@ -39,10 +40,10 @@ def create(model_dir, model_name, input_data_list, output_data_list, receptive_f
 def evaluate_model(model_dir, model_name, input_data_array, output_data_array, receptive_field_dimensions):
     model_path = os.path.join(model_dir, model_name)
 
-
     model = XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
 
     results = repeated_kfold_cv(model, input_data_array, output_data_array, receptive_field_dimensions)
+
     accuracy = np.median(results['test_accuracy'])
     roc_auc = np.median(results['test_roc_auc'])
     f1 = np.median(results['test_f1'])
