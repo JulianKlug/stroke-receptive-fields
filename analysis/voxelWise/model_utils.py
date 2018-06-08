@@ -37,12 +37,17 @@ def create(model_dir, model_name, input_data_list, output_data_list, receptive_f
 
     return model
 
-def evaluate_model(model_dir, model_name, input_data_array, output_data_array, receptive_field_dimensions):
+def train_CV(data_dir):
+    model = XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
+    train_patient_wise_kfold_cv(model, data_dir)
+
+def evaluate_model(data_dir, model_dir, model_name, input_data_array, output_data_array, receptive_field_dimensions):
     model_path = os.path.join(model_dir, model_name)
 
     model = XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
 
-    results = repeated_kfold_cv(model, input_data_array, output_data_array, receptive_field_dimensions)
+    results = test_patient_wise_kfold_cv(data_dir, receptive_field_dimensions)
+    # results = repeated_kfold_cv(model, input_data_array, output_data_array, receptive_field_dimensions)
 
     accuracy = np.median(results['test_accuracy'])
     roc_auc = np.median(results['test_roc_auc'])
@@ -113,6 +118,7 @@ def repeated_kfold_cv(model, X, y, receptive_field_dimensions, n_repeats = 1, n_
             fittedModel = model.fit(X_retained, y_retained)
 
             X_test, y_test = rf.reshape_to_receptive_field(X[test], y[test], receptive_field_dimensions)
+
             probas_= fittedModel.predict_proba(X_test)
             # Compute ROC curve, area under the curve, f1, and accuracy
             threshold = 0.5 # threshold choosen ot evaluate f1 and accuracy of model
@@ -135,6 +141,118 @@ def repeated_kfold_cv(model, X, y, receptive_field_dimensions, n_repeats = 1, n_
         'test_TPR': tprs,
         'test_FPR': fprs
     }
+
+def save_patient_wise_kfold_data_split(save_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5):
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    iteration = 0
+    for j in np.random.randint(0, high=10000, size=n_repeats):
+        iteration_dir = os.path.join(save_dir, 'iteration_' + str(iteration))
+        if not os.path.exists(iteration_dir):
+            os.makedirs(iteration_dir)
+
+        iteration += 1
+        print('Crossvalidation: Running ' + str(iteration) + ' of a total of ' + str(n_repeats))
+
+        f = 0
+        kf = KFold(n_splits = n_folds, shuffle = True, random_state = j)
+        for train, test in kf.split(X, y):
+            print('Evaluating split : ' + str(f))
+
+            start = timeit.default_timer()
+            rf_inputs, rf_outputs = rf.reshape_to_receptive_field(X[train], y[train], receptive_field_dimensions)
+            end = timeit.default_timer()
+            print('Reshaped to receptive fields in: ', end - start)
+
+            X_train, y_train = balance(rf_inputs, rf_outputs)
+            X_test, y_test = X[test], y[test]
+            np.savez_compressed(os.path.join(iteration_dir, 'fold_' + str(f)),
+                X_train = X_train, y_train = y_train, X_test = X_test, y_test = y_test )
+
+            f += 1
+
+def train_patient_wise_kfold_cv(model, data_dir):
+
+    iterations = [o for o in os.listdir(data_dir)
+                    if os.path.isdir(os.path.join(data_dir,o)) and o.startswith('iteration')]
+
+    for iteration in iterations:
+        print(iteration)
+        iteration_dir = os.path.join(data_dir, iteration)
+
+        folds = [o for o in os.listdir(iteration_dir)
+                        if o.startswith('fold')]
+        for fold in folds:
+            print('Training', fold, 'of', iteration)
+            X_train = np.load(os.path.join(iteration_dir, fold))['X_train']
+            y_train = np.load(os.path.join(iteration_dir, fold))['y_train']
+
+            # Reduce amount of data initially processed
+            remaining_fraction = 0.3
+            print('Discarding ' + str((1 - remaining_fraction)* 100) + '% of data for faster training')
+            X_retained, X_rest, y_retained, y_rest = train_test_split(X_train, y_train, test_size = 1-remaining_fraction, random_state = 42)
+
+            trained_model = model.fit(X_retained, y_retained)
+
+            fold_name_pure = fold.split('.')[0]
+            model_extension = '.pkl'
+            model_path = os.path.join(iteration_dir, 'model_' + fold_name_pure + model_extension)
+            print('Saving model as : ', model_path)
+            joblib.dump(trained_model, model_path)
+
+def test_patient_wise_kfold_cv(data_dir, receptive_field_dimensions):
+    print('Testing Crossvalidation')
+    n_folds = 0;
+    tprs = []
+    fprs = []
+    aucs = []
+    accuracies = []
+    f1_scores = []
+
+    iterations = [o for o in os.listdir(data_dir)
+                    if os.path.isdir(os.path.join(data_dir,o)) and o.startswith('iteration')]
+    n_repeats = len(iterations)
+
+    for iteration in iterations:
+        print(iteration)
+        iteration_dir = os.path.join(data_dir, iteration)
+
+        folds = [o for o in os.listdir(iteration_dir)
+                        if o.startswith('fold')]
+        n_folds = len(folds)
+        for fold in folds:
+            print('Testing', fold, 'of', iteration)
+            X_test = np.load(os.path.join(iteration_dir, fold))['X_test']
+            y_test = np.load(os.path.join(iteration_dir, fold))['y_test']
+            fold_name_pure = fold.split('.')[0]
+            model_extension = '.pkl'
+            model = joblib.load(os.path.join(iteration_dir, 'model_' + fold_name_pure + model_extension))
+
+            X_test, y_test = rf.reshape_to_receptive_field(X_test, y_test, receptive_field_dimensions)
+
+            probas_= model.predict_proba(X_test)
+            # Compute ROC curve, area under the curve, f1, and accuracy
+            threshold = 0.5 # threshold choosen ot evaluate f1 and accuracy of model
+            fpr, tpr, thresholds = roc_curve(y_test, probas_[:, 1])
+            accuracies.append(accuracy_score(y_test, probas_[:, 1] > threshold))
+            f1_scores.append(f1_score(y_test, probas_[:, 1] > threshold))
+            roc_auc = auc(fpr, tpr)
+            aucs.append(roc_auc)
+            tprs.append(tpr)
+            fprs.append(fpr)
+
+    return {
+        'settings_repeats': n_repeats,
+        'settings_folds': n_folds,
+        'model': model,
+        'test_accuracy': accuracies,
+        'test_roc_auc': aucs,
+        'test_f1': f1_scores,
+        'test_TPR': tprs,
+        'test_FPR': fprs
+    }
+
 
 def plot_roc(tprs, fprs):
     """
