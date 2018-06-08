@@ -3,6 +3,7 @@ sys.path.insert(0, '../')
 
 import os, timeit
 import numpy as np
+import timeit
 import model_utils
 import visual
 import data_loader
@@ -26,6 +27,7 @@ if os.path.isfile(model_path):
         raise ValueError('Model already exists. Choose another model name or delete current model')
 
 notification_system = NotificationSystem()
+
 
 IN, OUT = data_loader.load_saved_data(data_dir)
 # IN, OUT = manual_data.load(data_dir)
