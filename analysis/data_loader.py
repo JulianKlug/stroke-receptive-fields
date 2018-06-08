@@ -2,6 +2,7 @@ import os
 import nibabel as nib
 import numpy as np
 
+
 # provided a given directory return list of paths to ct_sequences and lesion_maps
 def get_paths(data_dir, ct_sequences, mri_sequences):
 
@@ -81,8 +82,16 @@ def load_nifti(main_dir, ct_sequences, mri_sequences):
     ct_paths, lesion_paths = get_paths(main_dir, ct_sequences, mri_sequences)
     return load_images(ct_paths, lesion_paths)
 
+
 # Save data as compressed numpy array
-def load_and_save_data(data_dir, main_dir, ct_sequences, mri_sequences):
+def load_and_save_data(data_dir, main_dir, ct_sequences = [], mri_sequences = []):
+    if len(ct_sequences) < 1:
+        # ct_sequences = ['wcoreg_RAPID_TMax_[s]', 'wcoreg_RAPID_MTT_[s]', 'wcoreg_RAPID_CBV', 'wcoreg_RAPID_CBF']
+        ct_sequences = ['wcoreg_RAPID_Tmax', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV', 'wcoreg_RAPID_rCBF']
+        # ct_sequences = ['wcoreg_RAPID_TMax_[s]']
+    if len(mri_sequences) < 1:
+        mri_sequences = ['wcoreg_VOI_lesion']
+
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
     ct_inputs, lesion_GT = load_nifti(main_dir, ct_sequences, mri_sequences)
