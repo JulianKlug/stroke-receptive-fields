@@ -4,11 +4,13 @@ sys.path.insert(0, '../')
 from rolling_window import rolling_window
 import numpy as np
 
-def reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions) :
+def reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions, verbose = False) :
     # Dimensions of the receptive field defined as distance to center point in every direction
     rf_x, rf_y, rf_z = receptive_field_dimensions
     window_d_x, window_d_y, window_d_z  = 2 * np.array(receptive_field_dimensions) + 1
-    print('Receptive field window dimensions are: ', window_d_x, window_d_y, window_d_z )
+
+    if verbose:
+        print('Receptive field window dimensions are: ', window_d_x, window_d_y, window_d_z )
 
     n_subjects = input_data_array.shape[0]
     n_receptive_fields = input_data_array[0, :, :, :, 0].size * n_subjects  # ie voxels per image times number of images
@@ -26,19 +28,22 @@ def reshape_to_receptive_field(input_data_array, output_data_array, receptive_fi
 
     outputs = np.stack(output_data_array).reshape(n_subjects * n_voxels_per_subject)
 
-    print('Entire dataset. Input shape: ', inputs.shape,
-          ' and output shape: ', outputs.shape)
+    if verbose:
+        print('Entire dataset. Input shape: ', inputs.shape,
+              ' and output shape: ', outputs.shape)
 
     return inputs, outputs
 
-def predict(input_data, model, receptive_field_dimensions):
+def predict(input_data, model, receptive_field_dimensions, verbose = False):
     # Dimensions of the receptive field defined as distance to center point in every direction
     rf_x, rf_y, rf_z = receptive_field_dimensions
     window_d_x, window_d_y, window_d_z = 2 * np.array(receptive_field_dimensions) + 1
-    print('Receptive field window dimensions are: ', window_d_x, window_d_y, window_d_z )
+    if verbose :
+        print('Receptive field window dimensions are: ', window_d_x, window_d_y, window_d_z )
 
     n_x, n_y, n_z, n_c = input_data.shape
-    print('Predicting from input: ', input_data.shape)
+    if verbose:
+        print('Predicting from input: ', input_data.shape)
     receptive_field_size = window_d_x * window_d_y * window_d_z * n_c
     n_voxels_per_subject = n_x * n_y * n_z
 

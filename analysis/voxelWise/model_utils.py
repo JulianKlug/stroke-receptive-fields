@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from collections import Counter
 import receptiveField as rf
-from cv_utils import balance, repeated_kfold_cv, intermittent_repeated_kfold_cv
+from cv_utils import balance, repeated_kfold_cv, intermittent_repeated_kfold_cv, ext_mem_repeated_kfold_cv
 
 def create(model_dir, model_name, input_data_list, output_data_list, receptive_field_dimensions):
     rf_inputs, rf_outputs = rf.reshape_to_receptive_field(input_data_list, output_data_list, receptive_field_dimensions)
@@ -41,10 +41,18 @@ def evaluate_crossValidation(save_dir, model_dir, model_name, input_data_array, 
 
     model = XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
 
+    params = {
+        'tree_method': 'hist',
+        'silent': 0,
+        'objective': 'binary:logistic',
+        'eval_metric': 'auc'
+    }
+
     n_repeats = 1
     n_folds = 5
 
-    results = intermittent_repeated_kfold_cv(model, save_dir, input_data_array, output_data_array, receptive_field_dimensions, n_repeats, n_folds)
+    results = ext_mem_repeated_kfold_cv(params, save_dir, input_data_array, output_data_array, receptive_field_dimensions, n_repeats, n_folds)
+    # results = intermittent_repeated_kfold_cv(model, save_dir, input_data_array, output_data_array, receptive_field_dimensions, n_repeats, n_folds)
     # results = repeated_kfold_cv(model, input_data_array, output_data_array, receptive_field_dimensions, n_repeats, n_folds)
 
     accuracy = np.median(results['test_accuracy'])
