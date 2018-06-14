@@ -18,6 +18,11 @@ MRI :
 
 - matlab/mri_coreg_normalisation_wrapper.m : recenter subject CT, co-register T2 to subject CT, co-register T2 to CT-MNI and normalise to CT-MNI
 
+Post: 
+As RAPID performs excessive skull-stripping, same crop has to be applied to esion maps to remove lesions without underlying input data. 
+- masking/brain_mask.py : create brain masks based on RAPID perfusion maps
+- masking/mask_lesions.py : apply brain masks to lesions
+
 ## Requirements
 
 - matlab
