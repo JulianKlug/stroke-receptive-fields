@@ -37,16 +37,16 @@ rf = 1
 rf_dim = [rf, rf, rf]
 print('Evaluating', model_name, 'with rf:', rf_dim)
 
-# save_dir = os.path.join(data_dir, 'cv_data')
+save_dir = os.path.join(data_dir, 'cv_data')
 
 # model_utils.create(model_dir, model_name, IN, OUT, rf_dim)
-model_utils.create_external_memory(model_dir, model_name, data_dir, IN, OUT, rf_dim)
+# model_utils.create_external_memory(model_dir, model_name, data_dir, IN, OUT, rf_dim)
 
-# start = timeit.default_timer()
-# score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, IN, OUT, rf_dim)
-# elapsed = timeit.default_timer() - start
-# print('Evaluation done in: ', elapsed)
-#
-# title = model_name + ' finished Cross-Validation'
-# body = 'accuracy ' + str(score) + '\n' + 'ROC AUC ' + str(roc_auc) + '\n' + 'F1 ' + str(f1) + '\n' + 'RF ' + str(rf) + '\n' + 'Time elapsed ' + str(elapsed)
-# notification_system.send_message(title, body)
+start = timeit.default_timer()
+score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, IN, OUT, rf_dim)
+elapsed = timeit.default_timer() - start
+print('Evaluation done in: ', elapsed)
+
+title = model_name + ' finished Cross-Validation'
+body = 'accuracy ' + str(score) + '\n' + 'ROC AUC ' + str(roc_auc) + '\n' + 'F1 ' + str(f1) + '\n' + 'RF ' + str(rf) + '\n' + 'Time elapsed ' + str(elapsed)
+notification_system.send_message(title, body)

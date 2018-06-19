@@ -9,6 +9,7 @@ import xgboost as xgb
 from collections import Counter
 import receptiveField as rf
 from ext_mem_utils import save_to_svmlight
+from model_utils import ext_mem_undersample
 
 def repeated_kfold_cv(model, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5):
     """
@@ -153,9 +154,10 @@ def external_save_patient_wise_kfold_data_split(save_dir, X, y, receptive_field_
                 subj_X_train, subj_y_train = np.expand_dims(X_train[subject], axis=0), np.expand_dims(y_train[subject], axis=0)
                 rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_train, subj_y_train, receptive_field_dimensions)
                 # TODO: Might be dangerous to balance here
-                subj_X_train, subj_y_train = balance(rf_inputs, rf_outputs)
+                # subj_X_train, subj_y_train = balance(rf_inputs, rf_outputs)
                 train_data_path = os.path.join(fold_dir, 'fold_' + str(fold) + '_train' + ext_mem_extension)
                 save_to_svmlight(subj_X_train, subj_y_train, train_data_path)
+                ext_mem_undersample(train_data_path)
 
             X_test, y_test = X[test], y[test]
             for subject in range(X_test.shape[0]):
