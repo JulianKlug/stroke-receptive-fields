@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from sklearn.metrics import f1_score, fbeta_score, jaccard_similarity_score, roc_auc_score, precision_score, roc_curve, auc, accuracy_score
+from sklearn.metrics import f1_score, accuracy_score, fbeta_score, jaccard_similarity_score, roc_auc_score, precision_score, roc_curve, auc, accuracy_score
 import numpy as np
 
 
@@ -52,22 +52,19 @@ def plot_roc(tprs, fprs):
     plt.draw()
     plt.show()
 
-def validate(model, X_test, y_test):
-    score = model.accuracy(X_test, y_test)
-    print('Voxel-wise accuracy: ', score)
+def validate(y_pred, y_test):
+    threshold = 0.5 # threshold choosen ot evaluate f1 and accuracy of model
 
-    y_pred = model.predict(X_test)
-
-    jaccard = jaccard_similarity_score(y_test, y_pred)
+    jaccard = jaccard_similarity_score(y_test, y_pred > threshold)
     print('Jaccard similarity score: ', jaccard)
 
     roc_auc = roc_auc_score(y_test, y_pred)
     print('ROC AUC score: ', roc_auc)
 
-    precision = precision_score(y_test, y_pred, average=None)
-    print('Precision score: ', precision)
+    accuracy = accuracy_score(y_test, y_pred > threshold)
+    print('Accuracy score: ', accuracy)
 
-    f1 = f1_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred > threshold)
     print('F1 score: ', f1)
 
-    return score, roc_auc, f1
+    return accuracy, roc_auc, f1

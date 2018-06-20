@@ -3,7 +3,6 @@ sys.path.insert(0, '../')
 
 import os, timeit
 import numpy as np
-import matplotlib.pyplot as plt
 from sklearn import linear_model
 from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split, KFold, RepeatedKFold, cross_val_score, cross_validate
@@ -23,30 +22,37 @@ def create(model_dir, model_name, input_data_array, output_data_array, receptive
     # Create model object
     # model = linear_model.LogisticRegression(verbose = 1, max_iter = 1000000000)
     # model = RandomForestClassifier(verbose = 1)
-    model = xgb.XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
+    # model = xgb.XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
 
     params = {
-        'tree_method': 'hist',
-        'max_depth' : 3,
-        'learning_rate' : 0.1,
-        'n_estimators':100,
-        'silent':True,
-        'objective':"binary:logistic",
-        'booster':'gbtree',
         'n_jobs':-1,
-        'gamma':0,
-        'min_child_weight':1,
-        'max_delta_step':0,
-        'subsample':1,
-        'colsample_bytree':1,
-        'colsample_bylevel':1,
-        'reg_alpha':0,
-        'reg_lambda':1,
-        'scale_pos_weight':1,
-        'base_score':0.5,
-        'random_state':0
+        'base_score': 0.5,
+        'booster': 'gbtree',
+        'colsample_bylevel': 1,
+        'colsample_bytree': 1,
+        'gamma': 0,
+        'learning_rate': 0.1,
+        'max_delta_step': 0,
+        'max_depth': 3,
+        'min_child_weight': 1,
+        'missing': None,
+        'n_estimators': 100,
+        'objective': 'binary:logistic',
+        'reg_alpha': 0, 'reg_lambda': 1,
+        'scale_pos_weight': 1,
+        'seed': 0,
+        'silent': 1,
+        'subsample': 1,
+        'verbose_eval': True,
+        'tree_method': 'hist'
     }
 
+    obj = None
+    feval = None
+    n_estimators = 100 # number of boosted tree
+    evals = ()
+    early_stopping_rounds = None
+    evals_result = {}
 
 
     ## Load everything at once
@@ -78,7 +84,11 @@ def create(model_dir, model_name, input_data_array, output_data_array, receptive
     # RAW interface
     dtrain = xgb.DMatrix(tempX, tempY)
     print(dtrain.get_label().shape, dtrain.feature_names)
-    model = xgb.train(params, dtrain)
+    model = xgb.train(params, dtrain, n_estimators,
+                              evals=evals,
+                              early_stopping_rounds=early_stopping_rounds,
+                              evals_result=evals_result, obj=obj, feval=feval,
+                              verbose_eval=True, xgb_model=None)
 
     # SKLEARN interface
     # model.fit(tempX, tempY)
@@ -101,7 +111,7 @@ def create_external_memory(model_dir, model_name, data_dir, input_data_array, ou
         'silent':True,
         'objective':"binary:logistic",
         'booster':'gbtree',
-        'n_jobs':1,
+        'n_jobs':-1,
         'gamma':0,
         'min_child_weight':1,
         'max_delta_step':0,
@@ -115,6 +125,12 @@ def create_external_memory(model_dir, model_name, data_dir, input_data_array, ou
         'random_state':0
     }
 
+    obj = None
+    feval = None
+    n_estimators = 100 # number of boosted tree
+    evals = ()
+    early_stopping_rounds = None
+    evals_result = {}
 
     X, y = input_data_array, output_data_array
     print('initial shape', X.shape)
@@ -147,7 +163,11 @@ def create_external_memory(model_dir, model_name, data_dir, input_data_array, ou
 
     print('final shapes', dtrain.get_label().shape, dtrain.feature_names)
 
-    trained_model = xgb.train(params, dtrain)
+    trained_model = xgb.train(params, dtrain, n_estimators,
+                              evals=evals,
+                              early_stopping_rounds=early_stopping_rounds,
+                              evals_result=evals_result, obj=obj, feval=feval,
+                              verbose_eval=True, xgb_model=None)
     os.remove(os.path.join(data_dir, model_name + '.r0-1.cache'))
     os.remove(os.path.join(data_dir, model_name + '.r0-1.cache.row.page'))
 

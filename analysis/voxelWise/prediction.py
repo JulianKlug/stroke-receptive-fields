@@ -6,13 +6,13 @@ import nibabel as nib
 import numpy as np
 from sklearn.externals import joblib
 import receptiveField as rf
-import visual
+import visual, scoring_utils
 import data_loader
 
 main_dir = '/Users/julian/master/data/analysis_test_LOO/'
 data_dir = os.path.join(main_dir, '')
 model_dir = main_dir
-model_name = 'temp_test'
+model_name = 'cache_temp_test'
 model_extension = '.pkl'
 model_path = os.path.join(model_dir, model_name + model_extension)
 
@@ -30,6 +30,7 @@ mri_sequences = ['wcoreg_VOI_lesion']
 IN, OUT = data_loader.load_nifti(input_dir, ct_sequences, mri_sequences)
 
 input_data = IN[0]
+output_GT = OUT[0]
 
 homogenous_rf = 1
 rf_dim = [homogenous_rf, homogenous_rf, homogenous_rf]
@@ -42,9 +43,10 @@ predicted = rf.predict(input_data, input_dir, model, rf_dim, external_memory = T
 end = timeit.default_timer()
 print('Prediction time: ', end - start)
 
-
 print('Predicted shape', predicted.shape)
 print('Predicted lesion size', np.sum(predicted))
+
+scoring_utils.validate(predicted.reshape(-1), output_GT.reshape(-1))
 
 coordinate_space = input_img.affine
 image_extension = '.nii'

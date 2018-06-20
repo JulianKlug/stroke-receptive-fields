@@ -17,7 +17,7 @@ if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 
 # Path to save the model to
-model_name = 'temp_test'
+model_name = 'cache_temp_test'
 model_path = os.path.join(model_dir, model_name + '.pkl')
 if os.path.isfile(model_path):
     # file exists
