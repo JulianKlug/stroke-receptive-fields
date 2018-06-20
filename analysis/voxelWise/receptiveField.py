@@ -8,7 +8,7 @@ import xgboost as xgb
 from ext_mem_utils import save_to_svmlight
 
 
-def reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions, verbose = False) :
+def reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions, include_only = np.NaN, verbose = False) :
     # Dimensions of the receptive field defined as distance to center point in every direction
     rf_x, rf_y, rf_z = receptive_field_dimensions
     window_d_x, window_d_y, window_d_z  = 2 * np.array(receptive_field_dimensions) + 1
@@ -31,6 +31,13 @@ def reshape_to_receptive_field(input_data_array, output_data_array, receptive_fi
     inputs = input_fields.reshape((n_subjects * n_voxels_per_subject, receptive_field_size))
 
     outputs = np.stack(output_data_array).reshape(n_subjects * n_voxels_per_subject)
+
+    if not np.isnan(include_only):
+        if verbose:
+            print('Keeping', inputs.length / include_only.length * 100, '% of data')
+        inputs = inputs[include_only]
+        outputs = outputs[include_only]
+
 
     if verbose:
         print('Entire dataset. Input shape: ', inputs.shape,
@@ -64,9 +71,11 @@ def predict(input_data, test_data_path, model, receptive_field_dimensions, verbo
     if not external_memory:
         dtest = xgb.DMatrix(inputs)
         output = model.predict(dtest)
+        output = 1 - output.reshape(n_x, n_y, n_z)
+
 
         # output = model.predict_proba(inputs)
-        output = 1 - output.reshape(n_x, n_y, n_z)
+        # output = 1 - output[:, 1].reshape(n_x, n_y, n_z)
 
     else:
         test_data_path = os.path.join(test_data_path, 'testData.txt')

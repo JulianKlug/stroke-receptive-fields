@@ -12,7 +12,7 @@ import data_loader
 main_dir = '/Users/julian/master/data/analysis_test_LOO/'
 data_dir = os.path.join(main_dir, '')
 model_dir = main_dir
-model_name = 'undersampled_fileRAM_test1'
+model_name = 'temp_test'
 model_extension = '.pkl'
 model_path = os.path.join(model_dir, model_name + model_extension)
 

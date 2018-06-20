@@ -9,7 +9,7 @@ import xgboost as xgb
 from collections import Counter
 import receptiveField as rf
 from ext_mem_utils import save_to_svmlight
-from model_utils import ext_mem_undersample
+from sampling_utils import balance
 
 def repeated_kfold_cv(model, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5):
     """
@@ -157,7 +157,8 @@ def external_save_patient_wise_kfold_data_split(save_dir, X, y, receptive_field_
                 # subj_X_train, subj_y_train = balance(rf_inputs, rf_outputs)
                 train_data_path = os.path.join(fold_dir, 'fold_' + str(fold) + '_train' + ext_mem_extension)
                 save_to_svmlight(subj_X_train, subj_y_train, train_data_path)
-                ext_mem_undersample(train_data_path)
+
+            ext_mem_undersample(train_data_path)
 
             X_test, y_test = X[test], y[test]
             for subject in range(X_test.shape[0]):
@@ -381,21 +382,3 @@ def test_patient_wise_kfold_cv(data_dir, receptive_field_dimensions):
         'test_TPR': tprs,
         'test_FPR': fprs
     }
-
-
-def balance(X, y, verbose = False):
-    # Prefer under_sampling
-    from imblearn.under_sampling import RandomUnderSampler
-    rus = RandomUnderSampler(random_state=0)
-    X_resampled, y_resampled = rus.fit_sample(X, y)
-
-    # Avoid over sampling because it overloads the RAM
-    # from imblearn.over_sampling import RandomOverSampler
-    # ros = RandomOverSampler(random_state=0)
-    # X_resampled, y_resampled = ros.fit_sample(X, y)
-
-    if (verbose):
-        print('Balancing Data.')
-        print('Remaining data points after balancing: ', sorted(Counter(y_resampled).items()))
-
-    return (X_resampled, y_resampled)
