@@ -21,7 +21,16 @@ def ext_mem_undersample(datapath):
     delete_lines(datapath, unselected_indices)
 
 def get_undersample_selector_array(y):
-    # useful for multidimensional arrays
+    """
+    Return boolean array with true for indeces fitting a undersampled balance
+    Useful for multidimensional arrays
+
+    Args:
+        y: dependent variables of data in a form of an np array (0,1 where 1 is underrepresented)
+
+    Returns:
+        selector : boolean with true indeces retained after random undersapling
+    """
     flat_labels = np.squeeze(y.reshape(-1, 1))
     undersampled_indices, unselected_indices = index_undersample_balance(flat_labels)
     selector = np.full(flat_labels.shape, False)
