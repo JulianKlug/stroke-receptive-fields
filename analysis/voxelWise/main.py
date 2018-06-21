@@ -12,12 +12,12 @@ from email_notification import NotificationSystem
 
 main_dir = '/home/klug/data/working_data'	
 data_dir = os.path.join(main_dir, 'saved_data')	
-model_dir = '/home/klug/models/patient_wise'
+model_dir = '/home/klug/models/ext_mem'
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 
 # Path to save the model to
-model_name = 'cache_cv_test'
+model_name = 'ext_mem_cv_test1'
 model_path = os.path.join(model_dir, model_name + '.pkl')
 if os.path.isfile(model_path):
     # file exists
