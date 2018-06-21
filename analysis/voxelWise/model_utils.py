@@ -55,30 +55,11 @@ def create(model_dir, model_name, input_data_array, output_data_array, receptive
     evals_result = {}
 
 
-    ## Load everything at once
-    # rf_inputs, rf_outputs = rf.reshape_to_receptive_field(X, y, receptive_field_dimensions)
-    # X_train, y_train = balance(rf_inputs, rf_outputs)
-
-    ## Continous loading
     X, y = input_data_array, output_data_array
-    X_train, y_train = [],[]
-    print('initial shape', X.shape, y.shape)
-
-    # Balancing the data for training
-    selector = get_undersample_selector_array(y)
-    for subject in range(X.shape[0]):
-        # reshape to rf expects data with n_subjects in first
-        subj_X_train, subj_y_train = np.expand_dims(X[subject], axis=0), np.expand_dims(y[subject], axis=0)
-        rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_train, subj_y_train, receptive_field_dimensions)
-
-        subj_X_train, subj_y_train = rf_inputs[selector[subject].reshape(-1)], rf_outputs[selector[subject].reshape(-1)]
-
-        print('subject shapes', subj_X_train.shape, subj_y_train.shape)
-        X_train.append(subj_X_train)
-        y_train.append(subj_y_train)
-
-    tempX, tempY = np.concatenate(X_train), np.concatenate(y_train)
-
+    ## Load everything at once
+    rf_inputs, rf_outputs = rf.reshape_to_receptive_field(X, y, receptive_field_dimensions)
+    X_train, y_train = balance(rf_inputs, rf_outputs)
+    tempX, tempY = X_train, y_train
 
     # Train the model using the training sets
     # RAW interface
@@ -182,9 +163,24 @@ def evaluate_crossValidation(save_dir, model_dir, model_name, input_data_array, 
 
     params = {
         'tree_method': 'hist',
-        'silent': 0,
-        'objective': 'binary:logistic',
-        'eval_metric': 'auc'
+        'max_depth' : 3,
+        'learning_rate' : 0.1,
+        'n_estimators':100,  # number of boosted tree
+        'silent':True,
+        'objective':"binary:logistic",
+        'booster':'gbtree',
+        'n_jobs':-1,
+        'gamma':0,
+        'min_child_weight':1,
+        'max_delta_step':0,
+        'subsample':1,
+        'colsample_bytree':1,
+        'colsample_bylevel':1,
+        'reg_alpha':0,
+        'reg_lambda':1,
+        'scale_pos_weight':1,
+        'base_score':0.5,
+        'random_state':0
     }
 
     n_repeats = 1

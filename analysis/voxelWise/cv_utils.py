@@ -1,4 +1,4 @@
-import os, timeit
+import os, timeit, shutil
 import numpy as np
 from sklearn.metrics import f1_score, fbeta_score, jaccard_similarity_score, roc_auc_score, precision_score, roc_curve, auc, accuracy_score
 from sklearn import linear_model
@@ -9,7 +9,7 @@ import xgboost as xgb
 from collections import Counter
 import receptiveField as rf
 from ext_mem_utils import save_to_svmlight
-from sampling_utils import balance
+from sampling_utils import balance, get_undersample_selector_array
 
 def repeated_kfold_cv(model, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5):
     """
@@ -98,7 +98,7 @@ def ext_mem_repeated_kfold_cv(params, save_dir, X, y, receptive_field_dimensions
     External Memory: saves the folds as libsvm files and uses the external memory version of xgboost to avoid overloading the RAM
 
     Args:
-        params: params of the xgboost model to crossvalidate
+        params: params of the xgboost model to crossvalidate, needs to have n_estimators
         save_dir: directory to use for saving the intermittent states
         X: data to validate for all subjects in form of an np array [subject, x, y, z, c]
         y: dependent variables of data in a form of an np array [subject, x, y, z]
@@ -125,7 +125,12 @@ def ext_mem_repeated_kfold_cv(params, save_dir, X, y, receptive_field_dimensions
     return results
 
 def external_save_patient_wise_kfold_data_split(save_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5):
-    if not os.path.exists(save_dir):
+    if os.path.exists(save_dir):
+        print('This directory already exists: ', save_dir)
+        validation = input('Type `yes` if you wish to delete your previous data:\t')
+        if (validation != 'yes'):
+            raise ValueError('Model already exists. Choose another model name or delete current model')
+        shutil.rmtree(save_dir)
         os.makedirs(save_dir)
     print('Saving repeated kfold data split to libsvm format', n_repeats, n_folds)
 
@@ -149,16 +154,20 @@ def external_save_patient_wise_kfold_data_split(save_dir, X, y, receptive_field_
                 os.makedirs(fold_dir)
 
             X_train, y_train = X[train], y[train]
+
+            # Get balancing selector respecting population wide distribution
+            balancing_selector = get_undersample_selector_array(y_train)
+
             for subject in range(X_train.shape[0]):
                 # reshape to rf expects data with n_subjects in first
                 subj_X_train, subj_y_train = np.expand_dims(X_train[subject], axis=0), np.expand_dims(y_train[subject], axis=0)
                 rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_train, subj_y_train, receptive_field_dimensions)
-                # TODO: Might be dangerous to balance here
-                # subj_X_train, subj_y_train = balance(rf_inputs, rf_outputs)
+
+                # Balance by using predefined balancing_selector
+                subj_X_train, subj_y_train = rf_inputs[balancing_selector[subject].reshape(-1)], rf_outputs[balancing_selector[subject].reshape(-1)]
+
                 train_data_path = os.path.join(fold_dir, 'fold_' + str(fold) + '_train' + ext_mem_extension)
                 save_to_svmlight(subj_X_train, subj_y_train, train_data_path)
-
-            ext_mem_undersample(train_data_path)
 
             X_test, y_test = X[test], y[test]
             for subject in range(X_test.shape[0]):
@@ -182,6 +191,7 @@ def external_evaluate_patient_wise_kfold_cv(params, data_dir):
     aucs = []
     accuracies = []
     f1_scores = []
+    n_estimators = params['n_estimators']
 
     iterations = [o for o in os.listdir(data_dir)
                     if os.path.isdir(os.path.join(data_dir,o)) and o.startswith('iteration')]
@@ -204,7 +214,14 @@ def external_evaluate_patient_wise_kfold_cv(params, data_dir):
             dtest = xgb.DMatrix(os.path.join(fold_dir, fold + '_test' + ext_mem_extension)
                 + '#' + os.path.join(fold_dir, 'dtest.cache'))
 
-            trained_model = xgb.train(params, dtrain)
+            trained_model = xgb.train(params, dtrain, n_estimators)
+            try:
+                os.remove(os.path.join(fold_dir, 'dtrain.r0-1.cache'))
+                os.remove(os.path.join(fold_dir, 'dtrain.r0-1.cache.row.page'))
+                os.remove(os.path.join(fold_dir, 'dtest.r0-1.cache'))
+                os.remove(os.path.join(fold_dir, 'dtest.r0-1.cache.row.page'))
+            except:
+                print('No cache to clear.')
 
             # fold_name_pure = fold.split('.')[0]
             # model_extension = '.pkl'
