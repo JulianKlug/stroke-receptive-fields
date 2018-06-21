@@ -18,7 +18,7 @@ model_path = os.path.join(model_dir, model_name + model_extension)
 
 input_dir = os.path.join(data_dir, 'LOO')
 
-input_image_path = os.path.join(input_dir, 'Barlovic_Radojka_19480907/Ct2_Cerebral_20160103/wcoreg_RAPID_MTT_[s]_Barlovic_Radojka_19480907.nii')
+input_image_path = os.path.join(input_dir, 'patient_19480907/Ct2_Cerebral_20160103/wcoreg_RAPID_MTT_[s]_patient_19480907.nii')
 input_img = nib.load(input_image_path)
 # input_data = input_img.get_data()
 
