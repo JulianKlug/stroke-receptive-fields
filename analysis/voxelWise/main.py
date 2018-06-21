@@ -10,14 +10,14 @@ import data_loader
 import manual_data
 from email_notification import NotificationSystem
 
-main_dir = '/home/klug/data/working_data'
-data_dir = os.path.join(main_dir, 'saved_data')
+main_dir = '/home/klug/data/working_data'	
+data_dir = os.path.join(main_dir, 'saved_data')	
 model_dir = '/home/klug/models/patient_wise'
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 
 # Path to save the model to
-model_name = 'test_cv'
+model_name = 'cache_cv_test'
 model_path = os.path.join(model_dir, model_name + '.pkl')
 if os.path.isfile(model_path):
     # file exists
@@ -33,11 +33,15 @@ IN, OUT = data_loader.load_saved_data(data_dir)
 # IN, OUT = manual_data.load(data_dir)
 
 
-rf = 0
+rf = 1
 rf_dim = [rf, rf, rf]
 print('Evaluating', model_name, 'with rf:', rf_dim)
 
-save_dir = data_dir = os.path.join(data_dir, 'cv_data')
+main_save_dir = os.path.join(data_dir, 'cv_data')
+save_dir = os.path.join(main_save_dir, model_name + '_data')
+
+# model_utils.create(model_dir, model_name, IN, OUT, rf_dim)
+# model_utils.create_external_memory(model_dir, model_name, data_dir, IN, OUT, rf_dim)
 
 start = timeit.default_timer()
 score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, IN, OUT, rf_dim)
