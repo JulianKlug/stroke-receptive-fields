@@ -1,7 +1,7 @@
 import sys
 sys.path.insert(0, '../')
 
-import os, timeit
+import os, timeit, torch
 import numpy as np
 from sklearn import linear_model
 from sklearn.externals import joblib
@@ -9,7 +9,8 @@ from sklearn.model_selection import train_test_split, KFold, RepeatedKFold, cros
 from sklearn.ensemble import RandomForestClassifier
 import xgboost as xgb
 import receptiveField as rf
-from cv_utils import repeated_kfold_cv, intermittent_repeated_kfold_cv, ext_mem_repeated_kfold_cv
+from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
+from cv_utils import repeated_kfold_cv, intermittent_repeated_kfold_cv, ext_mem_repeated_kfold_cv, external_evaluate_patient_wise_kfold_cv
 from ext_mem_utils import save_to_svmlight, delete_lines
 from sampling_utils import get_undersample_selector_array, balance
 
@@ -38,6 +39,7 @@ def create(model_dir, model_name, input_data_array, output_data_array, receptive
         'missing': None,
         'n_estimators': 100,
         'objective': 'binary:logistic',
+        'eval_metric': 'auc',
         'reg_alpha': 0, 'reg_lambda': 1,
         'scale_pos_weight': 1,
         'seed': 0,
@@ -91,6 +93,7 @@ def create_external_memory(model_dir, model_name, data_dir, input_data_array, ou
         'n_estimators':100,
         'silent':True,
         'objective':"binary:logistic",
+        'eval_metric': 'auc',
         'booster':'gbtree',
         'n_jobs':-1,
         'gamma':0,
@@ -159,17 +162,18 @@ def create_external_memory(model_dir, model_name, data_dir, input_data_array, ou
 
 def evaluate_crossValidation(save_dir, model_dir, model_name, input_data_array, output_data_array, receptive_field_dimensions):
 
-    model = xgb.XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
+    # model = xgb.XGBClassifier(verbose_eval=False, n_jobs = -1, tree_method = 'hist')
 
     params = {
         'tree_method': 'hist',
-        'max_depth' : 3,
-        'learning_rate' : 0.1,
-        'n_estimators':100,  # number of boosted tree
+        'n_estimators':999,  # number of boosted tree
         'silent':True,
         'objective':"binary:logistic",
+        'eval_metric': 'auc',
         'booster':'gbtree',
         'n_jobs':-1,
+        'max_depth' : 3,
+        'learning_rate' : 0.1,
         'gamma':0,
         'min_child_weight':1,
         'max_delta_step':0,
@@ -184,7 +188,7 @@ def evaluate_crossValidation(save_dir, model_dir, model_name, input_data_array, 
     }
 
     n_repeats = 1
-    n_folds = 5
+    n_folds = 3
 
     results = ext_mem_repeated_kfold_cv(params, save_dir, input_data_array, output_data_array, receptive_field_dimensions, n_repeats, n_folds)
     # results = intermittent_repeated_kfold_cv(model, save_dir, input_data_array, output_data_array, receptive_field_dimensions, n_repeats, n_folds)
@@ -202,3 +206,100 @@ def evaluate_crossValidation(save_dir, model_dir, model_name, input_data_array, 
     np.save(os.path.join(model_dir, model_name + '_' + str(receptive_field_dimensions[0]) + '_cv_scores.npy'), results)
 
     return accuracy, roc_auc, f1
+
+class Hyperopt_objective():
+    def __init__(self, data_dir, input_data_array = None, output_data_array = None, receptive_field_dimensions = None, create_folds = False):
+        super(Hyperopt_objective, self).__init__()
+        self.data_dir = data_dir
+        self.input_data_array = input_data_array
+        self.output_data_array = output_data_array
+        self.receptive_field_dimensions = receptive_field_dimensions
+        self.create_folds = create_folds
+
+    def estimate_loss(self, space):
+            params = {
+                'tree_method': 'hist',
+                'n_estimators':999,  # number of boosted tree
+                'silent':True,
+                'objective':"binary:logistic",
+                'eval_metric': 'auc',
+                'booster':'gbtree',
+                'n_jobs':-1,
+                'max_depth' : int(space['max_depth']),
+                'learning_rate' : space['eta'],
+                'gamma': space['gamma'],
+                'min_child_weight': space['min_child_weight'],
+                'max_delta_step':0,
+                'subsample': space['subsample'],
+                'colsample_bytree': space['colsample_bytree'],
+                'colsample_bylevel':1,
+                'reg_alpha': space['alpha'],
+                'reg_lambda': space['lambda'],
+                'scale_pos_weight':1,
+                'base_score':0.5,
+                'random_state':0
+            }
+
+            n_repeats = 1
+            n_folds = 5
+
+            if self.create_folds:
+                results = ext_mem_repeated_kfold_cv(params, self.data_dir, self.input_data_array, self.output_data_array, self.receptive_field_dimensions, n_repeats, n_folds)
+            else:
+                results = external_evaluate_patient_wise_kfold_cv(params, self.data_dir)
+
+            roc_auc = np.median(results['test_roc_auc'])
+            print('Using params:', params)
+            print("ROC AUC SCORE:", roc_auc)
+
+            return {'loss': 1-roc_auc, 'status': STATUS_OK }
+
+
+def xgb_hyperopt(data_dir, save_dir, receptive_field_dimensions, max_trials = 500, create_folds = False, input_data_array = None, output_data_array = None):
+    trials_step = 10  # how many additional trials to do after loading saved trials. 1 = save after iteration
+    initial_max_trials = 10  # initial current_max_trials. put something small to not have to wait
+    current_max_trials = 0
+
+    best_params_path = os.path.join(save_dir, 'rf_' + str(receptive_field_dimensions[0]) + '_hyperopt_best.npy')
+    trials_path = os.path.join(save_dir, 'rf_' + str(receptive_field_dimensions[0]) + '_hyperopt_trials.npy')
+
+    space = {
+        # A problem with max_depth casted to float instead of int with
+        # the hp.quniform method.
+        'max_depth':  hp.choice('max_depth', np.arange(1, 15, dtype=int)),
+        # 'max_depth': hp.quniform('x_max_depth', 5, 30, 1),
+        'min_child_weight': hp.quniform ('x_min_child', 1, 10, 1),
+        'subsample': hp.uniform ('x_subsample', 0.8, 1),
+        # 'n_estimators': hp.quniform('n_estimators', 100, 1000, 1),
+        'eta': hp.quniform('eta', 0.025, 0.5, 0.025),
+        'gamma': hp.quniform('gamma', 0.5, 1, 0.05),
+        'alpha': hp.uniform('alpha', 1e-4, 1e-6),
+        'lambda': hp.uniform('lambda', 1e-4, 1),
+        'colsample_bytree': hp.quniform('colsample_bytree', 0.5, 1, 0.05),
+    }
+
+    while current_max_trials < max_trials:
+        try:  # try to load an already saved trials object, and increase the max
+            trials = torch.load(trials_path)
+            print("Found saved Trials! Loading...")
+            current_max_trials = len(trials.trials) + trials_step
+            print("Rerunning from {} trials to {} (+{}) trials".format(len(trials.trials), max_trials, trials_step))
+        except:  # create a new trials object and start searching
+            current_max_trials = initial_max_trials
+            trials = Trials()
+
+        objective = Hyperopt_objective(data_dir, input_data_array, output_data_array, receptive_field_dimensions, create_folds = create_folds)
+        best = fmin(fn = objective.estimate_loss,
+                    space = space,
+                    algo = tpe.suggest,
+                    max_evals = current_max_trials,
+                    trials = trials)
+
+        print("Best:", best)
+
+        # save the trials object
+        torch.save(trials, trials_path)
+        # save the best params
+        np.save(best_params_path, best)
+
+    return best

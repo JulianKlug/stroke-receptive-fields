@@ -92,18 +92,19 @@ def repeated_kfold_cv(model, X, y, receptive_field_dimensions, n_repeats = 1, n_
         'test_FPR': fprs
     }
 
-def ext_mem_repeated_kfold_cv(params, save_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5):
+def ext_mem_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5, recreate_folds = False):
     """
     Patient wise Repeated KFold Crossvalidation for xgboost
     External Memory: saves the folds as libsvm files and uses the external memory version of xgboost to avoid overloading the RAM
 
     Args:
         params: params of the xgboost model to crossvalidate, needs to have n_estimators
-        save_dir: directory to use for saving the intermittent states
+        data_dir: directory to use for saving the intermittent states
         X: data to validate for all subjects in form of an np array [subject, x, y, z, c]
         y: dependent variables of data in a form of an np array [subject, x, y, z]
+        receptive_field_dimensions : in the form of a list as  [rf_x, rf_y, rf_z]
         n_repeats (optional, default 1): repeats of kfold CV
-        n_folds (optional, default 5): number of folfs in kfold (ie. k)
+        n_folds (optional, default 5): number of folds in kfold (ie. k)
 
     Returns: result dictionary
         'settings_repeats': n_repeats
@@ -118,9 +119,10 @@ def ext_mem_repeated_kfold_cv(params, save_dir, X, y, receptive_field_dimensions
     print('Using external memory version for Crossvalidation')
     print('Using params:', params)
 
-    external_save_patient_wise_kfold_data_split(save_dir, X, y, receptive_field_dimensions, n_repeats, n_folds)
+    if recreate_folds:
+        external_save_patient_wise_kfold_data_split(data_dir, X, y, receptive_field_dimensions, n_repeats, n_folds)
 
-    results = external_evaluate_patient_wise_kfold_cv(params, save_dir)
+    results = external_evaluate_patient_wise_kfold_cv(params, data_dir)
 
     return results
 
@@ -214,7 +216,13 @@ def external_evaluate_patient_wise_kfold_cv(params, data_dir):
             dtest = xgb.DMatrix(os.path.join(fold_dir, fold + '_test' + ext_mem_extension)
                 + '#' + os.path.join(fold_dir, 'dtest.cache'))
 
-            trained_model = xgb.train(params, dtrain, n_estimators)
+            trained_model = xgb.train(params, dtrain,
+                num_boost_round = n_estimators,
+                evals = [(dtest, 'Test')],
+                early_stopping_rounds = 30,
+                verbose_eval = False)
+
+            # Clean up cache files
             try:
                 os.remove(os.path.join(fold_dir, 'dtrain.r0-1.cache'))
                 os.remove(os.path.join(fold_dir, 'dtrain.r0-1.cache.row.page'))
@@ -231,7 +239,7 @@ def external_evaluate_patient_wise_kfold_cv(params, data_dir):
 
             print('Testing', fold, 'of', iteration)
             y_test = dtest.get_label()
-            probas_= trained_model.predict(dtest)
+            probas_= trained_model.predict(dtest, ntree_limit = trained_model.best_ntree_limit)
             # Compute ROC curve, area under the curve, f1, and accuracy
             threshold = 0.5 # threshold choosen ot evaluate f1 and accuracy of model
             fpr, tpr, thresholds = roc_curve(y_test, probas_[:])
