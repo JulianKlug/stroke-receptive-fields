@@ -273,7 +273,7 @@ def xgb_hyperopt(data_dir, save_dir, receptive_field_dimensions, max_trials = 50
         # 'n_estimators': hp.quniform('n_estimators', 100, 1000, 1),
         'eta': hp.quniform('eta', 0.025, 0.5, 0.025),
         'gamma': hp.quniform('gamma', 0.5, 1, 0.05),
-        'alpha': hp.uniform('alpha', 1e-4, 1e-6),
+        'alpha': hp.uniform('alpha', 1e-4, 1),
         'lambda': hp.uniform('lambda', 1e-4, 1),
         'colsample_bytree': hp.quniform('colsample_bytree', 0.5, 1, 0.05),
     }
