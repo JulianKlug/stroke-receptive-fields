@@ -10,14 +10,15 @@ import data_loader
 import manual_data
 from email_notification import NotificationSystem
 
-main_dir = '/Users/julian/master/data/hyperopt_test_LOO'
-data_dir = os.path.join(main_dir, 'saved_dataset/CV_3folds')
+# main_dir = '/Users/julian/master/data/hyperopt_test_LOO'
+main_dir = '/home/klug/data/working_data/'
+data_dir = os.path.join(main_dir, 'saved_data/CV_5_folds')
 model_dir = os.path.join(main_dir, 'models')
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 
 # Path to save the model to
-model_name = 'hyperopt_test3'
+model_name = 'old_params_test1'
 model_path = os.path.join(model_dir, model_name + '.pkl')
 if os.path.isfile(model_path):
     # file exists
@@ -47,13 +48,14 @@ if not os.path.exists(save_dir):
 
 start = timeit.default_timer()
 # score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, IN, OUT, rf_dim)
-best = model_utils.xgb_hyperopt(data_dir, save_dir, rf_dim, create_folds = False)
+score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, create_folds = False, data_dir = data_dir)
+# best = model_utils.xgb_hyperopt(data_dir, save_dir, rf_dim, create_folds = False)
 elapsed = timeit.default_timer() - start
 print('Evaluation done in: ', elapsed)
 
-# title = model_name + ' finished Cross-Validation'
-# body = 'accuracy ' + str(score) + '\n' + 'ROC AUC ' + str(roc_auc) + '\n' + 'F1 ' + str(f1) + '\n' + 'RF ' + str(rf) + '\n' + 'Time elapsed ' + str(elapsed)
+title = model_name + ' finished Cross-Validation'
+body = 'accuracy ' + str(score) + '\n' + 'ROC AUC ' + str(roc_auc) + '\n' + 'F1 ' + str(f1) + '\n' + 'RF ' + str(rf) + '\n' + 'Time elapsed ' + str(elapsed)
 
-title = model_name + ' finished hyperopt'
-body = best + '\n' + 'Time elapsed ' + str(elapsed)
+# title = model_name + ' finished hyperopt'
+# body = str(best) + '\n' + 'Time elapsed ' + str(elapsed)
 notification_system.send_message(title, body)
