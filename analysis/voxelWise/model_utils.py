@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split, KFold, RepeatedKFold, cros
 from sklearn.ensemble import RandomForestClassifier
 import xgboost as xgb
 import receptiveField as rf
-from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
+from hyperopt import hp, fmin, rand, tpe, STATUS_OK, Trials
 from cv_utils import repeated_kfold_cv, intermittent_repeated_kfold_cv, ext_mem_repeated_kfold_cv, external_evaluate_patient_wise_kfold_cv
 from ext_mem_utils import save_to_svmlight, delete_lines
 from sampling_utils import get_undersample_selector_array, balance
@@ -188,7 +188,7 @@ def evaluate_crossValidation(save_dir, model_dir, model_name, data_dir = None, i
     }
 
     n_repeats = 1
-    n_folds = 3
+    n_folds = 5
 
     if create_folds:
         results = ext_mem_repeated_kfold_cv(params, save_dir, input_data_array, output_data_array, receptive_field_dimensions, n_repeats, n_folds)
@@ -212,13 +212,23 @@ def evaluate_crossValidation(save_dir, model_dir, model_name, data_dir = None, i
     return accuracy, roc_auc, f1
 
 class Hyperopt_objective():
-    def __init__(self, data_dir, input_data_array = None, output_data_array = None, receptive_field_dimensions = None, create_folds = False):
+    def __init__(self, data_dir, save_dir, input_data_array = None, output_data_array = None, receptive_field_dimensions = None, create_folds = False):
         super(Hyperopt_objective, self).__init__()
         self.data_dir = data_dir
         self.input_data_array = input_data_array
         self.output_data_array = output_data_array
         self.receptive_field_dimensions = receptive_field_dimensions
         self.create_folds = create_folds
+
+        self.score_save_path = os.path.join(save_dir, 'custom_objective_best_score.npy')
+        self.params_save_path = os.path.join(save_dir, 'custom_objective_best_params.npy')
+
+        try:  # try to load an already saved trials object, and increase the max
+            self.best_score = torch.load(self.score_save_path)
+            self.best_params = torch.load(self.params_save_path)
+        except:  # create a new trials object and start searching
+            self.best_score = 0
+            self.best_params = None
 
     def estimate_loss(self, space):
             params = {
@@ -256,6 +266,14 @@ class Hyperopt_objective():
             print('Using params:', params)
             print("ROC AUC SCORE:", roc_auc)
 
+            if roc_auc > self.best_score:
+                print('Better score:', roc_auc)
+                print('Used params:', params)
+                self.best_score = roc_auc
+                self.best_params = params
+                torch.save(roc_auc, self.score_save_path)
+                torch.save(params, self.params_save_path)
+
             return {'loss': 1-roc_auc, 'status': STATUS_OK }
 
 
@@ -292,10 +310,10 @@ def xgb_hyperopt(data_dir, save_dir, receptive_field_dimensions, max_trials = 50
             current_max_trials = initial_max_trials
             trials = Trials()
 
-        objective = Hyperopt_objective(data_dir, input_data_array, output_data_array, receptive_field_dimensions, create_folds = create_folds)
+        objective = Hyperopt_objective(data_dir, save_dir, input_data_array, output_data_array, receptive_field_dimensions, create_folds = create_folds)
         best = fmin(fn = objective.estimate_loss,
                     space = space,
-                    algo = tpe.suggest,
+                    algo = rand.suggest,
                     max_evals = current_max_trials,
                     trials = trials)
 

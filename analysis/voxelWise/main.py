@@ -48,14 +48,15 @@ if not os.path.exists(save_dir):
 
 start = timeit.default_timer()
 # score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, IN, OUT, rf_dim)
-score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, create_folds = False, data_dir = data_dir)
-# best = model_utils.xgb_hyperopt(data_dir, save_dir, rf_dim, create_folds = False)
+# score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, create_folds = False, data_dir = data_dir)
+best = model_utils.xgb_hyperopt(data_dir, save_dir, rf_dim, create_folds = False)
 elapsed = timeit.default_timer() - start
 print('Evaluation done in: ', elapsed)
 
-title = model_name + ' finished Cross-Validation'
-body = 'accuracy ' + str(score) + '\n' + 'ROC AUC ' + str(roc_auc) + '\n' + 'F1 ' + str(f1) + '\n' + 'RF ' + str(rf) + '\n' + 'Time elapsed ' + str(elapsed)
+# title = model_name + ' finished Cross-Validation'
+# body = 'accuracy ' + str(score) + '\n' + 'ROC AUC ' + str(roc_auc) + '\n' + 'F1 ' + str(f1) + '\n' + 'RF ' + str(rf) + '\n' + 'Time elapsed ' + str(elapsed)
+body = ''
 
-# title = model_name + ' finished hyperopt'
+title = model_name + ' finished hyperopt'
 # body = str(best) + '\n' + 'Time elapsed ' + str(elapsed)
 notification_system.send_message(title, body)
