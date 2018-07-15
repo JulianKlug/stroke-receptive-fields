@@ -240,15 +240,15 @@ class Hyperopt_objective():
                 'booster':'gbtree',
                 'n_jobs':-1,
                 'max_depth' : int(space['max_depth']),
-                'learning_rate' : space['eta'],
+                'learning_rate' : space['learning_rate'],
                 'gamma': space['gamma'],
                 'min_child_weight': space['min_child_weight'],
                 'max_delta_step':0,
                 'subsample': space['subsample'],
                 'colsample_bytree': space['colsample_bytree'],
                 'colsample_bylevel':1,
-                'reg_alpha': space['alpha'],
-                'reg_lambda': space['lambda'],
+                'reg_alpha': space['reg_alpha'],
+                'reg_lambda': space['reg_lambda'],
                 'scale_pos_weight':1,
                 'base_score':0.5,
                 'random_state':0
@@ -288,16 +288,16 @@ def xgb_hyperopt(data_dir, save_dir, receptive_field_dimensions, max_trials = 50
     space = {
         # A problem with max_depth casted to float instead of int with
         # the hp.quniform method.
-        'max_depth':  hp.choice('max_depth', np.arange(1, 15, dtype=int)),
+        'max_depth':  hp.choice('max_depth', np.arange(1, 5, dtype=int)),
         # 'max_depth': hp.quniform('x_max_depth', 5, 30, 1),
         'min_child_weight': hp.quniform ('x_min_child', 1, 10, 1),
-        'subsample': hp.uniform ('x_subsample', 0.8, 1),
+        'subsample': hp.uniform ('x_subsample', 0.79, 0.81),
         # 'n_estimators': hp.quniform('n_estimators', 100, 1000, 1),
-        'eta': hp.quniform('eta', 0.025, 0.5, 0.025),
-        'gamma': hp.quniform('gamma', 0.5, 1, 0.05),
-        'alpha': hp.uniform('alpha', 1e-4, 1),
-        'lambda': hp.uniform('lambda', 1e-4, 1),
-        'colsample_bytree': hp.quniform('colsample_bytree', 0.5, 1, 0.05),
+        'learning_rate': hp.quniform('learning_rate', 0.325, 0.4, 0.01),
+        'gamma': hp.quniform('gamma', 0.84, 0.86, 0.02),
+        'reg_alpha': hp.uniform('reg_alpha', 0.8, 0.9),
+        'reg_lambda': hp.uniform('reg_lambda', 0.5, 0.6),
+        'colsample_bytree': hp.quniform('colsample_bytree', 0.9, 2),
     }
 
     while current_max_trials < max_trials:
@@ -313,7 +313,7 @@ def xgb_hyperopt(data_dir, save_dir, receptive_field_dimensions, max_trials = 50
         objective = Hyperopt_objective(data_dir, save_dir, input_data_array, output_data_array, receptive_field_dimensions, create_folds = create_folds)
         best = fmin(fn = objective.estimate_loss,
                     space = space,
-                    algo = rand.suggest,
+                    algo = tpe.suggest,
                     max_evals = current_max_trials,
                     trials = trials)
 
