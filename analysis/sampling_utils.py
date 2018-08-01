@@ -4,7 +4,7 @@ sys.path.insert(0, './voxelWise')
 import numpy as np
 from collections import Counter
 from ext_mem_utils import delete_lines
-import xgboost as xgb 
+import xgboost as xgb
 
 def undersample_by_index(X, y):
     print('initial', X.shape, y.shape)
@@ -51,7 +51,7 @@ def index_undersample_balance(y):
         undersampled_indices : indeces retained after random undersapling
         unselected_indices : indeces rejected after randum undersampling
     """
-    print('Undesampling Ratio 1:1')
+    print('Undersampling Ratio 1:1')
     n_pos = np.sum(y)
     neg_indices = np.squeeze(np.argwhere(y == 0))
     pos_indices = np.squeeze(np.argwhere(y == 1))
