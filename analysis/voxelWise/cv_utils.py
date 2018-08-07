@@ -253,7 +253,8 @@ def external_evaluate_patient_wise_kfold_cv(params, data_dir):
     return {
         'settings_repeats': n_repeats,
         'settings_folds': n_folds,
-        'model': params,
+        'model_params': params,
+        'trained_model': trained_model,
         'test_accuracy': accuracies,
         'test_roc_auc': aucs,
         'test_f1': f1_scores,
