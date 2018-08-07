@@ -18,6 +18,8 @@ def plot_auc_roc(rf_dims, roc_auc_scores):
 
     mean_roc_auc_scores = []
     mean_rf_dims = []
+    auc_upper_limits = []
+    auc_lower_limits = []
 
     # print(rf_dims, roc_auc_scores)
     roc_auc_scores = [x for _,x in sorted(zip(rf_dims, roc_auc_scores))]
@@ -29,14 +31,24 @@ def plot_auc_roc(rf_dims, roc_auc_scores):
             mean_roc_auc_scores.append( sum(roc_auc_scores[i]) / float(len(roc_auc_scores[i])) )
             mean_rf_dims.append(rf_dims[i])
 
+            std_auc = np.std(roc_auc_scores[i], axis=0)
+            print(std_auc)
+            auc_upper_limits.append(np.minimum(mean_roc_auc_scores[i] + std_auc, 1))
+            auc_lower_limits.append(np.maximum(mean_roc_auc_scores[i] - std_auc, 0))
+
         for j in range(len(roc_auc_scores[i])):
-            print(rf_dims[i], roc_auc_scores[i][j])
             plt.plot(rf_dims[i], roc_auc_scores[i][j], 'k.', lw=1, alpha=0.3)
+
+    print('means', mean_roc_auc_scores)
+    print('low', auc_lower_limits)
+    print('up', auc_upper_limits)
+
+    plt.fill_between(mean_rf_dims, auc_upper_limits, auc_lower_limits, color='grey', alpha=.2,
+                     label=r'$\pm$ 1 std. dev.')
 
     plt.plot(mean_rf_dims, mean_roc_auc_scores)
 
     plt.ylim([-0.05, 1.05])
-    # plt.xlim([-0.05, 5.05])
     plt.ylabel('ROC AUC')
     plt.xlabel('Receptive field size (as voxels from center)')
     plt.title('Area under the ROC curve')
