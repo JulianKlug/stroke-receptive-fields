@@ -92,7 +92,7 @@ def repeated_kfold_cv(model, X, y, receptive_field_dimensions, n_repeats = 1, n_
         'test_FPR': fprs
     }
 
-def ext_mem_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5, recreate_folds = False):
+def ext_mem_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5, create_folds = False):
     """
     Patient wise Repeated KFold Crossvalidation for xgboost
     External Memory: saves the folds as libsvm files and uses the external memory version of xgboost to avoid overloading the RAM
@@ -119,7 +119,7 @@ def ext_mem_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions
     print('Using external memory version for Crossvalidation')
     print('Using params:', params)
 
-    if recreate_folds:
+    if create_folds:
         external_save_patient_wise_kfold_data_split(data_dir, X, y, receptive_field_dimensions, n_repeats, n_folds)
 
     results = external_evaluate_patient_wise_kfold_cv(params, data_dir)
@@ -127,7 +127,7 @@ def ext_mem_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions
     return results
 
 def external_save_patient_wise_kfold_data_split(save_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5):
-    if os.path.exists(save_dir):
+    if os.path.exists(save_dir) and len(os.listdir(save_dir)) != 0:
         print('This directory already exists: ', save_dir)
         validation = input('Type `yes` if you wish to delete your previous data:\t')
         if (validation != 'yes'):
@@ -253,7 +253,8 @@ def external_evaluate_patient_wise_kfold_cv(params, data_dir):
     return {
         'settings_repeats': n_repeats,
         'settings_folds': n_folds,
-        'model': params,
+        'model_params': params,
+        'trained_model': trained_model,
         'test_accuracy': accuracies,
         'test_roc_auc': aucs,
         'test_f1': f1_scores,
