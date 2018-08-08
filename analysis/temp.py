@@ -27,9 +27,9 @@ params = {
 n_estimators = params['n_estimators']
 
 
-iteration_dir = ''
+iteration_dir = '/home/klug/data/working_data/saved_data/old_CV_10_folds/iteration_0'
 ext_mem_extension = '.txt'
-fold = 4
+fold = 'fold_1'
 
 fold_dir = os.path.join(iteration_dir, fold)
 
