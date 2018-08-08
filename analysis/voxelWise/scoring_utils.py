@@ -28,11 +28,13 @@ def plot_auc_roc(rf_dims, roc_auc_scores):
     for i in range(len(rf_dims)):
 
         if len(roc_auc_scores[i]) != 0:
-            mean_roc_auc_scores.append( sum(roc_auc_scores[i]) / float(len(roc_auc_scores[i])) )
+            median_roc_auc_score = np.median(roc_auc_scores[i])
+            mean_roc_auc = sum(roc_auc_scores[i]) / float(len(roc_auc_scores[i]))
+            mean_roc_auc_scores.append(mean_roc_auc)
             mean_rf_dims.append(rf_dims[i])
 
             std_auc = np.std(roc_auc_scores[i], axis=0)
-            print(std_auc)
+            print(i, median_roc_auc_score, mean_roc_auc, std_auc)
             auc_upper_limits.append(np.minimum(mean_roc_auc_scores[i] + std_auc, 1))
             auc_lower_limits.append(np.maximum(mean_roc_auc_scores[i] - std_auc, 0))
 
@@ -40,19 +42,22 @@ def plot_auc_roc(rf_dims, roc_auc_scores):
             plt.plot(rf_dims[i], roc_auc_scores[i][j], 'k.', lw=1, alpha=0.3)
 
     print('means', mean_roc_auc_scores)
+    print(mean_rf_dims)
     print('low', auc_lower_limits)
     print('up', auc_upper_limits)
+
+    # Plot one additional point to have only one label
+    plt.plot(0, 2, 'k.', lw=1, alpha=0.3, label=r'ROC AUC score')
 
     plt.fill_between(mean_rf_dims, auc_upper_limits, auc_lower_limits, color='grey', alpha=.2,
                      label=r'$\pm$ 1 std. dev.')
 
-    plt.plot(mean_rf_dims, mean_roc_auc_scores)
-
+    plt.plot(mean_rf_dims, mean_roc_auc_scores, 'C0', label=r'Mean ROC AUC')
     plt.ylim([-0.05, 1.05])
     plt.ylabel('ROC AUC')
     plt.xlabel('Receptive field size (as voxels from center)')
     plt.title('Area under the ROC curve')
-    # plt.legend(loc="lower right")
+    plt.legend(loc="lower right")
 
     plt.ion()
     plt.draw()
