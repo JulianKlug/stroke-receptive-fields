@@ -160,7 +160,7 @@ def create_external_memory(model_dir, model_name, data_dir, input_data_array, ou
     print('Saving model as : ', model_path)
     joblib.dump(trained_model, model_path)
 
-def evaluate_crossValidation(save_dir, model_dir, model_name, data_dir = None, input_data_array = None, output_data_array = None, receptive_field_dimensions = None, create_folds = True):
+def evaluate_crossValidation(save_dir, model_dir, model_name, receptive_field_dimensions, data_dir = None, input_data_array = None, output_data_array = None, create_folds = True):
 
     # model = xgb.XGBClassifier(verbose_eval=False, n_jobs = -1, tree_method = 'hist')
 
@@ -188,8 +188,8 @@ def evaluate_crossValidation(save_dir, model_dir, model_name, data_dir = None, i
     }
 
 
-    n_repeats = 1
-    n_folds = 3
+    n_repeats = 20
+    n_folds = 5
 
     if create_folds:
         results = ext_mem_repeated_kfold_cv(params, save_dir, input_data_array, output_data_array, receptive_field_dimensions, n_repeats = n_repeats, n_folds = n_folds, create_folds = create_folds)
@@ -198,6 +198,7 @@ def evaluate_crossValidation(save_dir, model_dir, model_name, data_dir = None, i
     else:
         results = external_evaluate_patient_wise_kfold_cv(params, data_dir)
 
+    results['rf'] = receptive_field_dimensions
 
     accuracy = np.median(results['test_accuracy'])
     roc_auc = np.median(results['test_roc_auc'])

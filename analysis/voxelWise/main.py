@@ -47,8 +47,8 @@ if not os.path.exists(save_dir):
 # model_utils.create_external_memory(model_dir, model_name, data_dir, IN, OUT, rf_dim)
 
 start = timeit.default_timer()
-# score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, IN, OUT, rf_dim)
-# score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, create_folds = False, data_dir = data_dir)
+# score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, IN, OUT)
+# score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, create_folds = False, data_dir = data_dir)
 best = model_utils.xgb_hyperopt(data_dir, save_dir, rf_dim, create_folds = False)
 elapsed = timeit.default_timer() - start
 print('Evaluation done in: ', elapsed)
