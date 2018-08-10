@@ -306,7 +306,7 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
     aucs = []
     accuracies = []
     f1_scores = []
-    n_estimators = params['n_estimators']
+    failed_folds = 0
 
     if os.path.exists(save_dir) and len(os.listdir(save_dir)) != 0:
         print('This directory already exists: ', save_dir)
@@ -361,14 +361,22 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
                 save_to_svmlight(rf_inputs, rf_outputs, test_data_path)
 
             # Evaluate this fold
-            print('Evaluating fold ' + str(fold) + ' of ' + str(n_folds - 1) + 'of iteration' + str(iteration))
-            fold_result = external_evaluate_fold_cv(params, fold_dir, 'fold_' + str(fold), ext_mem_extension)
-            accuracies.append(fold_result['accuracy'])
-            f1_scores.append(fold_result['f1'])
-            aucs.append(fold_result['roc_auc'])
-            tprs.append(fold_result['TPR'])
-            fprs.append(fold_result['FPR'])
-            trained_model = fold_result['trained_model']
+            print('Evaluating fold ' + str(fold) + ' of ' + str(n_folds - 1) + ' of iteration' + str(iteration))
+
+            try:
+                fold_result = external_evaluate_fold_cv(params, fold_dir, 'fold_' + str(fold), ext_mem_extension)
+                accuracies.append(fold_result['accuracy'])
+                f1_scores.append(fold_result['f1'])
+                aucs.append(fold_result['roc_auc'])
+                tprs.append(fold_result['TPR'])
+                fprs.append(fold_result['FPR'])
+                trained_model = fold_result['trained_model']
+                pass
+            except Exception as e:
+                failed_folds += 1
+                print('Evaluation of fold failed.')
+                print(e)
+
 
             # Erase saved fold to free up space
             try:
@@ -391,6 +399,7 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
     return {
         'settings_repeats': n_repeats,
         'settings_folds': n_folds,
+        'failed_folds': failed_folds,
         'model_params': params,
         'trained_model': trained_model,
         'test_accuracy': accuracies,
@@ -440,7 +449,6 @@ def external_evaluate_fold_cv(params, fold_dir, fold, ext_mem_extension):
     # Compute ROC curve, area under the curve, f1, and accuracy
     threshold = 0.5 # threshold choosen ot evaluate f1 and accuracy of model
     fpr, tpr, thresholds = roc_curve(y_test, probas_[:])
-    print('ouooooooooooooooooo', len(fpr), len(tpr))
     accuracy = accuracy_score(y_test, probas_[:] > threshold)
     f1 = f1_score(y_test, probas_[:] > threshold)
     roc_auc = auc(fpr, tpr)
