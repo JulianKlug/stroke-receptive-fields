@@ -19,13 +19,14 @@ PARAMETERS = [
     'sex',
     'height',
     'weight',
-    'BMI',
-    'onset_known',
+    'BMI', #to be removed
+    'onset_known', # to discuss
+    # TODO TIME_TO_CT
     'NIH admission',
     'bp_syst',
     'bp_diast',
-    'glucose',
-    'créatinine',
+    'glucose', # to discuss
+    'créatinine', # to discuss
     # cardiovascular risk factors
     'hypertension',
     'diabetes',
@@ -40,7 +41,10 @@ PARAMETERS = [
     'treat_antipatelet',
     'treat_anticoagulant',
     'treat_ivt',
-    'treat_iat',
+    # 'treat_iat',
+    X,
+    Y,
+    Z
 ]
 
 schema = Schema([
@@ -70,7 +74,8 @@ schema = Schema([
     Column('treat_antipatelet', [InListValidation(['yes', 'no'])]),
     Column('treat_anticoagulant', [InListValidation(['yes', 'no'])]),
     Column('treat_ivt', [InListValidation(['yes', 'no', 'started_before_admission'])]),
-    Column('treat_iat', [InListValidation(['yes', 'no'])]),
+    # vs. not started before admission
+    # Column('treat_iat', [InListValidation(['yes', 'no'])]),
 ])
 
 # DATA CLEANING
