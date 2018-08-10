@@ -10,9 +10,9 @@ import data_loader
 import manual_data
 from email_notification import NotificationSystem
 
-# main_dir = '/Users/julian/master/data/hyperopt_test_LOO'
-main_dir = '/home/klug/data/working_data/'
-data_dir = os.path.join(main_dir, 'saved_data')
+main_dir = '/Users/julian/master/data/hyperopt_test_LOO'
+# main_dir = '/home/klug/data/working_data/'
+data_dir = os.path.join(main_dir, 'saved_dataset')
 model_dir = os.path.join(main_dir, 'models')
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
@@ -27,7 +27,7 @@ IN, OUT = data_loader.load_saved_data(data_dir)
 for rf in range(3):
     rf_dim = [rf, rf, rf]
 
-    model_name = 'rf_hyperopt_' + str(rf)
+    model_name = 'test2_rf_hyperopt_' + str(rf)
     model_path = os.path.join(model_dir, model_name + '.pkl')
     if os.path.isfile(model_path):
         # file exists
@@ -44,7 +44,8 @@ for rf in range(3):
 
     try:
         start = timeit.default_timer()
-        score, roc_auc, f1, params = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, input_data_array = IN, output_data_array = OUT, create_folds = True)
+        save_folds = False
+        score, roc_auc, f1, params = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds)
         elapsed = timeit.default_timer() - start
         print('Evaluation done in: ', elapsed)
         title = model_name + ' finished Cross-Validation'
