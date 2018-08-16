@@ -1,18 +1,27 @@
+import os
 import seaborn as sns
+import matplotlib.pyplot as plt
 import torch
 import numpy as np
 
-def plot_auc_roc_distribution(rf_dims, roc_auc_scores):
+def plot_auc_roc_distribution(rf_dims, roc_auc_scores, settings_iterations, settings_folds):
     """
     Plot distribution of roc_auc scores for each value of rf (receptive field dimension)
 
     Args:
         rf_dims: list of receptiveField dimensions
         roc_auc_scores: list of roc_auc_scores coresponding to the rf_dim at the same index
+        settings_iterations: list of number of iterations per rf_dim
+        settings_folds : list of folds used for every rf_dim
 
     Returns:
         undefined
     """
+
+    n_iterations = settings_iterations[0]
+    n_folds = settings_folds[0]
+    if not (len(set(settings_folds)) == 1 and len(set(settings_iterations)) == 1):
+        print('!Settings used differ between experiments!')
 
     mean_roc_auc_scores = []
     mean_rf_dims = []
@@ -31,30 +40,38 @@ def plot_auc_roc_distribution(rf_dims, roc_auc_scores):
 
             std_auc = np.std(roc_auc_scores[i], axis=0)
 
-            sns.distplot(roc_auc_scores, bins=20, kde=False, rug=True)
+            sns.distplot(roc_auc_scores[i], bins=20, kde=False, rug=True,
+                label=r'ROC AUC for rf = %i' % (int(rf_dims[i][0])))
 
     print('means', mean_roc_auc_scores)
     print(mean_rf_dims)
 
-    # Plot one additional point to have only one label
-    # plt.ylim([-0.05, 1.05])
-    # plt.ylabel('ROC AUC')
-    # plt.xlabel('Receptive field size (as voxels from center)')
-    # plt.title('Area under the ROC curve')
-    # plt.legend(loc="lower right")
+    plt.ylabel('Number of observations')
+    plt.xlabel(r'Area under the ROC curve for %i-fold crossvalidation over %i iterations' % (int(n_folds), int(n_iterations)))
+    # Receptive field size (as voxels from center)')
+    plt.title('Distribution of ROC AUC scores')
+    plt.legend(loc="upper right")
 
-    # plt.ion()
-    # plt.draw()
-    # plt.show()
+    plt.ion()
+    plt.draw()
+    plt.show()
 
 def wrapper_plot_auc_roc_distribution(score_dir):
     roc_auc_scores = []
     rf_dims = []
-    score_paths = []
+    settings_iterations = []
+    settings_folds = []
     files = os.listdir(score_dir)
     for file in files:
         if (file.startswith('scores_repeat20_rf')):
             score_path = os.path.join(score_dir, file)
-            rf_dims.append(file.split('_')[-1].split('.')[0])
-            roc_auc_scores.append(torch.load(score_path)['test_roc_auc'])
-    plot_auc_roc(rf_dims, roc_auc_scores)
+            score_obj = torch.load(score_path)
+            try:
+                rf_dims.append(score_obj['rf'])
+            except KeyError:
+                rf_dims.append(file.split('_')[-1].split('.')[0])
+            roc_auc_scores.append(score_obj['test_roc_auc'])
+            settings_iterations.append(score_obj['settings_repeats'])
+            settings_folds.append(score_obj['settings_folds'])
+
+    plot_auc_roc_distribution(rf_dims, roc_auc_scores, settings_iterations, settings_folds)
