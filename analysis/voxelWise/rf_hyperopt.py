@@ -45,7 +45,8 @@ for rf in range(3):
     try:
         start = timeit.default_timer()
         save_folds = False
-        score, roc_auc, f1, params = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds)
+        score, roc_auc, f1, params = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim,
+                                            input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
         elapsed = timeit.default_timer() - start
         print('Evaluation done in: ', elapsed)
         title = model_name + ' finished Cross-Validation'

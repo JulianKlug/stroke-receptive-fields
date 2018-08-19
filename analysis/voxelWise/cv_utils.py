@@ -1,4 +1,4 @@
-import os, timeit, shutil
+import os, timeit, shutil, traceback
 import numpy as np
 from sklearn.metrics import f1_score, fbeta_score, jaccard_similarity_score, roc_auc_score, precision_score, roc_curve, auc, accuracy_score
 from sklearn import linear_model
@@ -92,7 +92,7 @@ def repeated_kfold_cv(model, X, y, receptive_field_dimensions, n_repeats = 1, n_
         'test_FPR': fprs
     }
 
-def ext_mem_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5, create_folds = False, save_folds = True):
+def ext_mem_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5, create_folds = False, save_folds = True, messaging = None):
     """
     Patient wise Repeated KFold Crossvalidation for xgboost
     External Memory: saves the folds as libsvm files and uses the external memory version of xgboost to avoid overloading the RAM
@@ -107,6 +107,7 @@ def ext_mem_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions
         n_folds (optional, default 5): number of folds in kfold (ie. k)
         create_folds (option, dafault False): boolean, if the folds should be created anew
         save_folds (optional, default True): boolean, if the created folds should be saved
+        messaging (optional, defaults to None): instance of notification_system used to report errors
 
     Returns: result dictionary
         'settings_repeats': n_repeats
@@ -123,7 +124,7 @@ def ext_mem_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions
 
     if create_folds:
         if not save_folds:
-            results = ext_mem_continuous_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions, n_repeats, n_folds)
+            results = ext_mem_continuous_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions, n_repeats, n_folds, messaging)
             return results
 
         external_save_patient_wise_kfold_data_split(data_dir, X, y, receptive_field_dimensions, n_repeats, n_folds)
@@ -271,7 +272,7 @@ def external_evaluation_wrapper_patient_wise_kfold_cv(params, data_dir):
         'test_FPR': fprs
     }
 
-def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5):
+def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5, messaging = None):
     """
     Patient wise Repeated KFold Crossvalidation for xgboost
     This function creates and evaluates k datafolds of n-iterations for crossvalidation,
@@ -286,6 +287,8 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
         receptive_field_dimensions : in the form of a list as  [rf_x, rf_y, rf_z]
         n_repeats (optional, default 1): repeats of kfold CV
         n_folds (optional, default 5): number of folds in kfold (ie. k)
+        messaging (optional, defaults to None): instance of notification_system used to report errors
+
 
     Returns: result dictionary
         'settings_repeats': n_repeats
@@ -376,7 +379,11 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
                 failed_folds += 1
                 print('Evaluation of fold failed.')
                 print(e)
-
+                if (messaging):
+                    title = 'Minor error upon rf_hyperopt at ' + str(receptive_field_dimensions)
+                    tb = traceback.format_exc()
+                    body = 'RF ' + str(receptive_field_dimensions) + '\n' + 'fold ' + str(fold) + '\n' +'iteration ' + str(iteration) + '\n' + 'Error ' + str(e) + '\n' + str(tb)
+                    messaging.send_message(title, body)
 
             # Erase saved fold to free up space
             try:
