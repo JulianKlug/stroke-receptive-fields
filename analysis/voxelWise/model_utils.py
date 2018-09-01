@@ -10,7 +10,7 @@ from sklearn.ensemble import RandomForestClassifier
 import xgboost as xgb
 import receptiveField as rf
 from hyperopt import hp, fmin, rand, tpe, STATUS_OK, Trials
-from cv_utils import repeated_kfold_cv, intermittent_repeated_kfold_cv, ext_mem_repeated_kfold_cv, external_evaluate_patient_wise_kfold_cv
+from cv_utils import repeated_kfold_cv, intermittent_repeated_kfold_cv, ext_mem_repeated_kfold_cv, external_evaluation_wrapper_patient_wise_kfold_cv
 from ext_mem_utils import save_to_svmlight, delete_lines
 from sampling_utils import get_undersample_selector_array, balance
 
@@ -160,43 +160,50 @@ def create_external_memory(model_dir, model_name, data_dir, input_data_array, ou
     print('Saving model as : ', model_path)
     joblib.dump(trained_model, model_path)
 
-def evaluate_crossValidation(save_dir, model_dir, model_name, data_dir = None, input_data_array = None, output_data_array = None, receptive_field_dimensions = None, create_folds = True):
+def evaluate_crossValidation(save_dir, model_dir, model_name, receptive_field_dimensions,
+                                data_dir = None, input_data_array = None, output_data_array = None, create_folds = True, save_folds = True, messaging = None):
 
     # model = xgb.XGBClassifier(verbose_eval=False, n_jobs = -1, tree_method = 'hist')
 
     params = {
-        'tree_method': 'hist',
-        'n_estimators':999,  # number of boosted tree
-        'silent':True,
-        'objective':"binary:logistic",
+        'base_score': 0.5,
+        'booster': 'gbtree',
+        'colsample_bylevel': 1,
+        'colsample_bytree': 1,
         'eval_metric': 'auc',
-        'booster':'gbtree',
-        'n_jobs':-1,
-        'max_depth' : 3,
-        'learning_rate' : 0.1,
-        'gamma':0,
-        'min_child_weight':1,
-        'max_delta_step':0,
-        'subsample':1,
-        'colsample_bytree':1,
-        'colsample_bylevel':1,
-        'reg_alpha':0,
-        'reg_lambda':1,
-        'scale_pos_weight':1,
-        'base_score':0.5,
-        'random_state':0
+        'gamma': 0.84,
+        'learning_rate': 0.4,
+        'max_delta_step': 0,
+        'max_depth': 1,
+        'min_child_weight': 10.0,
+        'n_estimators': 999,
+        'n_jobs': -1,
+        'objective': 'binary:logistic',
+        'random_state': 0,
+        'reg_alpha': 0.8671463346569078,
+        'reg_lambda': 0.5916603334004378,
+        'scale_pos_weight': 1,
+        'silent': True,
+        'subsample': 0.7925462136041614,
+        'tree_method': 'hist'
     }
 
-    n_repeats = 1
+
+    n_repeats = 20
     n_folds = 5
 
     if create_folds:
-        results = ext_mem_repeated_kfold_cv(params, save_dir, input_data_array, output_data_array, receptive_field_dimensions, n_repeats, n_folds)
+        # External memory based script
+        results = ext_mem_repeated_kfold_cv(params, save_dir, input_data_array, output_data_array, receptive_field_dimensions,
+                                                n_repeats = n_repeats, n_folds = n_folds, create_folds = create_folds, save_folds = save_folds, messaging = messaging)
+
+        # RAM based scripts
         # results = intermittent_repeated_kfold_cv(model, save_dir, input_data_array, output_data_array, receptive_field_dimensions, n_repeats, n_folds)
         # results = repeated_kfold_cv(model, input_data_array, output_data_array, receptive_field_dimensions, n_repeats, n_folds)
     else:
-        results = external_evaluate_patient_wise_kfold_cv(params, data_dir)
+        results = external_evaluation_wrapper_patient_wise_kfold_cv(params, data_dir)
 
+    results['rf'] = receptive_field_dimensions
 
     accuracy = np.median(results['test_accuracy'])
     roc_auc = np.median(results['test_roc_auc'])
@@ -207,9 +214,11 @@ def evaluate_crossValidation(save_dir, model_dir, model_name, data_dir = None, i
     print('ROC AUC score: ', roc_auc)
     print('F1 score: ', f1)
 
-    np.save(os.path.join(model_dir, model_name + '_' + str(receptive_field_dimensions[0]) + '_cv_scores.npy'), results)
+    # save the results and the params objects
+    torch.save(results, os.path.join(model_dir, 'scores_' + model_name + '.npy'))
+    torch.save(params, os.path.join(model_dir, 'params_' + model_name + '.npy'))
 
-    return accuracy, roc_auc, f1
+    return accuracy, roc_auc, f1, params
 
 class Hyperopt_objective():
     def __init__(self, data_dir, save_dir, input_data_array = None, output_data_array = None, receptive_field_dimensions = None, create_folds = False):
