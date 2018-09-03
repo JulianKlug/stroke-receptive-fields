@@ -41,7 +41,6 @@ parameters = [
     'treat_anticoagulant',
     # acute treatment
     'treat_ivt_before_ct', # ie ivt was started before imaging
-    'treat_iat_before_ct', # ie iat was started before imaging
 ]
 
 validation_schema = Schema([
@@ -75,5 +74,4 @@ validation_schema = Schema([
     Column('treat_anticoagulant', [InListValidation([0, 1])]),
 
     Column('treat_ivt_before_ct', [InListValidation([0, 1])]),
-    Column('treat_iat_before_ct', [InListValidation([0, 1])]),
 ])

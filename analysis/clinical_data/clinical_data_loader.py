@@ -11,7 +11,25 @@ FINAL_PARAMETERS = final_parameters.parameters
 final_schema = final_parameters.validation_schema
 
 def load_clinical_data(ids, data_dir, filename, sheet = 'Sheet1'):
+    """
+    Load clinical data from excel Sheet
+        - Clean Input data
+        - Compute needed variables
+    What data is needed and it's requirements are specified in the files :
+        - input_parameters : what parameters should be used as input
+        - final_parameters : what parameters should be given as output
+
+    Args:
+        ids : list of patient ids for which the data should be extracted
+        data_dir : directory containing the excel Sheet
+        filename : name of the file (excel)
+        sheet (optional) : name of the sheet from which to extract the data from
+
+    Returns:
+        'clinical_data': numpy array containing the data for each of the patients [patient, (n_parameters)]
+    """
     clinical_data = []
+    included_subjects = [] # ie no exclusion criteria for every patient
     filepath = os.path.join(data_dir, filename)
 
     # Load spreadsheet
@@ -71,7 +89,8 @@ def load_clinical_data(ids, data_dir, filename, sheet = 'Sheet1'):
     print(len(FINAL_PARAMETERS), 'clinical variables found.')
     print(FINAL_PARAMETERS)
     # Final data extraction and validation
-    final_parameter_data = cleaned_parameter_data.filter(items=FINAL_PARAMETERS + ['id_hospital_case'])
+    extra_columns = ['id_hospital_case', 'treat_iat_before_ct'] # other columns needed for subject evaluation
+    final_parameter_data = cleaned_parameter_data.filter(items=FINAL_PARAMETERS + extra_columns)
     final_errors = final_schema.validate(final_parameter_data.filter(items=FINAL_PARAMETERS)) # do no validate ID
 
     if (len(final_errors) == 1):
@@ -84,24 +103,23 @@ def load_clinical_data(ids, data_dir, filename, sheet = 'Sheet1'):
 
     for id in ids:
         # Get single subject
+        included = True;
         subject_all_data = final_parameter_data[final_parameter_data['id_hospital_case'] == int(id)]
+
+        # exclude patients who received IaT befor imaging
+        if (subject_all_data['treat_iat_before_ct'].values[0] == 1):
+            included = False
+            print('IaT performed before imaging. Patient excluded.', id)
+
         try:
-            subject_clinical_data = subject_all_data.drop(columns=['id_hospital_case']).values[0]
+            subject_clinical_data = subject_all_data.drop(columns = extra_columns).values[0]
             pass
         except IndexError as e:
+            included = False
             subject_clinical_data = np.NaN
             print('No clinical data found for this subject:', id)
+
+        included_subjects.append(included)
         clinical_data.append(subject_clinical_data)
 
-    return clinical_data
-
-    # print(subject_all_data.ix[:, 'Firstimage_date'])
-    # print(subject_all_data.ix[:, 'iat_start'])
-
-    # print(subject_all_data.ix[:, 'treat_iat_before_ct'])
-
-    # print(subject_all_data.ix[:, 'onset_known_no'], subject_all_data.ix[:, 'onset_known_yes'], subject_all_data.ix[:, 'onset_known_wake_up'])
-
-
-    # print(df[df['id_hospital_case'] == 898729].iloc[0]['sex'])
-    # print(subset.ix[:, 'sex'].index)
+    return (np.array(included_subjects), np.array(clinical_data))

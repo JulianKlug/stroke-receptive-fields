@@ -92,7 +92,7 @@ def repeated_kfold_cv(model, X, y, receptive_field_dimensions, n_repeats = 1, n_
         'test_FPR': fprs
     }
 
-def ext_mem_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5, create_folds = False, save_folds = True, messaging = None):
+def ext_mem_repeated_kfold_cv(params, data_dir, imgX, y, receptive_field_dimensions, clinX = None, n_repeats = 1, n_folds = 5, create_folds = False, save_folds = True, messaging = None):
     """
     Patient wise Repeated KFold Crossvalidation for xgboost
     External Memory: saves the folds as libsvm files and uses the external memory version of xgboost to avoid overloading the RAM
@@ -124,16 +124,16 @@ def ext_mem_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions
 
     if create_folds:
         if not save_folds:
-            results = ext_mem_continuous_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions, n_repeats, n_folds, messaging)
+            results = ext_mem_continuous_repeated_kfold_cv(params, data_dir, imgX, y, receptive_field_dimensions, clinX, n_repeats, n_folds, messaging)
             return results
 
-        external_save_patient_wise_kfold_data_split(data_dir, X, y, receptive_field_dimensions, n_repeats, n_folds)
+        external_save_patient_wise_kfold_data_split(data_dir, imgX, y, receptive_field_dimensions, clinX, n_repeats, n_folds)
 
     results = external_evaluation_wrapper_patient_wise_kfold_cv(params, data_dir)
 
     return results
 
-def external_save_patient_wise_kfold_data_split(save_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5):
+def external_save_patient_wise_kfold_data_split(save_dir, imgX, y, receptive_field_dimensions, clinX = None, n_repeats = 1, n_folds = 5, messaging = None):
     """
     Patient wise Repeated KFold Crossvalidation for xgboost
     This function creates and saves k datafolds of n-iterations for crossvalidations
@@ -142,11 +142,13 @@ def external_save_patient_wise_kfold_data_split(save_dir, X, y, receptive_field_
     Args:
         params: params of the xgboost model to crossvalidate, needs to have n_estimators
         data_dir: directory to use for saving the intermittent states
-        X: data to validate for all subjects in form of an np array [subject, x, y, z, c]
+        imgX: image input data to validate for all subjects in form of an np array [subject, x, y, z, c]
+        clinX (optional): clinical input data to validate for all subjects in form of a list [subject, clinical_data]
         y: dependent variables of data in a form of an np array [subject, x, y, z]
         receptive_field_dimensions : in the form of a list as  [rf_x, rf_y, rf_z]
         n_repeats (optional, default 1): repeats of kfold CV
         n_folds (optional, default 5): number of folds in kfold (ie. k)
+        messaging (optional, defaults to None): instance of notification_system used to report errors
 
     Returns: undefined
     """
@@ -172,35 +174,21 @@ def external_save_patient_wise_kfold_data_split(save_dir, X, y, receptive_field_
 
         fold = 0
         kf = KFold(n_splits = n_folds, shuffle = True, random_state = j)
-        for train, test in kf.split(X, y):
-            print('Creating fold : ' + str(fold))
+        for train, test in kf.split(imgX, y):
             fold_dir = os.path.join(iteration_dir, 'fold_' + str(fold))
-            if not os.path.exists(fold_dir):
-                os.makedirs(fold_dir)
 
-            X_train, y_train = X[train], y[train]
-
-            # Get balancing selector respecting population wide distribution
-            balancing_selector = get_undersample_selector_array(y_train)
-
-            for subject in range(X_train.shape[0]):
-                # reshape to rf expects data with n_subjects in first
-                subj_X_train, subj_y_train = np.expand_dims(X_train[subject], axis=0), np.expand_dims(y_train[subject], axis=0)
-                rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_train, subj_y_train, receptive_field_dimensions)
-
-                # Balance by using predefined balancing_selector
-                subj_X_train, subj_y_train = rf_inputs[balancing_selector[subject].reshape(-1)], rf_outputs[balancing_selector[subject].reshape(-1)]
-
-                train_data_path = os.path.join(fold_dir, 'fold_' + str(fold) + '_train' + ext_mem_extension)
-                save_to_svmlight(subj_X_train, subj_y_train, train_data_path)
-
-            X_test, y_test = X[test], y[test]
-            for subject in range(X_test.shape[0]):
-                # reshape to rf expects data with n_subjects in first
-                subj_X_test, subj_y_test = np.expand_dims(X_test[subject], axis=0), np.expand_dims(y_test[subject], axis=0)
-                rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_test, subj_y_test, receptive_field_dimensions)
-                test_data_path = os.path.join(fold_dir, 'fold_' + str(fold) + '_test' + ext_mem_extension)
-                save_to_svmlight(rf_inputs, rf_outputs, test_data_path)
+            # Create this fold
+            try:
+                external_create_fold(fold_dir, fold, imgX, y, receptive_field_dimensions, train, test, clinX = clinX, ext_mem_extension = ext_mem_extension)
+                pass
+            except Exception as e:
+                print('Creation of fold failed.')
+                print(e)
+                if (messaging):
+                    title = 'Minor error upon fold creation rf_hyperopt at ' + str(receptive_field_dimensions)
+                    tb = traceback.format_exc()
+                    body = 'RF ' + str(receptive_field_dimensions) + '\n' + 'fold ' + str(fold) + '\n' +'iteration ' + str(iteration) + '\n' + 'Error ' + str(e) + '\n' + str(tb)
+                    messaging.send_message(title, body)
 
             fold += 1
 
@@ -272,7 +260,7 @@ def external_evaluation_wrapper_patient_wise_kfold_cv(params, data_dir):
         'test_FPR': fprs
     }
 
-def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5, messaging = None):
+def ext_mem_continuous_repeated_kfold_cv(params, save_dir, imgX, y, receptive_field_dimensions, clinX = None, n_repeats = 1, n_folds = 5, messaging = None):
     """
     Patient wise Repeated KFold Crossvalidation for xgboost
     This function creates and evaluates k datafolds of n-iterations for crossvalidation,
@@ -282,7 +270,8 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
     Args:
         params: params of the xgboost model to crossvalidate, needs to have n_estimators
         data_dir: directory to use for saving the intermittent states
-        X: data to validate for all subjects in form of an np array [subject, x, y, z, c]
+        clinX (optional): clinical input data to validate for all subjects in form of a list [subject, clinical_data]
+        imgX: image input data to validate for all subjects in form of an np array [subject, x, y, z, c]
         y: dependent variables of data in a form of an np array [subject, x, y, z]
         receptive_field_dimensions : in the form of a list as  [rf_x, rf_y, rf_z]
         n_repeats (optional, default 1): repeats of kfold CV
@@ -311,6 +300,11 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
     f1_scores = []
     failed_folds = 0
 
+    if clinX is not None:
+        print('Using clinical data.')
+        if clinX.shape[0] != imgX.shape[0]:
+            raise ValueError('Not the same number of clinical and imaging data points:', clinX.shape, imgX.shape)
+
     if os.path.exists(save_dir) and len(os.listdir(save_dir)) != 0:
         print('This directory already exists: ', save_dir)
         validation = input('Type `yes` if you wish to delete your previous data:\t')
@@ -333,39 +327,23 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
 
         fold = 0
         kf = KFold(n_splits = n_folds, shuffle = True, random_state = j)
-        for train, test in kf.split(X, y):
-            print('Creating fold : ' + str(fold))
+        for train, test in kf.split(imgX, y):
             fold_dir = os.path.join(iteration_dir, 'fold_' + str(fold))
-            if not os.path.exists(fold_dir):
-                os.makedirs(fold_dir)
-
-            X_train, y_train = X[train], y[train]
-
-            # Get balancing selector respecting population wide distribution
-            balancing_selector = get_undersample_selector_array(y_train)
-
-            for subject in range(X_train.shape[0]):
-                # reshape to rf expects data with n_subjects in first
-                subj_X_train, subj_y_train = np.expand_dims(X_train[subject], axis=0), np.expand_dims(y_train[subject], axis=0)
-                rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_train, subj_y_train, receptive_field_dimensions)
-
-                # Balance by using predefined balancing_selector
-                subj_X_train, subj_y_train = rf_inputs[balancing_selector[subject].reshape(-1)], rf_outputs[balancing_selector[subject].reshape(-1)]
-
-                train_data_path = os.path.join(fold_dir, 'fold_' + str(fold) + '_train' + ext_mem_extension)
-                save_to_svmlight(subj_X_train, subj_y_train, train_data_path)
-
-            X_test, y_test = X[test], y[test]
-            for subject in range(X_test.shape[0]):
-                # reshape to rf expects data with n_subjects in first
-                subj_X_test, subj_y_test = np.expand_dims(X_test[subject], axis=0), np.expand_dims(y_test[subject], axis=0)
-                rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_test, subj_y_test, receptive_field_dimensions)
-                test_data_path = os.path.join(fold_dir, 'fold_' + str(fold) + '_test' + ext_mem_extension)
-                save_to_svmlight(rf_inputs, rf_outputs, test_data_path)
+            # Create this fold
+            try:
+                external_create_fold(fold_dir, fold, imgX, y, receptive_field_dimensions, train, test, clinX = clinX, ext_mem_extension = ext_mem_extension)
+                pass
+            except Exception as e:
+                print('Creation of fold failed.')
+                print(e)
+                if (messaging):
+                    title = 'Minor error upon fold creation rf_hyperopt at ' + str(receptive_field_dimensions)
+                    tb = traceback.format_exc()
+                    body = 'RF ' + str(receptive_field_dimensions) + '\n' + 'fold ' + str(fold) + '\n' +'iteration ' + str(iteration) + '\n' + 'Error ' + str(e) + '\n' + str(tb)
+                    messaging.send_message(title, body)
 
             # Evaluate this fold
             print('Evaluating fold ' + str(fold) + ' of ' + str(n_folds - 1) + ' of iteration' + str(iteration))
-
             try:
                 fold_result = external_evaluate_fold_cv(params, fold_dir, 'fold_' + str(fold), ext_mem_extension)
                 accuracies.append(fold_result['accuracy'])
@@ -380,7 +358,7 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
                 print('Evaluation of fold failed.')
                 print(e)
                 if (messaging):
-                    title = 'Minor error upon rf_hyperopt at ' + str(receptive_field_dimensions)
+                    title = 'Minor error upon fold evaluation rf_hyperopt at ' + str(receptive_field_dimensions)
                     tb = traceback.format_exc()
                     body = 'RF ' + str(receptive_field_dimensions) + '\n' + 'fold ' + str(fold) + '\n' +'iteration ' + str(iteration) + '\n' + 'Error ' + str(e) + '\n' + str(tb)
                     messaging.send_message(title, body)
@@ -415,6 +393,74 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
         'test_TPR': tprs,
         'test_FPR': fprs
     }
+
+def external_create_fold(fold_dir, fold, imgX, y, receptive_field_dimensions, train, test, clinX = None, ext_mem_extension = '.txt'):
+    """
+    Create a fold given the data and the test / train distribution
+    External Memory: saves the folds as libsvm files
+
+    Args:
+        fold_dir: directory to use for saving the fold
+        fold : name of the fold
+        clinX (optional): clinical input data to validate for all subjects in form of a list [subject, clinical_data]
+        imgX: image input data to validate for all subjects in form of an np array [subject, x, y, z, c]
+        y: dependent variables of data in a form of an np array [subject, x, y, z]
+        receptive_field_dimensions : in the form of a list as  [rf_x, rf_y, rf_z]
+        train: boolean array selecting for Training
+        test: boolean array selecting for testing
+
+    Returns: undefined
+    """
+    print('Creating fold : ' + str(fold))
+    if not os.path.exists(fold_dir):
+        os.makedirs(fold_dir)
+
+    imgX_train, y_train = imgX[train], y[train]
+    if clinX is not None:
+        clinX_train = clinX[train]
+
+    # Get balancing selector respecting population wide distribution
+    balancing_selector = get_undersample_selector_array(y_train)
+
+    for subject in range(imgX_train.shape[0]):
+        # reshape to rf expects data with n_subjects in first
+        subj_X_train, subj_y_train = np.expand_dims(imgX_train[subject], axis=0), np.expand_dims(y_train[subject], axis=0)
+        rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_train, subj_y_train, receptive_field_dimensions)
+
+        if clinX is not None:
+            # Add clinical data to every voxel
+            # As discussed here: https://stackoverflow.com/questions/52132331/how-to-add-multiple-extra-columns-to-a-numpy-array/52132400#52132400
+            subj_mixed_inputs = np.zeros((rf_inputs.shape[0], rf_inputs.shape[1] + clinX_train[subject].shape[0]), int) # Initialising matrix of the right size
+            subj_mixed_inputs[:, : rf_inputs.shape[1]] = rf_inputs
+            subj_mixed_inputs[:, rf_inputs.shape[1] :]= clinX_train[subject]
+            all_inputs = subj_mixed_inputs
+        else:
+            all_inputs = rf_inputs
+
+        # Balance by using predefined balancing_selector
+        subj_X_train, subj_y_train = all_inputs[balancing_selector[subject].reshape(-1)], rf_outputs[balancing_selector[subject].reshape(-1)]
+
+        train_data_path = os.path.join(fold_dir, 'fold_' + str(fold) + '_train' + ext_mem_extension)
+        save_to_svmlight(subj_X_train, subj_y_train, train_data_path)
+
+    X_test, y_test = imgX[test], y[test]
+    if clinX is not None:
+        clinX_test = clinX[test]
+    for subject in range(X_test.shape[0]):
+        # reshape to rf expects data with n_subjects in first
+        subj_X_test, subj_y_test = np.expand_dims(X_test[subject], axis=0), np.expand_dims(y_test[subject], axis=0)
+        rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_test, subj_y_test, receptive_field_dimensions)
+        if clinX is not None:
+            # Add clinical data to every voxel
+            subj_mixed_inputs = np.zeros((rf_inputs.shape[0], rf_inputs.shape[1] + clinX_test[subject].shape[0]), int) # Initialising matrix of the right size
+            subj_mixed_inputs[:, : rf_inputs.shape[1]] = rf_inputs
+            subj_mixed_inputs[:, rf_inputs.shape[1] :]= clinX_test[subject]
+            all_inputs = subj_mixed_inputs
+        else:
+            all_inputs = rf_inputs
+        test_data_path = os.path.join(fold_dir, 'fold_' + str(fold) + '_test' + ext_mem_extension)
+        save_to_svmlight(all_inputs, rf_outputs, test_data_path)
+
 
 def external_evaluate_fold_cv(params, fold_dir, fold, ext_mem_extension):
     """

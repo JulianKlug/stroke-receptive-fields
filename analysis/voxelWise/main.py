@@ -10,15 +10,15 @@ import data_loader
 import manual_data
 from email_notification import NotificationSystem
 
-# main_dir = '/Users/julian/master/data/hyperopt_test_LOO'
-main_dir = '/home/klug/data/working_data/'
-data_dir = os.path.join(main_dir, 'saved_data/CV_5_folds')
+main_dir = '/Users/julian/master/data/clinical_data_test'
+# main_dir = '/home/klug/data/working_data/'
+data_dir = os.path.join(main_dir, '')
 model_dir = os.path.join(main_dir, 'models')
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 
 # Path to save the model to
-model_name = 'old_params_test1'
+model_name = 'clinical_data_test'
 model_path = os.path.join(model_dir, model_name + '.pkl')
 if os.path.isfile(model_path):
     # file exists
@@ -30,7 +30,7 @@ if os.path.isfile(model_path):
 notification_system = NotificationSystem()
 
 
-# IN, OUT = data_loader.load_saved_data(data_dir)
+CLIN, IN, OUT = data_loader.load_saved_data(data_dir)
 # IN, OUT = manual_data.load(data_dir)
 
 
@@ -47,9 +47,12 @@ if not os.path.exists(save_dir):
 # model_utils.create_external_memory(model_dir, model_name, data_dir, IN, OUT, rf_dim)
 
 start = timeit.default_timer()
+save_folds = True
 # score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, IN, OUT)
 # score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, create_folds = False, data_dir = data_dir)
-best = model_utils.xgb_hyperopt(data_dir, save_dir, rf_dim, create_folds = False)
+score, roc_auc, f1, params = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim,
+                                    clinical_input_array = CLIN, input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
+# best = model_utils.xgb_hyperopt(data_dir, save_dir, rf_dim, create_folds = False)
 elapsed = timeit.default_timer() - start
 print('Evaluation done in: ', elapsed)
 

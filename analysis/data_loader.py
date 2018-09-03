@@ -40,7 +40,7 @@ def get_paths_and_ids(data_dir, ct_sequences, mri_sequences):
             ids.append(subject)
             print('Adding', subject)
         else :
-            print('Not all images found for this subject. Skipping.', subject)
+            print('Not all images found for this folder. Skipping.', subject)
 
     return (ids, ct_paths, lesion_paths)
 
@@ -85,7 +85,7 @@ def load_nifti(main_dir, ct_sequences, mri_sequences):
     return (ids, load_images(ct_paths, lesion_paths))
 
 # Save data as compressed numpy array
-def load_and_save_data(data_dir, main_dir, ct_sequences = [], mri_sequences = []):
+def load_and_save_data(data_dir, main_dir, clinical_dir = None, clinical_name = None, ct_sequences = [], mri_sequences = []):
     if len(ct_sequences) < 1:
         # ct_sequences = ['wcoreg_RAPID_TMax_[s]', 'wcoreg_RAPID_MTT_[s]', 'wcoreg_RAPID_CBV', 'wcoreg_RAPID_CBF']
         ct_sequences = ['wcoreg_RAPID_Tmax', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV', 'wcoreg_RAPID_rCBF']
@@ -93,16 +93,35 @@ def load_and_save_data(data_dir, main_dir, ct_sequences = [], mri_sequences = []
     if len(mri_sequences) < 1:
         mri_sequences = ['wcoreg_VOI_lesion']
 
+    included_subjects = np.array([])
+    clinical_data = np.array([])
+
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
     ids, (ct_inputs, lesion_GT) = load_nifti(main_dir, ct_sequences, mri_sequences)
-    c_dir = '/Users/julian/OneDrive - unige.ch/master project/clinical_data'
-    filename = 'orig_cleaned_clinical_data_2016.xlsx'
-    clinical_data = load_clinical_data(ids, c_dir, filename)
-    print('shaping', ct_inputs.shape, ids, clinical_data)
-    np.savez_compressed(os.path.join(data_dir, 'data_set'), ids = ids, ct_inputs = ct_inputs, lesion_GT = lesion_GT)
+    ids = np.array(ids)
+
+    if clinical_dir is not None:
+        included_subjects, clinical_data = load_clinical_data(ids, clinical_dir, clinical_name)
+
+        # Remove patients with exclusion criteria
+        ct_inputs = ct_inputs[included_subjects]
+        lesion_GT = lesion_GT[included_subjects]
+
+        print('Excluded', ids.shape[0] - ct_inputs.shape[0], 'subjects.')
+
+    print('Saving a total of', ct_inputs.shape[0], 'subjects.')
+    np.savez_compressed(os.path.join(data_dir, 'data_set'),
+        ids = ids, included_subjects = included_subjects, clinical_inputs = clinical_data, ct_inputs = ct_inputs, lesion_GT = lesion_GT)
 
 def load_saved_data(data_dir):
+    ids = np.load(os.path.join(data_dir, 'data_set.npz'))['ids']
+    clinical_inputs = np.load(os.path.join(data_dir, 'data_set.npz'))['clinical_inputs']
     ct_inputs = np.load(os.path.join(data_dir, 'data_set.npz'))['ct_inputs']
     lesion_GT = np.load(os.path.join(data_dir, 'data_set.npz'))['lesion_GT']
-    return (ct_inputs, lesion_GT)
+
+    print('Loading a total of', ct_inputs.shape[0], 'subjects.')
+    print(ids.shape[0] - ct_inputs.shape[0], 'subjects had been excluded.')
+
+
+    return (clinical_inputs, ct_inputs, lesion_GT)
