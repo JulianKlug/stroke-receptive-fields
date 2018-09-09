@@ -31,8 +31,11 @@ notification_system = NotificationSystem()
 
 
 CLIN, IN, OUT = data_loader.load_saved_data(data_dir)
+# CLIN = None
 # IN, OUT = manual_data.load(data_dir)
 
+print('yoooooo', IN.shape)
+visual.display(IN[0,:,:,:,3])
 
 rf = 1
 rf_dim = [rf, rf, rf]
@@ -47,7 +50,7 @@ if not os.path.exists(save_dir):
 # model_utils.create_external_memory(model_dir, model_name, data_dir, IN, OUT, rf_dim)
 
 start = timeit.default_timer()
-save_folds = True
+save_folds = False
 # score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, IN, OUT)
 # score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, create_folds = False, data_dir = data_dir)
 score, roc_auc, f1, params = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim,
