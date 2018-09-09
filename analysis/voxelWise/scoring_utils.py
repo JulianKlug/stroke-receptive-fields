@@ -1,8 +1,8 @@
-import os, torch
+import os, torch, math
 import matplotlib.pyplot as plt
 from sklearn.metrics import f1_score, accuracy_score, fbeta_score, jaccard_similarity_score, roc_auc_score, precision_score, roc_curve, auc, accuracy_score
 import numpy as np
-
+import scipy.stats as stats
 
 def plot_auc_roc(rf_dims, roc_auc_scores):
     """
@@ -34,15 +34,20 @@ def plot_auc_roc(rf_dims, roc_auc_scores):
             mean_rf_dims.append(rf_dims[i])
 
             std_auc = np.std(roc_auc_scores[i], axis=0)
-            print(i, median_roc_auc_score, mean_roc_auc, std_auc)
-            auc_upper_limits.append(np.minimum(mean_roc_auc_scores[i] + std_auc, 1))
-            auc_lower_limits.append(np.maximum(mean_roc_auc_scores[i] - std_auc, 0))
+            z_critical = stats.norm.ppf(q = 0.975)  # Get the z-critical value*
+            margin_of_error = z_critical * (std_auc/math.sqrt(len(roc_auc_scores[i])))
+
+            print(i, median_roc_auc_score, mean_roc_auc, std_auc, margin_of_error)
+            # auc_upper_limits.append(np.minimum(mean_roc_auc_scores[i] + margin_of_error, 1))
+            auc_upper_limits.append(mean_roc_auc_scores[i] + margin_of_error)
+            auc_lower_limits.append(np.maximum(mean_roc_auc_scores[i] - margin_of_error, 0))
 
         for j in range(len(roc_auc_scores[i])):
             plt.plot(rf_dims[i], roc_auc_scores[i][j], 'k.', lw=1, alpha=0.3)
 
     print('means', mean_roc_auc_scores)
     print(mean_rf_dims)
+    print('Using Z:', z_critical)
     print('low', auc_lower_limits)
     print('up', auc_upper_limits)
 
@@ -50,7 +55,8 @@ def plot_auc_roc(rf_dims, roc_auc_scores):
     plt.plot(0, 2, 'k.', lw=1, alpha=0.3, label=r'ROC AUC score')
 
     plt.fill_between(mean_rf_dims, auc_upper_limits, auc_lower_limits, color='grey', alpha=.2,
-                     label=r'$\pm$ 1 std. dev.')
+                     # label=r'$\pm$ 1 std. dev.')
+                     label=r'$\pm$ 1 std. err.')
 
     plt.plot(mean_rf_dims, mean_roc_auc_scores, 'C0', label=r'Mean ROC AUC')
     plt.ylim([-0.05, 1.05])
@@ -69,7 +75,7 @@ def wrapper_plot_auc_roc(score_dir):
     score_paths = []
     files = os.listdir(score_dir)
     for file in files:
-        if (file.startswith('scores_rf_hyperopt_')):
+        if (file.startswith('scores_repeat20_rf_hyperopt_') or file.startswith('scores_rf_hyperopt_')):
             score_path = os.path.join(score_dir, file)
             rf_dims.append(file.split('_')[-1].split('.')[0])
             roc_auc_scores.append(torch.load(score_path)['test_roc_auc'])
