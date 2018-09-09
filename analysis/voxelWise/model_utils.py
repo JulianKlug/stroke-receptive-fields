@@ -13,6 +13,7 @@ from hyperopt import hp, fmin, rand, tpe, STATUS_OK, Trials
 from cv_utils import repeated_kfold_cv, intermittent_repeated_kfold_cv, ext_mem_repeated_kfold_cv, external_evaluation_wrapper_patient_wise_kfold_cv
 from ext_mem_utils import save_to_svmlight, delete_lines
 from sampling_utils import get_undersample_selector_array, balance
+import model_config
 
 def create(model_dir, model_name, input_data_array, output_data_array, receptive_field_dimensions):
     # Reduce amount of data initially processed
@@ -25,36 +26,13 @@ def create(model_dir, model_name, input_data_array, output_data_array, receptive
     # model = RandomForestClassifier(verbose = 1)
     # model = xgb.XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
 
-    params = {
-        'n_jobs':-1,
-        'base_score': 0.5,
-        'booster': 'gbtree',
-        'colsample_bylevel': 1,
-        'colsample_bytree': 1,
-        'gamma': 0,
-        'learning_rate': 0.1,
-        'max_delta_step': 0,
-        'max_depth': 3,
-        'min_child_weight': 1,
-        'missing': None,
-        'n_estimators': 100,
-        'objective': 'binary:logistic',
-        'eval_metric': 'auc',
-        'reg_alpha': 0, 'reg_lambda': 1,
-        'scale_pos_weight': 1,
-        'seed': 0,
-        'silent': 1,
-        'subsample': 1,
-        'verbose_eval': True,
-        'tree_method': 'hist'
-    }
-
-    obj = None
-    feval = None
-    n_estimators = 100 # number of boosted tree
-    evals = ()
-    early_stopping_rounds = None
-    evals_result = {}
+    params = model_config.parameters
+    obj = model_config.obj
+    feval = model_config.feval
+    n_estimators = model_config.n_estimators # number of boosted tree
+    evals = model_config.evals
+    early_stopping_rounds = model_config.early_stopping_rounds
+    evals_result = model_config.evals_result
 
 
     X, y = input_data_array, output_data_array
@@ -86,35 +64,13 @@ def create(model_dir, model_name, input_data_array, output_data_array, receptive
 def create_external_memory(model_dir, model_name, data_dir, input_data_array, output_data_array, receptive_field_dimensions):
     ext_mem_extension = '.txt'
 
-    params = {
-        'tree_method': 'hist',
-        'max_depth' : 3,
-        'learning_rate' : 0.1,
-        'n_estimators':100,
-        'silent':True,
-        'objective':"binary:logistic",
-        'eval_metric': 'auc',
-        'booster':'gbtree',
-        'n_jobs':-1,
-        'gamma':0,
-        'min_child_weight':1,
-        'max_delta_step':0,
-        'subsample':1,
-        'colsample_bytree':1,
-        'colsample_bylevel':1,
-        'reg_alpha':0,
-        'reg_lambda':1,
-        'scale_pos_weight':1,
-        'base_score':0.5,
-        'random_state':0
-    }
-
-    obj = None
-    feval = None
-    n_estimators = 100 # number of boosted tree
-    evals = ()
-    early_stopping_rounds = None
-    evals_result = {}
+    params = model_config.parameters
+    obj = model_config.obj
+    feval = model_config.feval
+    n_estimators = model_config.n_estimators # number of boosted tree
+    evals = model_config.evals
+    early_stopping_rounds = model_config.early_stopping_rounds
+    evals_result = model_config.evals_result
 
     X, y = input_data_array, output_data_array
     print('initial shape', X.shape)
@@ -165,29 +121,7 @@ def evaluate_crossValidation(save_dir, model_dir, model_name, receptive_field_di
 
     # model = xgb.XGBClassifier(verbose_eval=False, n_jobs = -1, tree_method = 'hist')
 
-    params = {
-        'base_score': 0.5,
-        'booster': 'gbtree',
-        'colsample_bylevel': 1,
-        'colsample_bytree': 1,
-        'eval_metric': 'auc',
-        'gamma': 0.84,
-        'learning_rate': 0.4,
-        'max_delta_step': 0,
-        'max_depth': 1,
-        'min_child_weight': 10.0,
-        'n_estimators': 999,
-        'n_jobs': -1,
-        'objective': 'binary:logistic',
-        'random_state': 0,
-        'reg_alpha': 0.8671463346569078,
-        'reg_lambda': 0.5916603334004378,
-        'scale_pos_weight': 1,
-        'silent': True,
-        'subsample': 0.7925462136041614,
-        'tree_method': 'hist'
-    }
-
+    params = model_config.parameters
 
     n_repeats = 20
     n_folds = 5
