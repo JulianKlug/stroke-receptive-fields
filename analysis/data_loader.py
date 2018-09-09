@@ -11,13 +11,11 @@ def get_paths(data_dir, ct_sequences, mri_sequences):
 
     lesion_paths = []
     ct_paths = []
-    ct_names = []
 
     for subject in subjects:
         subject_dir = os.path.join(data_dir, subject)
         ct_channels = []
         lesion_map = []
-        ctn = []
 
         if os.path.isdir(subject_dir):
             modalities = [o for o in os.listdir(subject_dir)
@@ -34,18 +32,15 @@ def get_paths(data_dir, ct_sequences, mri_sequences):
 
                     if study.startswith(tuple(ct_sequences)):
                         ct_channels.append(os.path.join(modality_dir, study))
-                        ctn.append(study)
 
         if len(ct_sequences) == len(ct_channels) and len(mri_sequences) == len(lesion_map):
             lesion_paths.append(lesion_map[0])
             ct_paths.append(ct_channels)
-            ids.append(subject)
-            ct_names.append(ctn)
             print('Adding', subject)
         else :
             print('Not all images found for this subject. Skipping.', subject)
 
-    return (ids, ct_names, ct_paths, lesion_paths)
+    return (ct_paths, lesion_paths)
 
 # Load nifi image maps from paths (first image is used as reference for dimensions)
 # - ct_paths : list of lists of paths of channels
@@ -84,8 +79,9 @@ def load_images(ct_paths, lesion_paths):
 
 
 def load_nifti(main_dir, ct_sequences, mri_sequences):
-    ids, ct_names, ct_paths, lesion_paths = get_paths_and_ids(main_dir, ct_sequences, mri_sequences)
-    return (ids, ct_names, load_images(ct_paths, lesion_paths))
+    ct_paths, lesion_paths = get_paths(main_dir, ct_sequences, mri_sequences)
+    return load_images(ct_paths, lesion_paths)
+
 
 # Save data as compressed numpy array
 def load_and_save_data(data_dir, main_dir, ct_sequences = [], mri_sequences = []):
@@ -98,27 +94,10 @@ def load_and_save_data(data_dir, main_dir, ct_sequences = [], mri_sequences = []
 
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
-    ids, ct_names, (ct_inputs, lesion_GT) = load_nifti(main_dir, ct_sequences, mri_sequences)
-    ids = np.array(ids)
-
-    if clinical_dir is not None:
-        included_subjects, clinical_data = load_clinical_data(ids, clinical_dir, clinical_name)
-
-        # Remove patients with exclusion criteria
-        ct_inputs = ct_inputs[included_subjects]
-        lesion_GT = lesion_GT[included_subjects]
-
-        print('Excluded', ids.shape[0] - ct_inputs.shape[0], 'subjects.')
-
-    print('Saving a total of', ct_inputs.shape[0], 'subjects.')
-    np.savez_compressed(os.path.join(data_dir, 'data_set'),
-        ids = ids, included_subjects = included_subjects, clinical_inputs = clinical_data, ct_inputs = ct_inputs, lesion_GT = lesion_GT)
+    ct_inputs, lesion_GT = load_nifti(main_dir, ct_sequences, mri_sequences)
+    np.savez_compressed(os.path.join(data_dir, 'data_set'), ct_inputs = ct_inputs, lesion_GT = lesion_GT)
 
 def load_saved_data(data_dir):
     ct_inputs = np.load(os.path.join(data_dir, 'data_set.npz'))['ct_inputs']
     lesion_GT = np.load(os.path.join(data_dir, 'data_set.npz'))['lesion_GT']
-
-    print('Loading a total of', ct_inputs.shape[0], 'subjects with', clinical_inputs.shape[1], 'clinical parameters.')
-    print(ids.shape[0] - ct_inputs.shape[0], 'subjects had been excluded.')
-
-    return (clinical_inputs, ct_inputs, lesion_GT)
+    return (ct_inputs, lesion_GT)
