@@ -309,6 +309,7 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
     aucs = []
     accuracies = []
     f1_scores = []
+    gains = []
     failed_folds = 0
 
     if os.path.exists(save_dir) and len(os.listdir(save_dir)) != 0:
@@ -374,6 +375,7 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
                 tprs.append(fold_result['TPR'])
                 fprs.append(fold_result['FPR'])
                 trained_model = fold_result['trained_model']
+                gains.append(fold_result['gains'])
                 pass
             except Exception as e:
                 failed_folds += 1
@@ -413,7 +415,8 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
         'test_roc_auc': aucs,
         'test_f1': f1_scores,
         'test_TPR': tprs,
-        'test_FPR': fprs
+        'test_FPR': fprs,
+        'gains': gains
     }
 
 def external_evaluate_fold_cv(params, fold_dir, fold, ext_mem_extension):
@@ -459,6 +462,7 @@ def external_evaluate_fold_cv(params, fold_dir, fold, ext_mem_extension):
     accuracy = accuracy_score(y_test, probas_[:] > threshold)
     f1 = f1_score(y_test, probas_[:] > threshold)
     roc_auc = auc(fpr, tpr)
+    gains = trained_model.get_score(importance_type='gain')
 
     return {
         'trained_model': trained_model,
@@ -467,7 +471,8 @@ def external_evaluate_fold_cv(params, fold_dir, fold, ext_mem_extension):
         'thresholds': thresholds,
         'accuracy': accuracy,
         'f1': f1,
-        'roc_auc': roc_auc
+        'roc_auc': roc_auc,
+        'gains': gains
         }
 
 def intermittent_repeated_kfold_cv(model, save_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5):

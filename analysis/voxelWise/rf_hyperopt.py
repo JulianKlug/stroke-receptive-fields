@@ -13,21 +13,21 @@ from email_notification import NotificationSystem
 # main_dir = '/Users/julian/master/data/hyperopt_test_LOO'
 main_dir = '/home/klug/data/working_data/'
 data_dir = os.path.join(main_dir, 'saved_data')
-model_dir = os.path.join(main_dir, 'models')
+model_dir = os.path.join(main_dir, 'results')
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 
 notification_system = NotificationSystem()
 
-main_save_dir = os.path.join(main_dir, 'rf_hyperopt_data')
+main_save_dir = os.path.join(main_dir, 'depth_hp_data')
 
 IN, OUT = data_loader.load_saved_data(data_dir)
 # IN, OUT = manual_data.load(data_dir)
 
-for rf in range(3):
+for rf in range(1):
     rf_dim = [rf, rf, rf]
 
-    model_name = 'rf_hyperopt_' + str(rf)
+    model_name = 'depth3_repeat20_rf_hyperopt' + str(rf)
     model_path = os.path.join(model_dir, model_name + '.pkl')
     if os.path.isfile(model_path):
         # file exists

@@ -152,8 +152,12 @@ def create_external_memory(model_dir, model_name, data_dir, input_data_array, ou
                               early_stopping_rounds=early_stopping_rounds,
                               evals_result=evals_result, obj=obj, feval=feval,
                               verbose_eval=True, xgb_model=None)
-    os.remove(os.path.join(data_dir, model_name + '.r0-1.cache'))
-    os.remove(os.path.join(data_dir, model_name + '.r0-1.cache.row.page'))
+    try :
+      os.remove(os.path.join(data_dir, model_name + '.r0-1.cache'))
+      os.remove(os.path.join(data_dir, model_name + '.r0-1.cache.row.page'))
+      pass
+    except Exception as e:
+      print(e)
 
     model_extension = '.pkl'
     model_path = os.path.join(model_dir, model_name + model_extension)
@@ -174,7 +178,7 @@ def evaluate_crossValidation(save_dir, model_dir, model_name, receptive_field_di
         'gamma': 0.84,
         'learning_rate': 0.4,
         'max_delta_step': 0,
-        'max_depth': 1,
+        'max_depth': 3,
         'min_child_weight': 10.0,
         'n_estimators': 999,
         'n_jobs': -1,
