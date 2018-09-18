@@ -49,7 +49,7 @@ def plot_auc_roc_distribution(rf_dims, roc_auc_scores, settings_iterations, sett
     print('means', mean_roc_auc_scores)
     print(mean_rf_dims)
 
-    plt.ylabel('Number of observations')
+    plt.ylabel('Number of simulations')
     plt.xlabel(r'Area under the ROC curve for %i-fold crossvalidation over %i iterations' % (int(n_folds), int(n_iterations)))
     # Receptive field size (as voxels from center)')
     plt.title('Distribution of ROC AUC scores')

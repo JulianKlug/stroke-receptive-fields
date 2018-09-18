@@ -67,8 +67,3 @@ def mask_lesions_wrapper(data_dir):
             #
             # except :
             #     print('Not all images found for subject ', subject)
-
-
-main_dir = '/Users/julian/master/data'
-data_dir = os.path.join(main_dir, 'masking_test')
-mask_lesions_wrapper(data_dir)

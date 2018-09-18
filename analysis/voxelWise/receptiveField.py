@@ -85,7 +85,8 @@ def predict(input_data, test_data_path, model, receptive_field_dimensions, verbo
         data = xgb.DMatrix(test_data_path)
         print(data.get_label().shape)
         output = model.predict(data, ntree_limit=0)
-        output = 1 - output[0:n_voxels_per_subject].reshape(n_x, n_y, n_z)
+        # output = 1 - output[0:n_voxels_per_subject].reshape(n_x, n_y, n_z)
+        output = output[0:n_voxels_per_subject].reshape(n_x, n_y, n_z)
         os.remove(test_data_path) # Clean-up
 
     return output
