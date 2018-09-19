@@ -21,7 +21,6 @@ def create(model_dir, model_name, input_data_array, output_data_array, receptive
     # X_retained, X_rest, y_retained, y_rest = train_test_split(rf_inputs, rf_outputs, test_size = 0.7, random_state = 42)
 
     # Create model object
-    # model = linear_model.LogisticRegression(verbose = 1, max_iter = 1000000000)
     # model = RandomForestClassifier(verbose = 1)
     # model = xgb.XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
 
