@@ -1,5 +1,6 @@
 import sys
 sys.path.insert(0, '../')
+sys.path.insert(0, '../../')
 
 import os, timeit, torch
 import numpy as np
@@ -10,7 +11,7 @@ from sklearn.ensemble import RandomForestClassifier
 import xgboost as xgb
 import receptiveField as rf
 from hyperopt import hp, fmin, rand, tpe, STATUS_OK, Trials
-from cv_utils import repeated_kfold_cv, intermittent_repeated_kfold_cv, ext_mem_repeated_kfold_cv, external_evaluation_wrapper_patient_wise_kfold_cv
+from vxl_xgboost.cv_utils import repeated_kfold_cv, intermittent_repeated_kfold_cv, ext_mem_repeated_kfold_cv, external_evaluation_wrapper_patient_wise_kfold_cv
 from ext_mem_utils import save_to_svmlight, delete_lines
 from sampling_utils import get_undersample_selector_array, balance
 
@@ -188,8 +189,11 @@ def evaluate_crossValidation(save_dir, model_dir, model_name, receptive_field_di
     }
 
 
-    n_repeats = 20
-    n_folds = 5
+    # n_repeats = 20
+    # n_folds = 5
+
+    n_repeats = 1
+    n_folds = 3
 
     if create_folds:
         # External memory based script

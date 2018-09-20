@@ -1,18 +1,19 @@
 import sys
 sys.path.insert(0, '../')
 
-import os, timeit, traceback
+import os, timeit, traceback, torch
 import numpy as np
 import timeit
-import model_utils
+from vxl_xgboost import model_utils
+from vxl_glm.glm_cv import glm_continuous_repeated_kfold_cv
 import visual
 import data_loader
 import manual_data
 from email_notification import NotificationSystem
 
-# main_dir = '/Users/julian/master/data/hyperopt_test_LOO'
-main_dir = '/home/klug/data/working_data/'
-data_dir = os.path.join(main_dir, 'saved_data')
+main_dir = '/Users/julian/master/data/hyperopt_test_LOO'
+# main_dir = '/home/klug/data/working_data/'
+data_dir = os.path.join(main_dir, 'saved_dataset')
 model_dir = os.path.join(main_dir, 'models')
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
@@ -27,7 +28,7 @@ IN, OUT = data_loader.load_saved_data(data_dir)
 for rf in range(3):
     rf_dim = [rf, rf, rf]
 
-    model_name = 'rf_hyperopt_' + str(rf)
+    model_name = 'glm_rf_hyperopt_' + str(rf)
     model_path = os.path.join(model_dir, model_name + '.pkl')
     if os.path.isfile(model_path):
         # file exists
@@ -45,8 +46,22 @@ for rf in range(3):
     try:
         start = timeit.default_timer()
         save_folds = False
-        score, roc_auc, f1, params = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim,
-                                            input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
+        # score, roc_auc, f1, params = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim,
+        #                                     input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
+        results = glm_continuous_repeated_kfold_cv(IN, OUT, rf_dim, n_repeats = 1, n_folds = 3, messaging = notification_system)
+        params = 0
+        # save the results and the params objects
+        torch.save(results, os.path.join(model_dir, 'scores_' + model_name + '.npy'))
+
+        score = np.median(results['test_accuracy'])
+        roc_auc = np.median(results['test_roc_auc'])
+        f1 = np.median(results['test_f1'])
+
+        print('Results for', model_name)
+        print('Voxel-wise accuracy: ', score)
+        print('ROC AUC score: ', roc_auc)
+        print('F1 score: ', f1)
+
         elapsed = timeit.default_timer() - start
         print('Evaluation done in: ', elapsed)
         title = model_name + ' finished Cross-Validation'
