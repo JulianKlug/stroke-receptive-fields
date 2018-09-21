@@ -134,6 +134,8 @@ def ext_mem_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions
 
     results = external_evaluation_wrapper_patient_wise_kfold_cv(params, data_dir)
 
+    results['rf'] = receptive_field_dimensions
+
     return results
 
 def external_save_patient_wise_kfold_data_split(save_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5):
