@@ -142,6 +142,7 @@ def glm_evaluate_fold_cv(X_test, y_test, trained_model):
     """
     probas_= trained_model.predict_proba(X_test)
     probas_ = probas_[:,1]
+    # TODO: replace by common function
     # Compute ROC curve, area under the curve, f1, and accuracy
     threshold = 0.5 # threshold choosen ot evaluate f1 and accuracy of model
     fpr, tpr, thresholds = roc_curve(y_test, probas_[:])
