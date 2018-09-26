@@ -1,4 +1,7 @@
-import os, timeit, shutil, traceback
+import sys, os, timeit, shutil, traceback
+sys.path.insert(0, '../')
+sys.path.insert(0, '../../')
+
 import numpy as np
 from sklearn.metrics import f1_score, fbeta_score, jaccard_similarity_score, roc_auc_score, precision_score, roc_curve, auc, accuracy_score
 from sklearn import linear_model
@@ -130,6 +133,8 @@ def ext_mem_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions
         external_save_patient_wise_kfold_data_split(data_dir, X, y, receptive_field_dimensions, n_repeats, n_folds)
 
     results = external_evaluation_wrapper_patient_wise_kfold_cv(params, data_dir)
+
+    results['rf'] = receptive_field_dimensions
 
     return results
 

@@ -1,5 +1,6 @@
 import sys
 sys.path.insert(0, '../')
+sys.path.insert(0, '../../')
 
 import os, timeit, torch
 import numpy as np
@@ -10,7 +11,7 @@ from sklearn.ensemble import RandomForestClassifier
 import xgboost as xgb
 import receptiveField as rf
 from hyperopt import hp, fmin, rand, tpe, STATUS_OK, Trials
-from cv_utils import repeated_kfold_cv, intermittent_repeated_kfold_cv, ext_mem_repeated_kfold_cv, external_evaluation_wrapper_patient_wise_kfold_cv
+from vxl_xgboost.cv_utils import repeated_kfold_cv, intermittent_repeated_kfold_cv, ext_mem_repeated_kfold_cv, external_evaluation_wrapper_patient_wise_kfold_cv
 from ext_mem_utils import save_to_svmlight, delete_lines
 from sampling_utils import get_undersample_selector_array, balance
 
@@ -21,7 +22,6 @@ def create(model_dir, model_name, input_data_array, output_data_array, receptive
     # X_retained, X_rest, y_retained, y_rest = train_test_split(rf_inputs, rf_outputs, test_size = 0.7, random_state = 42)
 
     # Create model object
-    # model = linear_model.LogisticRegression(verbose = 1, max_iter = 1000000000)
     # model = RandomForestClassifier(verbose = 1)
     # model = xgb.XGBClassifier(verbose_eval=True, n_jobs = -1, tree_method = 'hist')
 

@@ -45,7 +45,7 @@ def reshape_to_receptive_field(input_data_array, output_data_array, receptive_fi
 
     return inputs, outputs
 
-def predict(input_data, test_data_path, model, receptive_field_dimensions, verbose = False, external_memory = False):
+def xgb_predict(input_data, test_data_path, model, receptive_field_dimensions, verbose = False, external_memory = False):
     # Dimensions of the receptive field defined as distance to center point in every direction
     rf_x, rf_y, rf_z = receptive_field_dimensions
     window_d_x, window_d_y, window_d_z = 2 * np.array(receptive_field_dimensions) + 1

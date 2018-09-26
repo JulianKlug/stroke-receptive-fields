@@ -39,7 +39,7 @@ print('Predict output image with model: ', model_name)
 model = joblib.load(model_path)
 
 start = timeit.default_timer()
-predicted = rf.predict(input_data, input_dir, model, rf_dim, external_memory = True)
+predicted = rf.xgb_predict(input_data, input_dir, model, rf_dim, external_memory = True)
 end = timeit.default_timer()
 print('Prediction time: ', end - start)
 
