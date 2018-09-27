@@ -37,7 +37,7 @@ rf = 1
 rf_dim = [rf, rf, rf]
 print('Evaluating', model_name, 'with rf:', rf_dim)
 
-main_save_dir = os.path.join(main_dir, 'test_results')
+main_save_dir = os.path.join(main_dir, 'external_mem_data')
 save_dir = os.path.join(main_save_dir, model_name + '_data')
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
@@ -58,6 +58,7 @@ try:
     accuracy = np.median(results['test_accuracy'])
     roc_auc = np.median(results['test_roc_auc'])
     f1 = np.median(results['test_f1'])
+    params = results['model_params']
 
     print('Results for', model_name)
     print('Voxel-wise accuracy: ', accuracy)

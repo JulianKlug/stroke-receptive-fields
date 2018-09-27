@@ -493,8 +493,6 @@ def external_evaluate_fold_cv(params, n_test_subjects, fold_dir, fold, ext_mem_e
         evals_result=evals_result,
         verbose_eval = False)
 
-    print('evals', evals_result)
-
     # Clean up cache files
     try:
         os.remove(os.path.join(fold_dir, 'dtrain.r0-1.cache'))
@@ -506,9 +504,7 @@ def external_evaluate_fold_cv(params, n_test_subjects, fold_dir, fold, ext_mem_e
 
     print('Testing', fold, 'in', fold_dir)
     y_test = dtest.get_label()
-    print('y_test',y_test.shape)
     probas_= trained_model.predict(dtest, ntree_limit=trained_model.best_ntree_limit)
-    print('probas',probas_.shape)
 
     results = evaluate(probas_, y_test, n_test_subjects)
     results['trained_model'] = trained_model
