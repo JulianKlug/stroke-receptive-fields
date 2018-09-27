@@ -55,7 +55,6 @@ def repeated_kfold_cv(model, X, y, receptive_field_dimensions, n_repeats = 1, n_
         kf = KFold(n_splits = n_folds, shuffle = True, random_state = j)
         for train, test in kf.split(X, y):
             print('Evaluating split : ' + str(f))
-            print('spit', X[train].shape, y[train].shape)
 
             start = timeit.default_timer()
             rf_inputs, rf_outputs = rf.reshape_to_receptive_field(X[train], y[train], receptive_field_dimensions)
@@ -388,13 +387,11 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
                 save_to_svmlight(subj_X_train, subj_y_train, train_data_path)
 
             X_test, y_test = X[test], y[test]
-            print('X test', X_test.shape, y_test.shape)
             for subject in range(X_test.shape[0]):
                 # reshape to rf expects data with n_subjects in first
                 subj_X_test, subj_y_test = np.expand_dims(X_test[subject], axis=0), np.expand_dims(y_test[subject], axis=0)
                 rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_test, subj_y_test, receptive_field_dimensions)
                 test_data_path = os.path.join(fold_dir, 'fold_' + str(fold) + '_test' + ext_mem_extension)
-                print('subj', subject, rf_inputs.shape, rf_outputs.shape)
                 save_to_svmlight(rf_inputs, rf_outputs, test_data_path)
 
             # Evaluate this fold
