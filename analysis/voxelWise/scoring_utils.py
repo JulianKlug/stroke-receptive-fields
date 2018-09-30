@@ -30,8 +30,8 @@ def evaluate(probas_, y_test, n_subjects):
 
     for subj in range(n_subjects):
         # Volume delta is defined as GT - predicted volume
-        thresholded_volume_deltas.append(image_wise_y_test[subj] - np.sum(image_wise_probas[subj] > threshold))
-        unthresholded_volume_deltas.append(image_wise_y_test[subj] - np.sum(image_wise_probas[subj]))
+        thresholded_volume_deltas.append(np.sum(image_wise_y_test[subj]) - np.sum(image_wise_probas[subj] > threshold))
+        unthresholded_volume_deltas.append(np.sum(image_wise_y_test[subj])- np.sum(image_wise_probas[subj]))
         n_voxels = image_wise_y_test[subj].shape[0]
         # error ration being defined as sum(FP + FN)/all
         image_wise_error_ratios.append(
