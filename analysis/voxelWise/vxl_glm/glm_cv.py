@@ -1,4 +1,6 @@
-import os, timeit, traceback
+import sys, os, timeit, traceback
+sys.path.insert(0, '../')
+
 import numpy as np
 from sklearn.metrics import f1_score, fbeta_score, jaccard_similarity_score, roc_auc_score, precision_score, roc_curve, auc, accuracy_score
 from sklearn import linear_model
@@ -6,6 +8,7 @@ from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split, KFold, RepeatedKFold, cross_val_score, cross_validate
 from sampling_utils import balance, get_undersample_selector_array
 import receptiveField as rf
+from scoring_utils import evaluate
 
 
 def glm_continuous_repeated_kfold_cv(X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5, messaging = None):
@@ -40,8 +43,14 @@ def glm_continuous_repeated_kfold_cv(X, y, receptive_field_dimensions, n_repeats
     aucs = []
     accuracies = []
     f1_scores = []
+    jaccards = []
+    thresholded_volume_deltas = []
+    unthresholded_volume_deltas = []
+    image_wise_error_ratios = []
+    image_wise_jaccards = []
+    trained_models = []
     failed_folds = 0
-    trained_model = np.NaN
+
 
     n_x, n_y, n_z, n_c = X[0].shape
     rf_x, rf_y, rf_z = receptive_field_dimensions
@@ -65,8 +74,6 @@ def glm_continuous_repeated_kfold_cv(X, y, receptive_field_dimensions, n_repeats
 
             # Get balancing selector respecting population wide distribution
             balancing_selector = get_undersample_selector_array(y_train)
-            tempX = []
-            tempY = []
             all_subj_X_train = np.empty([np.sum(balancing_selector), receptive_field_size])
             all_subj_y_train = np.empty(np.sum(balancing_selector))
             all_subj_index = 0
@@ -85,19 +92,25 @@ def glm_continuous_repeated_kfold_cv(X, y, receptive_field_dimensions, n_repeats
             glm_model.fit(all_subj_X_train, all_subj_y_train)
 
             X_test, y_test = X[test], y[test]
+            n_test_subjects = X_test.shape[0]
             test_rf_inputs, test_rf_outputs = rf.reshape_to_receptive_field(X_test, y_test, receptive_field_dimensions)
 
             # Evaluate this fold
             print('Evaluating fold ' + str(fold) + ' of ' + str(n_folds - 1) + ' of iteration' + str(iteration))
 
             try:
-                fold_result = glm_evaluate_fold_cv(test_rf_inputs, test_rf_outputs, glm_model)
+                fold_result = glm_evaluate_fold_cv(test_rf_inputs, test_rf_outputs, n_test_subjects, glm_model)
                 accuracies.append(fold_result['accuracy'])
                 f1_scores.append(fold_result['f1'])
                 aucs.append(fold_result['roc_auc'])
-                tprs.append(fold_result['TPR'])
-                fprs.append(fold_result['FPR'])
-                trained_model = fold_result['trained_model']
+                tprs.append(fold_result['tpr'])
+                fprs.append(fold_result['fpr'])
+                jaccards.append(fold_result['jaccard'])
+                thresholded_volume_deltas.append(fold_result['thresholded_volume_deltas'])
+                unthresholded_volume_deltas.append(fold_result['unthresholded_volume_deltas'])
+                image_wise_error_ratios.append(fold_result['image_wise_error_ratios'])
+                image_wise_jaccards.append(fold_result['image_wise_jaccards'])
+                trained_models.append(fold_result['trained_model'])
                 pass
             except Exception as e:
                 failed_folds += 1
@@ -117,44 +130,40 @@ def glm_continuous_repeated_kfold_cv(X, y, receptive_field_dimensions, n_repeats
     end = timeit.default_timer()
     print('Created, saved and evaluated splits in: ', end - start)
 
-    return {
+    return ({
         'rf': receptive_field_dimensions,
         'settings_repeats': n_repeats,
         'settings_folds': n_folds,
         'failed_folds': failed_folds,
-        'trained_model': trained_model,
+        'model_params': 'glm',
         'test_accuracy': accuracies,
         'test_roc_auc': aucs,
         'test_f1': f1_scores,
+        'test_jaccard': jaccards,
         'test_TPR': tprs,
-        'test_FPR': fprs
-    }
+        'test_FPR': fprs,
+        'test_thresholded_volume_deltas': thresholded_volume_deltas,
+        'test_unthresholded_volume_deltas': unthresholded_volume_deltas,
+        'test_image_wise_error_ratios': image_wise_error_ratios,
+        'test_image_wise_jaccards': image_wise_jaccards
+    },
+        trained_models
+    )
 
 
-def glm_evaluate_fold_cv(X_test, y_test, trained_model):
+def glm_evaluate_fold_cv(X_test, y_test, n_test_subjects, trained_model):
     """
     Patient wise Repeated KFold Crossvalidation for glm
     This function evaluates a saved datafold
 
-    Args:
+    Args: X_test, y_test, n_test_subjects, trained_model
 
     Returns: result dictionary
     """
     probas_= trained_model.predict_proba(X_test)
     probas_ = probas_[:,1]
-    # Compute ROC curve, area under the curve, f1, and accuracy
-    threshold = 0.5 # threshold choosen ot evaluate f1 and accuracy of model
-    fpr, tpr, thresholds = roc_curve(y_test, probas_[:])
-    accuracy = accuracy_score(y_test, probas_[:] > threshold)
-    f1 = f1_score(y_test, probas_[:] > threshold)
-    roc_auc = auc(fpr, tpr)
 
-    return {
-        'trained_model': trained_model,
-        'FPR': fpr,
-        'TPR': tpr,
-        'thresholds': thresholds,
-        'accuracy': accuracy,
-        'f1': f1,
-        'roc_auc': roc_auc
-        }
+    results = evaluate(probas_, y_test, n_test_subjects)
+    results['trained_model'] = trained_model
+
+    return results

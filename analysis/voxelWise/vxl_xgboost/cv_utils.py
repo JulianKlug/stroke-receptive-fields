@@ -13,6 +13,7 @@ from collections import Counter
 import receptiveField as rf
 from ext_mem_utils import save_to_svmlight
 from sampling_utils import balance, get_undersample_selector_array
+from scoring_utils import evaluate
 
 def repeated_kfold_cv(model, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5):
     """
@@ -54,7 +55,6 @@ def repeated_kfold_cv(model, X, y, receptive_field_dimensions, n_repeats = 1, n_
         kf = KFold(n_splits = n_folds, shuffle = True, random_state = j)
         for train, test in kf.split(X, y):
             print('Evaluating split : ' + str(f))
-            print('spit', X[train].shape, y[train].shape)
 
             start = timeit.default_timer()
             rf_inputs, rf_outputs = rf.reshape_to_receptive_field(X[train], y[train], receptive_field_dimensions)
@@ -73,15 +73,13 @@ def repeated_kfold_cv(model, X, y, receptive_field_dimensions, n_repeats = 1, n_
             X_test, y_test = rf.reshape_to_receptive_field(X[test], y[test], receptive_field_dimensions)
 
             probas_= fittedModel.predict_proba(X_test)
-            # Compute ROC curve, area under the curve, f1, and accuracy
-            threshold = 0.5 # threshold choosen ot evaluate f1 and accuracy of model
-            fpr, tpr, thresholds = roc_curve(y_test, probas_[:, 1])
-            accuracies.append(accuracy_score(y_test, probas_[:, 1] > threshold))
-            f1_scores.append(f1_score(y_test, probas_[:, 1] > threshold))
-            roc_auc = auc(fpr, tpr)
-            aucs.append(roc_auc)
-            tprs.append(tpr)
-            fprs.append(fpr)
+            n_test_subjects = X_test.shape[0]
+            results = evaluate(probas_, y_test, n_test_subjects)
+            aucs.append(results['roc_auc'])
+            tprs.append(results['tpr'])
+            fprs.append(results['fpr'])
+            accuracies.append(results['accuracy'])
+            f1_scores.append(results['f1'])
             f += 1
 
     return {
@@ -127,16 +125,17 @@ def ext_mem_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions
 
     if create_folds:
         if not save_folds:
-            results = ext_mem_continuous_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions, n_repeats, n_folds, messaging)
-            return results
+            results, trained_models = ext_mem_continuous_repeated_kfold_cv(params, data_dir, X, y, receptive_field_dimensions, n_repeats, n_folds, messaging)
+            results['rf'] = receptive_field_dimensions
+            return (results, trained_models)
 
         external_save_patient_wise_kfold_data_split(data_dir, X, y, receptive_field_dimensions, n_repeats, n_folds)
 
-    results = external_evaluation_wrapper_patient_wise_kfold_cv(params, data_dir)
+    results, trained_models = external_evaluation_wrapper_patient_wise_kfold_cv(params, n_test_subjects, data_dir)
 
     results['rf'] = receptive_field_dimensions
 
-    return results
+    return (results, trained_models)
 
 def external_save_patient_wise_kfold_data_split(save_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5):
     """
@@ -212,7 +211,7 @@ def external_save_patient_wise_kfold_data_split(save_dir, X, y, receptive_field_
     end = timeit.default_timer()
     print('Created and saved splits in: ', end - start)
 
-def external_evaluation_wrapper_patient_wise_kfold_cv(params, data_dir):
+def external_evaluation_wrapper_patient_wise_kfold_cv(params, n_test_subjects, data_dir):
     """
     Patient wise Repeated KFold Crossvalidation for xgboost
     This function evaluates the saved datafolds.
@@ -240,6 +239,13 @@ def external_evaluation_wrapper_patient_wise_kfold_cv(params, data_dir):
     aucs = []
     accuracies = []
     f1_scores = []
+    jaccards = []
+    thresholded_volume_deltas = []
+    unthresholded_volume_deltas = []
+    image_wise_error_ratios = []
+    image_wise_jaccards = []
+    trained_models = []
+    train_evals = []
 
     iterations = [o for o in os.listdir(data_dir)
                     if os.path.isdir(os.path.join(data_dir,o)) and o.startswith('iteration')]
@@ -257,25 +263,38 @@ def external_evaluation_wrapper_patient_wise_kfold_cv(params, data_dir):
             print('Training', fold, 'of', iteration)
             fold_dir = os.path.join(iteration_dir, fold)
 
-            fold_result = external_evaluate_fold_cv(params, fold_dir, fold, ext_mem_extension)
+            fold_result = external_evaluate_fold_cv(params, n_test_subjects, fold_dir, fold, ext_mem_extension)
             accuracies.append(fold_result['accuracy'])
             f1_scores.append(fold_result['f1'])
             aucs.append(fold_result['roc_auc'])
-            tprs.append(fold_result['TPR'])
-            fprs.append(fold_result['FPR'])
-            trained_model = fold_result['trained_model']
+            tprs.append(fold_result['tpr'])
+            fprs.append(fold_result['fpr'])
+            jaccards.append(fold_result['jaccard'])
+            thresholded_volume_deltas.append(fold_result['thresholded_volume_deltas'])
+            unthresholded_volume_deltas.append(fold_result['unthresholded_volume_deltas'])
+            image_wise_error_ratios.append(fold_result['image_wise_error_ratios'])
+            image_wise_jaccards.append(fold_result['image_wise_jaccards'])
+            train_evals.append(fold_result['train_evals'])
+            trained_models.append(fold_result['trained_model'])
 
-    return {
+    return ({
         'settings_repeats': n_repeats,
         'settings_folds': n_folds,
         'model_params': params,
-        'trained_model': trained_model,
+        'train_evals': train_evals,
         'test_accuracy': accuracies,
         'test_roc_auc': aucs,
         'test_f1': f1_scores,
+        'test_jaccard': jaccards,
         'test_TPR': tprs,
-        'test_FPR': fprs
-    }
+        'test_FPR': fprs,
+        'test_thresholded_volume_deltas': thresholded_volume_deltas,
+        'test_unthresholded_volume_deltas': unthresholded_volume_deltas,
+        'test_image_wise_error_ratios': image_wise_error_ratios,
+        'test_image_wise_jaccards': image_wise_jaccards
+    },
+        trained_models
+    )
 
 def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5, messaging = None):
     """
@@ -314,6 +333,13 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
     aucs = []
     accuracies = []
     f1_scores = []
+    jaccards = []
+    thresholded_volume_deltas = []
+    unthresholded_volume_deltas = []
+    image_wise_error_ratios = []
+    image_wise_jaccards = []
+    trained_models = []
+    train_evals = []
     failed_folds = 0
 
     if os.path.exists(save_dir) and len(os.listdir(save_dir)) != 0:
@@ -372,13 +398,21 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
             print('Evaluating fold ' + str(fold) + ' of ' + str(n_folds - 1) + ' of iteration' + str(iteration))
 
             try:
-                fold_result = external_evaluate_fold_cv(params, fold_dir, 'fold_' + str(fold), ext_mem_extension)
+                n_test_subjects = X_test.shape[0]
+                fold_result = external_evaluate_fold_cv(params, n_test_subjects, fold_dir, 'fold_' + str(fold), ext_mem_extension)
+
                 accuracies.append(fold_result['accuracy'])
                 f1_scores.append(fold_result['f1'])
                 aucs.append(fold_result['roc_auc'])
-                tprs.append(fold_result['TPR'])
-                fprs.append(fold_result['FPR'])
-                trained_model = fold_result['trained_model']
+                tprs.append(fold_result['tpr'])
+                fprs.append(fold_result['fpr'])
+                jaccards.append(fold_result['jaccard'])
+                thresholded_volume_deltas.append(fold_result['thresholded_volume_deltas'])
+                unthresholded_volume_deltas.append(fold_result['unthresholded_volume_deltas'])
+                image_wise_error_ratios.append(fold_result['image_wise_error_ratios'])
+                image_wise_jaccards.append(fold_result['image_wise_jaccards'])
+                train_evals.append(fold_result['train_evals'])
+                trained_models.append(fold_result['trained_model'])
                 pass
             except Exception as e:
                 failed_folds += 1
@@ -408,20 +442,27 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, X, y, receptive_field
     end = timeit.default_timer()
     print('Created, saved and evaluated splits in: ', end - start)
 
-    return {
+    return ({
         'settings_repeats': n_repeats,
         'settings_folds': n_folds,
         'failed_folds': failed_folds,
         'model_params': params,
-        'trained_model': trained_model,
+        'train_evals': train_evals,
         'test_accuracy': accuracies,
         'test_roc_auc': aucs,
         'test_f1': f1_scores,
+        'test_jaccard': jaccards,
         'test_TPR': tprs,
-        'test_FPR': fprs
-    }
+        'test_FPR': fprs,
+        'test_thresholded_volume_deltas': thresholded_volume_deltas,
+        'test_unthresholded_volume_deltas': unthresholded_volume_deltas,
+        'test_image_wise_error_ratios': image_wise_error_ratios,
+        'test_image_wise_jaccards': image_wise_jaccards
+    },
+        trained_models
+    )
 
-def external_evaluate_fold_cv(params, fold_dir, fold, ext_mem_extension):
+def external_evaluate_fold_cv(params, n_test_subjects, fold_dir, fold, ext_mem_extension):
     """
     Patient wise Repeated KFold Crossvalidation for xgboost
     This function evaluates a saved datafold
@@ -440,10 +481,13 @@ def external_evaluate_fold_cv(params, fold_dir, fold, ext_mem_extension):
     dtest = xgb.DMatrix(os.path.join(fold_dir, fold + '_test' + ext_mem_extension)
         + '#' + os.path.join(fold_dir, 'dtest.cache'))
 
+    evals_result = {}
+
     trained_model = xgb.train(params, dtrain,
         num_boost_round = n_estimators,
-        evals = [(dtest, 'Test')],
+        evals = [(dtest, 'eval'), (dtrain, 'train')],
         early_stopping_rounds = 30,
+        evals_result=evals_result,
         verbose_eval = False)
 
     # Clean up cache files
@@ -457,23 +501,13 @@ def external_evaluate_fold_cv(params, fold_dir, fold, ext_mem_extension):
 
     print('Testing', fold, 'in', fold_dir)
     y_test = dtest.get_label()
-    probas_= trained_model.predict(dtest, ntree_limit = trained_model.best_ntree_limit)
-    # Compute ROC curve, area under the curve, f1, and accuracy
-    threshold = 0.5 # threshold choosen ot evaluate f1 and accuracy of model
-    fpr, tpr, thresholds = roc_curve(y_test, probas_[:])
-    accuracy = accuracy_score(y_test, probas_[:] > threshold)
-    f1 = f1_score(y_test, probas_[:] > threshold)
-    roc_auc = auc(fpr, tpr)
+    probas_= trained_model.predict(dtest, ntree_limit=trained_model.best_ntree_limit)
 
-    return {
-        'trained_model': trained_model,
-        'FPR': fpr,
-        'TPR': tpr,
-        'thresholds': thresholds,
-        'accuracy': accuracy,
-        'f1': f1,
-        'roc_auc': roc_auc
-        }
+    results = evaluate(probas_, y_test, n_test_subjects)
+    results['trained_model'] = trained_model
+    results['train_evals'] = evals_result
+
+    return results
 
 def intermittent_repeated_kfold_cv(model, save_dir, X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5):
     """
@@ -601,15 +635,12 @@ def test_patient_wise_kfold_cv(data_dir, receptive_field_dimensions):
             X_test, y_test = rf.reshape_to_receptive_field(X_test, y_test, receptive_field_dimensions)
 
             probas_= model.predict_proba(X_test)
-            # Compute ROC curve, area under the curve, f1, and accuracy
-            threshold = 0.5 # threshold choosen ot evaluate f1 and accuracy of model
-            fpr, tpr, thresholds = roc_curve(y_test, probas_[:, 1])
-            accuracies.append(accuracy_score(y_test, probas_[:, 1] > threshold))
-            f1_scores.append(f1_score(y_test, probas_[:, 1] > threshold))
-            roc_auc = auc(fpr, tpr)
-            aucs.append(roc_auc)
-            tprs.append(tpr)
-            fprs.append(fpr)
+            n_test_subjects = X_test.shape[0]
+            results = evaluate(probas_, y_test, n_test_subjects)
+
+            aucs.append(results['roc_auc'])
+            tprs.append(results['tpr'])
+            fprs.append(results['fpr'])
 
     return {
         'settings_repeats': n_repeats,

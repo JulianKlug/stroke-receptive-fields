@@ -125,33 +125,21 @@ def evaluate_crossValidation(save_dir, model_dir, model_name, receptive_field_di
 
     params = XGB_PARAMS
 
+
     if create_folds:
         # External memory based script
-        results = ext_mem_repeated_kfold_cv(params, save_dir, input_data_array, output_data_array, receptive_field_dimensions,
+        results, trained_models = ext_mem_repeated_kfold_cv(params, save_dir, input_data_array, output_data_array, receptive_field_dimensions,
                                                 n_repeats = n_repeats, n_folds = n_folds, create_folds = create_folds, save_folds = save_folds, messaging = messaging)
 
         # RAM based scripts
         # results = intermittent_repeated_kfold_cv(model, save_dir, input_data_array, output_data_array, receptive_field_dimensions, n_repeats, n_folds)
         # results = repeated_kfold_cv(model, input_data_array, output_data_array, receptive_field_dimensions, n_repeats, n_folds)
     else:
-        results = external_evaluation_wrapper_patient_wise_kfold_cv(params, data_dir)
+        results, trained_models = external_evaluation_wrapper_patient_wise_kfold_cv(params, n_test_subjects, data_dir)
 
     results['rf'] = receptive_field_dimensions
 
-    accuracy = np.median(results['test_accuracy'])
-    roc_auc = np.median(results['test_roc_auc'])
-    f1 = np.median(results['test_f1'])
-
-    print('Results for', model_name)
-    print('Voxel-wise accuracy: ', accuracy)
-    print('ROC AUC score: ', roc_auc)
-    print('F1 score: ', f1)
-
-    # save the results and the params objects
-    torch.save(results, os.path.join(model_dir, 'scores_' + model_name + '.npy'))
-    torch.save(params, os.path.join(model_dir, 'params_' + model_name + '.npy'))
-
-    return accuracy, roc_auc, f1, params
+    return (results, trained_models)
 
 class Hyperopt_objective():
     def __init__(self, data_dir, save_dir, input_data_array = None, output_data_array = None, receptive_field_dimensions = None, create_folds = False):
