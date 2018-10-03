@@ -28,33 +28,29 @@ def plot_image_wise_scores_boxplot(rf_dims, thresholded_volume_deltas, unthresho
     unthresholded_volume_deltas = [x for _,x in sorted(zip(rf_dims, unthresholded_volume_deltas))]
     image_wise_error_ratios = [x for _,x in sorted(zip(rf_dims, image_wise_error_ratios))]
     image_wise_jaccards = [x for _,x in sorted(zip(rf_dims, image_wise_jaccards))]
-
     rf_dims.sort()
 
-    # for i in range(len(rf_dims)):
-    #
-    #     if len(thresholded_volume_deltas[i]) != 0:
-    #         median_roc_auc_score = np.median(roc_auc_scores[i])
-    #         mean_roc_auc = sum(roc_auc_scores[i]) / float(len(roc_auc_scores[i]))
-    #         mean_roc_auc_scores.append(mean_roc_auc)
-    #         mean_rf_dims.append(rf_dims[i])
-    #
-    #         std_auc = np.std(roc_auc_scores[i], axis=0)
-    #
-    # print('means', mean_roc_auc_scores)
-    # print(mean_rf_dims)
+    plt.subplot(2, 2, 1)
+    ax1 = sns.boxplot(data=thresholded_volume_deltas)#, label=r'thresholded volume deltas')
+    plt.title('Distribution of thresholded volume deltas')
+    ax1.set_xlabel('Receptive field size (as voxels from center)')
 
-    ax1 = sns.boxplot(data=thresholded_volume_deltas, label=r'thresholded volume deltas')
-    ax2 = sns.boxplot(data=unthresholded_volume_deltas, label=r'unthresholded volume deltas')
-    ax3 = sns.boxplot(data=image_wise_error_ratios, label=r'image-wise error ratio')
-    ax4 = sns.boxplot(data=image_wise_jaccards, label=r'image-wise jaccard score')
+    plt.subplot(2, 2, 2)
+    ax2 = sns.boxplot(data=unthresholded_volume_deltas)#, label=r'unthresholded volume deltas')
+    plt.title('Distribution of unthresholded volume deltas')
+    ax2.set_xlabel('Receptive field size (as voxels from center)')
 
+    plt.subplot(2, 2, 3)
+    ax3 = sns.boxplot(data=image_wise_error_ratios)#, label=r'image-wise error ratio')
+    plt.title('Distribution of image-wise error ratios')
+    ax3.set_xlabel('Receptive field size (as voxels from center)')
 
-    plt.ylabel('')
-    # plt.xlabel(r'Area under the ROC curve for')
-    # Receptive field size (as voxels from center)')
-    plt.title('Distribution of ROC AUC scores')
-    plt.legend(loc="upper right")
+    plt.subplot(2, 2, 4)
+    ax4 = sns.boxplot(data=image_wise_jaccards)#, label=r'image-wise jaccard scores')
+    plt.title('Distribution of image-wise Jaccard scores')
+    ax4.set_xlabel('Receptive field size (as voxels from center)')
+
+    # plt.legend(loc="upper right")
 
     plt.ion()
     plt.draw()

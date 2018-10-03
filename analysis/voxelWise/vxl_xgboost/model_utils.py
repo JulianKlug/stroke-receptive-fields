@@ -189,10 +189,8 @@ def evaluate_crossValidation(save_dir, model_dir, model_name, receptive_field_di
     }
 
 
-    # n_repeats = 20
-    # n_folds = 5
-    n_repeats = 1
-    n_folds = 3
+    n_repeats = 20
+    n_folds = 5
 
 
     if create_folds:
