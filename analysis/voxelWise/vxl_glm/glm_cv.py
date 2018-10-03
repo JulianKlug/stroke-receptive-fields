@@ -74,8 +74,6 @@ def glm_continuous_repeated_kfold_cv(X, y, receptive_field_dimensions, n_repeats
 
             # Get balancing selector respecting population wide distribution
             balancing_selector = get_undersample_selector_array(y_train)
-            tempX = []
-            tempY = []
             all_subj_X_train = np.empty([np.sum(balancing_selector), receptive_field_size])
             all_subj_y_train = np.empty(np.sum(balancing_selector))
             all_subj_index = 0

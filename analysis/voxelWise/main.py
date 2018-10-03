@@ -8,10 +8,10 @@ import manual_data
 from email_notification import NotificationSystem
 from vxl_glm.glm_cv import glm_continuous_repeated_kfold_cv
 
-# main_dir = '/Users/julian/master/data/hyperopt_test_LOO'
-main_dir = '/home/jk/master/data/pure_LOO'
+main_dir = '/Users/julian/master/data/hyperopt_test_LOO'
+# main_dir = '/home/jk/master/data/pure_LOO'
 # main_dir = '/home/klug/data/working_data/'
-data_dir = os.path.join(main_dir, 'saved_data')
+data_dir = os.path.join(main_dir, 'saved_dataset')
 model_dir = os.path.join(main_dir, 'models')
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
@@ -45,10 +45,10 @@ if not os.path.exists(save_dir):
 try:
     start = timeit.default_timer()
     save_folds = False
-    results, trained_models = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim,
-                                        input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
-    # results = glm_continuous_repeated_kfold_cv(IN, OUT, rf_dim, n_repeats = 1, n_folds = 3, messaging = notification_system)
-    # params = 0
+    # results, trained_models = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim,
+    #                                     input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
+    results = glm_continuous_repeated_kfold_cv(IN, OUT, rf_dim, n_repeats = 1, n_folds = 3, messaging = notification_system)
+    params = 0
     # score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, IN, OUT)
     # score, roc_auc, f1 = glm_continuous_repeated_kfold_cv()
     # best = model_utils.xgb_hyperopt(data_dir, save_dir, rf_dim, create_folds = False)
