@@ -7,7 +7,7 @@ import numpy as np
 flatten = lambda l : [item for sublist in l for item in sublist]
 
 
-def plot_image_wise_scores_boxplot(rf_dims, thresholded_volume_deltas, unthresholded_volume_deltas, image_wise_error_ratios):
+def plot_image_wise_scores_boxplot(rf_dims, thresholded_volume_deltas, unthresholded_volume_deltas, image_wise_error_ratios, image_wise_jaccards):
     """
     Plot distribution of volume deltas for each value of rf (receptive field dimension)
 
@@ -23,13 +23,11 @@ def plot_image_wise_scores_boxplot(rf_dims, thresholded_volume_deltas, unthresho
 
     sns.set_palette(sns.color_palette("deep", 5))
 
-    mean_roc_auc_scores = []
-    mean_rf_dims = []
-
     # print(rf_dims, roc_auc_scores)
     thresholded_volume_deltas = [x for _,x in sorted(zip(rf_dims, thresholded_volume_deltas))]
     unthresholded_volume_deltas = [x for _,x in sorted(zip(rf_dims, unthresholded_volume_deltas))]
     image_wise_error_ratios = [x for _,x in sorted(zip(rf_dims, image_wise_error_ratios))]
+    image_wise_jaccards = [x for _,x in sorted(zip(rf_dims, image_wise_jaccards))]
 
     rf_dims.sort()
 
@@ -49,10 +47,11 @@ def plot_image_wise_scores_boxplot(rf_dims, thresholded_volume_deltas, unthresho
     ax1 = sns.boxplot(data=thresholded_volume_deltas, label=r'thresholded volume deltas')
     ax2 = sns.boxplot(data=unthresholded_volume_deltas, label=r'unthresholded volume deltas')
     ax3 = sns.boxplot(data=image_wise_error_ratios, label=r'image-wise error ratio')
+    ax4 = sns.boxplot(data=image_wise_jaccards, label=r'image-wise jaccard score')
 
 
     plt.ylabel('')
-    plt.xlabel(r'Area under the ROC curve for')
+    # plt.xlabel(r'Area under the ROC curve for')
     # Receptive field size (as voxels from center)')
     plt.title('Distribution of ROC AUC scores')
     plt.legend(loc="upper right")
@@ -65,6 +64,7 @@ def wrapper_plot_image_wise_scores_boxplot(score_dir):
     thresholded_volume_deltas = []
     unthresholded_volume_deltas = []
     image_wise_error_ratios = []
+    image_wise_jaccards = []
     rf_dims = []
     settings_iterations = []
     settings_folds = []
@@ -84,9 +84,11 @@ def wrapper_plot_image_wise_scores_boxplot(score_dir):
             unthresholded_volume_deltas.append(unthresh_v_deltas)
             image_wise_err_r = flatten(score_obj['test_image_wise_error_ratios'])
             image_wise_error_ratios.append(image_wise_err_r)
+            image_wise_j = flatten(score_obj['test_image_wise_jaccards'])
+            image_wise_jaccards.append(image_wise_j)
 
             settings_iterations.append(score_obj['settings_repeats'])
             settings_folds.append(score_obj['settings_folds'])
             print('For rf:', rf_dims[-1], 'found', settings_folds[-1], 'folds, repeated', settings_iterations[-1], 'times')
 
-    plot_image_wise_scores_boxplot(rf_dims, thresholded_volume_deltas, unthresholded_volume_deltas, image_wise_error_ratios)
+    plot_image_wise_scores_boxplot(rf_dims, thresholded_volume_deltas, unthresholded_volume_deltas, image_wise_error_ratios, image_wise_jaccards)
