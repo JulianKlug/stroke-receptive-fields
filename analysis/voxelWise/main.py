@@ -44,7 +44,7 @@ if not os.path.exists(save_dir):
 try:
     start = timeit.default_timer()
     save_folds = False
-    # score, roc_auc, f1, params = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim,
+    # score, roc_auc, f1, params = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, n_repeats = 20, n_folds = 5,
     #                                     input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
     results = glm_continuous_repeated_kfold_cv(IN, OUT, rf_dim, n_repeats = 1, n_folds = 3, messaging = notification_system)
     params = 0
