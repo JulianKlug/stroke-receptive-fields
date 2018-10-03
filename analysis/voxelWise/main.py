@@ -47,7 +47,7 @@ try:
     save_folds = False
     # results, trained_models = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim,
     #                                     input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
-    results = glm_continuous_repeated_kfold_cv(IN, OUT, rf_dim, n_repeats = 1, n_folds = 3, messaging = notification_system)
+    results, trained_models = glm_continuous_repeated_kfold_cv(IN, OUT, rf_dim, n_repeats = 1, n_folds = 3, messaging = notification_system)
     params = 0
     # score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, IN, OUT)
     # score, roc_auc, f1 = glm_continuous_repeated_kfold_cv()
