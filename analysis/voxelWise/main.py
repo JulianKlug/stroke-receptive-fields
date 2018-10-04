@@ -47,10 +47,10 @@ if not os.path.exists(save_dir):
 try:
     start = timeit.default_timer()
     save_folds = False
-    # results, trained_models = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, n_repeats = 20, n_folds = 5,
-    #                                     clinical_input_array = CLIN, input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
-    results, trained_models = glm_continuous_repeated_kfold_cv(IN, OUT, rf_dim, n_repeats = 1, n_folds = 3, messaging = notification_system)
-    params = 0
+    results, trained_models = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, n_repeats = 1, n_folds = 2,
+                                        clinical_input_array = CLIN, input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
+    # results, trained_models = glm_continuous_repeated_kfold_cv(IN, OUT, rf_dim, n_repeats = 1, n_folds = 3, messaging = notification_system)
+    # params = 0
     # score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, IN, OUT)
     # score, roc_auc, f1 = glm_continuous_repeated_kfold_cv()
     # best = model_utils.xgb_hyperopt(data_dir, save_dir, rf_dim, create_folds = False)
