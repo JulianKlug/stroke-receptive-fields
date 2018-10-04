@@ -93,6 +93,12 @@ def load_clinical_data(ids, data_dir, filename, sheet = 'Sheet1'):
     final_parameter_data = cleaned_parameter_data.filter(items=FINAL_PARAMETERS + extra_columns)
     final_errors = final_schema.validate(final_parameter_data.filter(items=FINAL_PARAMETERS)) # do no validate ID
 
+    # Check if there are negative values
+    if (sum(n < 0 for n in final_parameter_data.values.flatten()) > 0):
+        raise ValueError('Negative values found in initial data. Can not replace NaNs.')
+    # As NaNs are not accepted by external memomry XGB, code NaN as -1
+    final_parameter_data = final_parameter_data.fillna(-1)
+
     if (len(final_errors) == 1):
         print(final_errors[0])
 
