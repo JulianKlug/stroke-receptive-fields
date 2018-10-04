@@ -9,21 +9,21 @@ import receptiveField as rf
 import visual, scoring_utils
 import data_loader
 
-main_dir = '/Users/julian/master/data/analysis_test_LOO/'
+main_dir = '/Users/julian/master/server_output/test1/'
 data_dir = os.path.join(main_dir, '')
-model_dir = main_dir
-model_name = 'cache_temp_test'
+model_dir = '/Users/julian/master/server_output/rf1_full_model'
+model_name = 'rf1_full_model'
 model_extension = '.pkl'
 model_path = os.path.join(model_dir, model_name + model_extension)
 
 input_dir = os.path.join(data_dir, 'LOO')
 
-input_image_path = os.path.join(input_dir, 'patient_19480907/Ct2_Cerebral_20160103/wcoreg_RAPID_MTT_[s]_patient_19480907.nii')
+input_image_path = os.path.join(input_dir, '898729/Ct2_Cerebrale/wcoreg_RAPID_MTT_898729.nii')
 input_img = nib.load(input_image_path)
 # input_data = input_img.get_data()
 
-# ct_sequences = ['wcoreg_RAPID_Tmax', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV', 'wcoreg_RAPID_rCBF']
-ct_sequences = ['wcoreg_RAPID_TMax_[s]', 'wcoreg_RAPID_MTT_[s]', 'wcoreg_RAPID_CBV', 'wcoreg_RAPID_CBF']
+ct_sequences = ['wcoreg_RAPID_Tmax', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV', 'wcoreg_RAPID_rCBF']
+# ct_sequences = ['wcoreg_RAPID_TMax_[s]', 'wcoreg_RAPID_MTT_[s]', 'wcoreg_RAPID_CBV', 'wcoreg_RAPID_CBF']
 # ct_sequences = ['wcoreg_RAPID_TMax_[s]']
 mri_sequences = ['wcoreg_VOI_lesion']
 
@@ -39,12 +39,15 @@ print('Predict output image with model: ', model_name)
 model = joblib.load(model_path)
 
 start = timeit.default_timer()
-predicted = rf.predict(input_data, input_dir, model, rf_dim, external_memory = False)
+predicted = rf.xgb_predict(input_data, input_dir, model, rf_dim, external_memory = True)
 end = timeit.default_timer()
 print('Prediction time: ', end - start)
 
 print('Predicted shape', predicted.shape)
-print('Predicted lesion size', np.sum(predicted))
+
+threshold = 0.5
+lesion_volume = np.sum(predicted > threshold)
+print('Predicted lesion volume', lesion_volume)
 
 scoring_utils.validate(predicted.reshape(-1), output_GT.reshape(-1))
 
