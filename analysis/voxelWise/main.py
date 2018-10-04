@@ -18,7 +18,7 @@ if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 
 # Path to save the model to
-model_name = 'clinical_data_test'
+model_name = 'clinical_data_test2'
 model_path = os.path.join(model_dir, model_name + '.pkl')
 if os.path.isfile(model_path):
     # file exists
@@ -34,8 +34,6 @@ CLIN, IN, OUT = data_loader.load_saved_data(data_dir)
 # CLIN = None
 # IN, OUT = manual_data.load(data_dir)
 
-print('yoooooo', IN.shape)
-visual.display(IN[0,:,:,:,3])
 
 rf = 1
 rf_dim = [rf, rf, rf]

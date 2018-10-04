@@ -182,11 +182,12 @@ def external_save_patient_wise_kfold_data_split(save_dir, imgX, y, receptive_fie
                 external_create_fold(fold_dir, fold, imgX, y, receptive_field_dimensions, train, test, clinX = clinX, ext_mem_extension = ext_mem_extension)
                 pass
             except Exception as e:
+                tb = traceback.format_exc()
                 print('Creation of fold failed.')
                 print(e)
+                print(tb)
                 if (messaging):
                     title = 'Minor error upon fold creation rf_hyperopt at ' + str(receptive_field_dimensions)
-                    tb = traceback.format_exc()
                     body = 'RF ' + str(receptive_field_dimensions) + '\n' + 'fold ' + str(fold) + '\n' +'iteration ' + str(iteration) + '\n' + 'Error ' + str(e) + '\n' + str(tb)
                     messaging.send_message(title, body)
 
@@ -334,11 +335,12 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, imgX, y, receptive_fi
                 external_create_fold(fold_dir, fold, imgX, y, receptive_field_dimensions, train, test, clinX = clinX, ext_mem_extension = ext_mem_extension)
                 pass
             except Exception as e:
+                tb = traceback.format_exc()
                 print('Creation of fold failed.')
                 print(e)
+                print(tb)
                 if (messaging):
                     title = 'Minor error upon fold creation rf_hyperopt at ' + str(receptive_field_dimensions)
-                    tb = traceback.format_exc()
                     body = 'RF ' + str(receptive_field_dimensions) + '\n' + 'fold ' + str(fold) + '\n' +'iteration ' + str(iteration) + '\n' + 'Error ' + str(e) + '\n' + str(tb)
                     messaging.send_message(title, body)
 
@@ -428,8 +430,6 @@ def external_create_fold(fold_dir, fold, imgX, y, receptive_field_dimensions, tr
         rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_train, subj_y_train, receptive_field_dimensions)
 
         if clinX is not None:
-            print('whole clinical', clinX_train[subject])
-
             # Add clinical data to every voxel
             # As discussed here: https://stackoverflow.com/questions/52132331/how-to-add-multiple-extra-columns-to-a-numpy-array/52132400#52132400
             subj_mixed_inputs = np.zeros((rf_inputs.shape[0], rf_inputs.shape[1] + clinX_train[subject].shape[0]), dtype = np.float) # Initialising matrix of the right size
@@ -442,7 +442,6 @@ def external_create_fold(fold_dir, fold, imgX, y, receptive_field_dimensions, tr
         # Balance by using predefined balancing_selector
         subj_X_train, subj_y_train = all_inputs[balancing_selector[subject].reshape(-1)], rf_outputs[balancing_selector[subject].reshape(-1)]
 
-        print('yuuuuuhuuuu', subj_X_train.shape, subj_X_train[0][108:131])
         train_data_path = os.path.join(fold_dir, 'fold_' + str(fold) + '_train' + ext_mem_extension)
         save_to_svmlight(subj_X_train, subj_y_train, train_data_path)
 
@@ -454,16 +453,14 @@ def external_create_fold(fold_dir, fold, imgX, y, receptive_field_dimensions, tr
         subj_X_test, subj_y_test = np.expand_dims(X_test[subject], axis=0), np.expand_dims(y_test[subject], axis=0)
         rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_test, subj_y_test, receptive_field_dimensions)
         if clinX is not None:
-            print(clinX[subject])
             # Add clinical data to every voxel
-            subj_mixed_inputs = np.zeros((rf_inputs.shape[0], rf_inputs.shape[1] + clinX_test[subject].shape[0]), int) # Initialising matrix of the right size
+            subj_mixed_inputs = np.zeros((rf_inputs.shape[0], rf_inputs.shape[1] + clinX_test[subject].shape[0]), np.float) # Initialising matrix of the right size
             subj_mixed_inputs[:, : rf_inputs.shape[1]] = rf_inputs
             subj_mixed_inputs[:, rf_inputs.shape[1] :]= clinX_test[subject]
             all_inputs = subj_mixed_inputs
         else:
             all_inputs = rf_inputs
         test_data_path = os.path.join(fold_dir, 'fold_' + str(fold) + '_test' + ext_mem_extension)
-        print('nouououo', all_inputs.shape)
 
         save_to_svmlight(all_inputs, rf_outputs, test_data_path)
 
@@ -486,10 +483,6 @@ def external_evaluate_fold_cv(params, fold_dir, fold, ext_mem_extension):
         + '#' + os.path.join(fold_dir, 'dtrain.cache'))
     dtest = xgb.DMatrix(os.path.join(fold_dir, fold + '_test' + ext_mem_extension)
         + '#' + os.path.join(fold_dir, 'dtest.cache'))
-
-    print('trainnnnnnnnn', dtrain.get_label().shape, dtrain.feature_names)
-    print('tessst', dtest.get_label().shape, dtest.feature_names)
-
 
     trained_model = xgb.train(params, dtrain,
         num_boost_round = n_estimators,

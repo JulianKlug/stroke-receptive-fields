@@ -85,7 +85,23 @@ def load_nifti(main_dir, ct_sequences, mri_sequences):
     return (ids, load_images(ct_paths, lesion_paths))
 
 # Save data as compressed numpy array
-def load_and_save_data(data_dir, main_dir, clinical_dir = None, clinical_name = None, ct_sequences = [], mri_sequences = []):
+def load_and_save_data(data_dir, main_dir, clinical_dir = None, clinical_name = None, ct_sequences = [], mri_sequences = [], external_memory=False):
+    """
+    Load data
+        - Image data (from preprocessed Nifti)
+        - Clinical data (from excel)
+
+    Args:
+        data_dir : directory to save data_to
+        main_dir : directory containing images
+        clinical_dir (optional) : directory containing clinical data (excel)
+        ct_sequences (optional, array) : array with names of ct sequences
+        mri_sequences (optional, array) : array with names of mri sequences
+        external_memory (optional, default False): on external memory usage, NaNs need to be converted to -1
+
+    Returns:
+        'clinical_data': numpy array containing the data for each of the patients [patient, (n_parameters)]
+    """
     if len(ct_sequences) < 1:
         # ct_sequences = ['wcoreg_RAPID_TMax_[s]', 'wcoreg_RAPID_MTT_[s]', 'wcoreg_RAPID_CBV', 'wcoreg_RAPID_CBF']
         ct_sequences = ['wcoreg_RAPID_Tmax', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV', 'wcoreg_RAPID_rCBF']
@@ -102,7 +118,7 @@ def load_and_save_data(data_dir, main_dir, clinical_dir = None, clinical_name = 
     ids = np.array(ids)
 
     if clinical_dir is not None:
-        included_subjects, clinical_data = load_clinical_data(ids, clinical_dir, clinical_name)
+        included_subjects, clinical_data = load_clinical_data(ids, clinical_dir, clinical_name, external_memory=external_memory)
 
         # Remove patients with exclusion criteria
         ct_inputs = ct_inputs[included_subjects]

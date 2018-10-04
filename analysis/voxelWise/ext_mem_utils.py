@@ -25,8 +25,6 @@ def save_to_svmlight(data, labels, path):
         file = open(path, 'w')
 
     first = True
-    print('first line', data.shape, data[0][108:131])
-
     for i, x in enumerate(data):
         indexes = x.nonzero()[0]
         values = x[indexes]
@@ -38,14 +36,8 @@ def save_to_svmlight(data, labels, path):
             values = x
             first = False
 
-        # print('libsvm', i, values[i])
         label = '%i'%(labels[i])
         pairs = ['%i:%f'%(indexes[j] + 1, values[j]) for j in range(len(indexes))]
-        if first:
-            print('x', x.shape, x[108:131])
-            print(indexes.shape)
-            print('pairs', i, pairs)
-            first = False
 
         sep_line = [label]
         sep_line.extend(pairs)
