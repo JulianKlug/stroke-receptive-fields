@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import torch
 import numpy as np
 
-def plot_auc_roc_distribution(rf_dims, roc_auc_scores, settings_iterations, settings_folds):
+def plot_auc_roc_boxplot(rf_dims, roc_auc_scores, settings_iterations, settings_folds):
     """
     Plot distribution of roc_auc scores for each value of rf (receptive field dimension)
 
@@ -23,6 +23,9 @@ def plot_auc_roc_distribution(rf_dims, roc_auc_scores, settings_iterations, sett
     if not (len(set(settings_folds)) == 1 and len(set(settings_iterations)) == 1):
         print('!Settings used differ between experiments!')
 
+
+    sns.set_palette(sns.color_palette("deep", 5))
+
     mean_roc_auc_scores = []
     mean_rf_dims = []
 
@@ -40,13 +43,12 @@ def plot_auc_roc_distribution(rf_dims, roc_auc_scores, settings_iterations, sett
 
             std_auc = np.std(roc_auc_scores[i], axis=0)
 
-            sns.distplot(roc_auc_scores[i], bins=20, kde=False, rug=True,
-                label=r'ROC AUC for rf = %i' % (int(rf_dims[i][0])))
-
     print('means', mean_roc_auc_scores)
     print(mean_rf_dims)
 
-    plt.ylabel('Number of observations')
+    ax = sns.boxplot(data=roc_auc_scores)
+
+    plt.ylabel('')
     plt.xlabel(r'Area under the ROC curve for %i-fold crossvalidation over %i iterations' % (int(n_folds), int(n_iterations)))
     # Receptive field size (as voxels from center)')
     plt.title('Distribution of ROC AUC scores')
@@ -56,7 +58,7 @@ def plot_auc_roc_distribution(rf_dims, roc_auc_scores, settings_iterations, sett
     plt.draw()
     plt.show()
 
-def wrapper_plot_auc_roc_distribution(score_dir):
+def wrapper_plot_auc_roc_boxplot(score_dir):
     roc_auc_scores = []
     rf_dims = []
     settings_iterations = []
@@ -74,4 +76,4 @@ def wrapper_plot_auc_roc_distribution(score_dir):
             settings_iterations.append(score_obj['settings_repeats'])
             settings_folds.append(score_obj['settings_folds'])
 
-    plot_auc_roc_distribution(rf_dims, roc_auc_scores, settings_iterations, settings_folds)
+    plot_auc_roc_boxplot(rf_dims, roc_auc_scores, settings_iterations, settings_folds)

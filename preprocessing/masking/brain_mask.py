@@ -40,6 +40,7 @@ def createBrainMask(data_dir, ct_sequences, save = True):
     combined_labels = -1 * (combined_labels > 3) + 1
 
     labeled = combined_labels.astype(int)
+    inverse_labeled = 1 - labeled
 
     if (save):
         ref_img = nib.load(channel_paths[0])
@@ -47,6 +48,8 @@ def createBrainMask(data_dir, ct_sequences, save = True):
         image_extension = '.nii'
         labeled_img = nib.Nifti1Image(labeled, affine=coordinate_space)
         nib.save(labeled_img, os.path.join(data_dir,  'brain_mask' + image_extension))
+        inverse_labeled_img = nib.Nifti1Image(inverse_labeled, affine=coordinate_space)
+        nib.save(inverse_labeled_img, os.path.join(data_dir,  'inverse_brain_mask' + image_extension))
 
     return labeled
 
@@ -68,7 +71,3 @@ def createBrainMaskWrapper(data_dir):
                     modality_dir = os.path.join(subject_dir, modality)
                     createBrainMask(modality_dir, ct_sequences)
                     print('Processed subject:', subject)
-
-
-dir = '/Users/julian/master/data/masking_test'
-createBrainMaskWrapper(dir)
