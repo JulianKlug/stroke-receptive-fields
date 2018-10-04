@@ -28,8 +28,15 @@ def save_to_svmlight(data, labels, path):
     print('first line', data.shape, data[0][108:131])
 
     for i, x in enumerate(data):
-        # indexes = x.nonzero()[0]
-        # values = x[indexes]
+        indexes = x.nonzero()[0]
+        values = x[indexes]
+
+        # Let the first line be not sparse, to mention all columns
+        # This avoids having a different column number between training and testing
+        if first:
+            indexes = np.array(range(x.size))
+            values = x
+            first = False
 
         # print('libsvm', i, values[i])
         label = '%i'%(labels[i])
