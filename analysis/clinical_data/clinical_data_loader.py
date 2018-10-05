@@ -88,7 +88,7 @@ def load_clinical_data(ids, data_dir, filename, sheet = 'Sheet1', external_memor
     cleaned_parameter_data['treat_anticoagulant'] = np.where(cleaned_parameter_data['treat_anticoagulant'] == 'yes', 1, 0)
 
     print(len(FINAL_PARAMETERS), 'clinical variables found.')
-    print(FINAL_PARAMETERS)
+    print(str(FINAL_PARAMETERS).encode(encoding='ascii',errors='replace'))
     # Final data extraction and validation
     extra_columns = ['id_hospital_case', 'treat_iat_before_ct'] # other columns needed for subject evaluation
     final_parameter_data = cleaned_parameter_data.filter(items=FINAL_PARAMETERS + extra_columns)
