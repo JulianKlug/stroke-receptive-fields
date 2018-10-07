@@ -422,11 +422,16 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, imgX, y, receptive_fi
     end = timeit.default_timer()
     print('Created, saved and evaluated splits in: ', end - start)
 
+    used_clinical = False
+    if clinX is not None:
+        used_clinical = True
+
     return ({
         'settings_repeats': n_repeats,
         'settings_folds': n_folds,
         'failed_folds': failed_folds,
         'model_params': params,
+        'used_clinical': used_clinical,
         'train_evals': train_evals,
         'test_accuracy': accuracies,
         'test_roc_auc': aucs,
