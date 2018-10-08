@@ -1,5 +1,5 @@
 import os
-from pandas import DataFrame
+import pandas as pd
 import nibabel as nib
 import numpy as np
 
@@ -11,7 +11,7 @@ def extract_infarct_volumes(data_dir, save_data = True, save_dir = None):
     lesion_GT_prefix = 'wcoreg_VOI_lesion'
     output_name = 'infarcted_volumes'
 
-    df = DataFrame(columns=('id', 'vox_volume', 'total_volume'))
+    df = pd.DataFrame(columns=('id', 'vox_volume', 'total_volume'))
     index = 0
 
     subjects = [o for o in os.listdir(data_dir)
@@ -45,3 +45,11 @@ def extract_infarct_volumes(data_dir, save_data = True, save_dir = None):
         df.to_csv(os.path.join(save_dir, output_name + '.csv'))
 
     return df
+
+def merge_with_clinical(clinical_path, volumes_path, merged_path = None):
+    if merged_path is None:
+        merged_path = os.path.join(os.getcwd(), 'merged_with_volumes.csv')
+    clinical_df = pd.read_excel(clinical_path)
+    volumes_df = pd.read_csv(volumes_path)
+    merged_df = pd.merge(clinical_df, volumes_df, how='left', left_on='id_hospital_case', right_on='id')
+    merged_df.to_csv(merged_path)
