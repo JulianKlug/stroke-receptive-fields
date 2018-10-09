@@ -38,7 +38,6 @@ def get_paths_and_ids(data_dir, ct_sequences, mri_sequences):
                         raise ValueError('Multiple images found for', channel, 'in', studies)
                     if len(indices) == 1:
                         study = studies[indices[0]]
-                        print('Adding', channel, study)
                         ct_channels.append(os.path.join(modality_dir, study))
 
         if len(ct_sequences) == len(ct_channels) and len(mri_sequences) == len(lesion_map):
