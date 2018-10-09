@@ -57,10 +57,18 @@ def glm_continuous_repeated_kfold_cv(imgX, y, receptive_field_dimensions, clinX 
         if clinX.shape[0] != imgX.shape[0]:
             raise ValueError('Not the same number of clinical and imaging data points:', clinX.shape, imgX.shape)
 
+    if len(imgX.shape) < 5:
+        imgX = np.expand_dims(imgX, axis=5)
     n_x, n_y, n_z, n_c = imgX[0].shape
     rf_x, rf_y, rf_z = receptive_field_dimensions
     window_d_x, window_d_y, window_d_z  = 2 * np.array(receptive_field_dimensions) + 1
     receptive_field_size = window_d_x * window_d_y * window_d_z * n_c
+
+    print('Input image data shape:', imgX.shape)
+    if clinX is not None:
+        print('Using clinical data', clinX.shape)
+    else:
+        print('Not using clinical data')
 
     start = timeit.default_timer()
     iteration = 0
@@ -121,14 +129,12 @@ def glm_continuous_repeated_kfold_cv(imgX, y, receptive_field_dimensions, clinX 
             test_rf_inputs, test_rf_outputs = rf.reshape_to_receptive_field(X_test, y_test, receptive_field_dimensions)
             if clinX is not None:
                 # Add clinical data to every voxel
-                print('kdfhsjkfh', test_rf_inputs.shape[1], clinX_test.shape)
                 subj_mixed_inputs = np.zeros((test_rf_inputs.shape[0], input_size), np.float) # Initialising matrix of the right size
                 subj_mixed_inputs[:, : test_rf_inputs.shape[1]] = test_rf_inputs
                 subj_mixed_inputs[:, test_rf_inputs.shape[1] :]= clinX_test
                 all_test_inputs = subj_mixed_inputs
             else:
                 all_test_inputs = test_rf_inputs
-            print('yeeer', all_test_inputs.shape)
 
             # Evaluate this fold
             print('Evaluating fold ' + str(fold) + ' of ' + str(n_folds - 1) + ' of iteration' + str(iteration))
