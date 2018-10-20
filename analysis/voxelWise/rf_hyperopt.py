@@ -23,14 +23,15 @@ notification_system = NotificationSystem()
 main_save_dir = os.path.join(main_dir, 'rf_hyperopt_data')
 
 CLIN, IN, OUT = data_loader.load_saved_data(data_dir)
-# CLIN = None
+CLIN = None
 # IN, OUT = data_loader.load_saved_data(data_dir)
 # IN, OUT = manual_data.load(data_dir)
+
 
 for rf in range(3):
     rf_dim = [rf, rf, rf]
 
-    model_name = 'clin_rf_hyperopt_' + str(rf)
+    model_name = 'single_glm_rf_hyperopt_' + str(rf)
     model_path = os.path.join(model_dir, model_name + '.pkl')
     if os.path.isfile(model_path):
         # file exists
@@ -50,10 +51,10 @@ for rf in range(3):
         save_folds = False
         n_repeats = 20
         n_folds = 5
-        results, trained_models = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, n_repeats = 1, n_folds = 3,
-                                            clinical_input_array = CLIN, input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
-        # results, trained_models = glm_continuous_repeated_kfold_cv(IN, OUT, rf_dim, n_repeats = 1, n_folds = 3, messaging = notification_system)
-        # params = 0
+        # results, trained_models = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, n_repeats = 1, n_folds = 3,
+        #                                     clinical_input_array = CLIN, input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
+        results, trained_models = glm_continuous_repeated_kfold_cv(IN, OUT, rf_dim, clinX = CLIN, n_repeats = 1, n_folds = 3, messaging = notification_system)
+        params = 0
 
         accuracy = np.median(results['test_accuracy'])
         roc_auc = np.median(results['test_roc_auc'])

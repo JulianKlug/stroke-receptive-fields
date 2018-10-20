@@ -21,6 +21,9 @@ def plot_auc_roc(rf_dims, roc_auc_scores, model_name = 'model', color = 'C0', di
     auc_upper_limits = []
     auc_lower_limits = []
 
+    z_critical = stats.norm.ppf(q = 0.975)  # Get the z-critical value*
+
+
     # print(rf_dims, roc_auc_scores)
     roc_auc_scores = [x for _,x in sorted(zip(rf_dims, roc_auc_scores))]
     rf_dims.sort()
@@ -34,7 +37,6 @@ def plot_auc_roc(rf_dims, roc_auc_scores, model_name = 'model', color = 'C0', di
             mean_rf_dims.append(rf_dims[i])
 
             std_auc = np.std(roc_auc_scores[i], axis=0)
-            z_critical = stats.norm.ppf(q = 0.975)  # Get the z-critical value*
             margin_of_error = z_critical * (std_auc/math.sqrt(len(roc_auc_scores[i])))
 
             print(i, median_roc_auc_score, mean_roc_auc, std_auc, margin_of_error)
@@ -76,8 +78,7 @@ def wrapper_plot_auc_roc(score_dir, model_name, color = 'C0', display_legend = T
     score_paths = []
     files = os.listdir(score_dir)
     for file in files:
-        if (file.startswith('scores_repeat20_rf_hyperopt_') or file.startswith('scores_rf_hyperopt_')
-        or file.startswith('scores_glm_rf_hyperopt')):
+        if file.startswith('scores'):
             score_path = os.path.join(score_dir, file)
             rf_dims.append(file.split('_')[-1].split('.')[0])
             # rf_dims.append(torch.load(score_path)['rf'])
@@ -85,9 +86,14 @@ def wrapper_plot_auc_roc(score_dir, model_name, color = 'C0', display_legend = T
     plot_auc_roc(rf_dims, roc_auc_scores, model_name, color, display_legend)
     # plt.show()
 
-def compare(dir1, dir2):
+def compare(dir1, dir2, dir3, dir4, dir5, dir6):
     fig, ax = plt.subplots()
     wrapper_plot_auc_roc(dir1, 'xgboost based model', 'C0')
-    wrapper_plot_auc_roc(dir2, 'glm based model', 'C1', display_legend = False)
+    wrapper_plot_auc_roc(dir2, '4 parameter glm based model', 'C1', display_legend = False)
+    wrapper_plot_auc_roc(dir3, 'CBF glm based model', 'C2', display_legend = False)
+    wrapper_plot_auc_roc(dir4, 'CBV parameter glm based model', 'C3', display_legend = False)
+    wrapper_plot_auc_roc(dir5, 'Tmax parameter glm based model', 'C4', display_legend = False)
+    wrapper_plot_auc_roc(dir6, 'MTT parameter glm based model', 'C5', display_legend = False)
+
     plt.legend(loc="lower right")
     plt.show()
