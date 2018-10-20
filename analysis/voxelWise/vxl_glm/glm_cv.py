@@ -127,7 +127,6 @@ def glm_continuous_repeated_kfold_cv(imgX, y, receptive_field_dimensions, clinX 
                 all_test_inputs = subj_mixed_inputs
             else:
                 all_test_inputs = test_rf_inputs
-            print('yeeer', all_test_inputs.shape)
 
             # Evaluate this fold
             print('Evaluating fold ' + str(fold) + ' of ' + str(n_folds - 1) + ' of iteration' + str(iteration))
