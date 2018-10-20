@@ -121,7 +121,6 @@ def glm_continuous_repeated_kfold_cv(imgX, y, receptive_field_dimensions, clinX 
             test_rf_inputs, test_rf_outputs = rf.reshape_to_receptive_field(X_test, y_test, receptive_field_dimensions)
             if clinX is not None:
                 # Add clinical data to every voxel
-                print('kdfhsjkfh', test_rf_inputs.shape[1], clinX_test.shape)
                 subj_mixed_inputs = np.zeros((test_rf_inputs.shape[0], input_size), np.float) # Initialising matrix of the right size
                 subj_mixed_inputs[:, : test_rf_inputs.shape[1]] = test_rf_inputs
                 subj_mixed_inputs[:, test_rf_inputs.shape[1] :]= clinX_test
