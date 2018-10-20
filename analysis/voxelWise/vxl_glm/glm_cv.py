@@ -57,10 +57,18 @@ def glm_continuous_repeated_kfold_cv(imgX, y, receptive_field_dimensions, clinX 
         if clinX.shape[0] != imgX.shape[0]:
             raise ValueError('Not the same number of clinical and imaging data points:', clinX.shape, imgX.shape)
 
+    if len(imgX.shape) < 5:
+        imgX = np.expand_dims(imgX, axis=5)
     n_x, n_y, n_z, n_c = imgX[0].shape
     rf_x, rf_y, rf_z = receptive_field_dimensions
     window_d_x, window_d_y, window_d_z  = 2 * np.array(receptive_field_dimensions) + 1
     receptive_field_size = window_d_x * window_d_y * window_d_z * n_c
+
+    print('Input image data shape:', imgX.shape)
+    if clinX is not None:
+        print('Using clinical data', clinX.shape)
+    else:
+        print('Not using clinical data')
 
     start = timeit.default_timer()
     iteration = 0

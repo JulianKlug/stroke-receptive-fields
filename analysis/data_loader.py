@@ -31,7 +31,13 @@ def get_paths_and_ids(data_dir, ct_sequences, mri_sequences):
                     if study.startswith(tuple(mri_sequences)):
                         lesion_map.append(os.path.join(modality_dir, study))
 
-                    if study.startswith(tuple(ct_sequences)):
+                # Force order specified in ct_sequences
+                for channel in ct_sequences:
+                    indices = [i for i, s in enumerate(studies) if channel in s]
+                    if len(indices) > 1:
+                        raise ValueError('Multiple images found for', channel, 'in', studies)
+                    if len(indices) == 1:
+                        study = studies[indices[0]]
                         ct_channels.append(os.path.join(modality_dir, study))
 
         if len(ct_sequences) == len(ct_channels) and len(mri_sequences) == len(lesion_map):
@@ -103,11 +109,13 @@ def load_and_save_data(data_dir, main_dir, clinical_dir = None, clinical_name = 
         'clinical_data': numpy array containing the data for each of the patients [patient, (n_parameters)]
     """
     if len(ct_sequences) < 1:
-        # ct_sequences = ['wcoreg_RAPID_TMax_[s]', 'wcoreg_RAPID_MTT_[s]', 'wcoreg_RAPID_CBV', 'wcoreg_RAPID_CBF']
-        ct_sequences = ['wcoreg_RAPID_Tmax', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV', 'wcoreg_RAPID_rCBF']
+        # ct_sequences = ['wcoreg_RAPID_TMax_[s]', 'wcoreg_RAPID_CBF', 'wcoreg_RAPID_MTT_[s]', 'wcoreg_RAPID_CBV']
+        ct_sequences = ['wcoreg_RAPID_Tmax', 'wcoreg_RAPID_rCBF', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV']
         # ct_sequences = ['wcoreg_RAPID_TMax_[s]']
     if len(mri_sequences) < 1:
         mri_sequences = ['wcoreg_VOI_lesion']
+
+    print('Sequences used', ct_sequences, mri_sequences)
 
     included_subjects = np.array([])
     clinical_data = np.array([])
@@ -128,15 +136,18 @@ def load_and_save_data(data_dir, main_dir, clinical_dir = None, clinical_name = 
 
     print('Saving a total of', ct_inputs.shape[0], 'subjects.')
     np.savez_compressed(os.path.join(data_dir, 'data_set'),
+        params = {'ct_sequences': ct_sequences, 'mri_sequences': mri_sequences},
         ids = ids, included_subjects = included_subjects, clinical_inputs = clinical_data, ct_inputs = ct_inputs, lesion_GT = lesion_GT)
 
 def load_saved_data(data_dir):
+    params = np.load(os.path.join(data_dir, 'data_set.npz'))['params']
     ids = np.load(os.path.join(data_dir, 'data_set.npz'))['ids']
     clinical_inputs = np.load(os.path.join(data_dir, 'data_set.npz'))['clinical_inputs']
     ct_inputs = np.load(os.path.join(data_dir, 'data_set.npz'))['ct_inputs']
     lesion_GT = np.load(os.path.join(data_dir, 'data_set.npz'))['lesion_GT']
 
     print('Loading a total of', ct_inputs.shape[0], 'subjects.')
+    print('Sequences used:', params)
     print(ids.shape[0] - ct_inputs.shape[0], 'subjects had been excluded.')
 
 
