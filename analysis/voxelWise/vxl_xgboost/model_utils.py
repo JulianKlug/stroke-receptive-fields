@@ -119,7 +119,8 @@ def create_external_memory(model_dir, model_name, data_dir, input_data_array, ou
     joblib.dump(trained_model, model_path)
 
 def evaluate_crossValidation(save_dir, model_dir, model_name, receptive_field_dimensions, n_repeats = 20, n_folds = 5,
-                                data_dir = None, input_data_array = None, output_data_array = None, create_folds = True, save_folds = True, messaging = None):
+                                data_dir = None, clinical_input_array = None, input_data_array = None, output_data_array = None,
+                                create_folds = True, save_folds = True, messaging = None):
 
     # model = xgb.XGBClassifier(verbose_eval=False, n_jobs = -1, tree_method = 'hist')
 
@@ -128,7 +129,7 @@ def evaluate_crossValidation(save_dir, model_dir, model_name, receptive_field_di
 
     if create_folds:
         # External memory based script
-        results, trained_models = ext_mem_repeated_kfold_cv(params, save_dir, input_data_array, output_data_array, receptive_field_dimensions,
+        results, trained_models = ext_mem_repeated_kfold_cv(params, save_dir, input_data_array, output_data_array, receptive_field_dimensions, clinX = clinical_input_array,
                                                 n_repeats = n_repeats, n_folds = n_folds, create_folds = create_folds, save_folds = save_folds, messaging = messaging)
 
         # RAM based scripts

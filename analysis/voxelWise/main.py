@@ -8,16 +8,16 @@ import manual_data
 from email_notification import NotificationSystem
 from vxl_glm.glm_cv import glm_continuous_repeated_kfold_cv
 
-main_dir = '/Users/julian/master/data/hyperopt_test_LOO'
-# main_dir = '/home/jk/master/data/pure_LOO'
+main_dir = '/Users/julian/master/data/clinical_data_test'
 # main_dir = '/home/klug/data/working_data/'
-data_dir = os.path.join(main_dir, 'saved_dataset')
+data_dir = os.path.join(main_dir, '')
+# data_dir = os.path.join(main_dir, 'saved_dataset')
 model_dir = os.path.join(main_dir, 'models')
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 
 # Path to save the model to
-model_name = 'voxel_wise_metrics_test1'
+model_name = 'clinical_data_glm_test1'
 model_path = os.path.join(model_dir, model_name + '.pkl')
 if os.path.isfile(model_path):
     # file exists
@@ -29,7 +29,9 @@ if os.path.isfile(model_path):
 notification_system = NotificationSystem()
 
 
-IN, OUT = data_loader.load_saved_data(data_dir)
+CLIN, IN, OUT = data_loader.load_saved_data(data_dir)
+# CLIN = None
+# IN, OUT = data_loader.load_saved_data(data_dir)
 # IN, OUT = manual_data.load(data_dir)
 
 
@@ -45,9 +47,9 @@ if not os.path.exists(save_dir):
 try:
     start = timeit.default_timer()
     save_folds = False
-    # results, trained_models = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim,
-    #                                     input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
-    results, trained_models = glm_continuous_repeated_kfold_cv(IN, OUT, rf_dim, n_repeats = 1, n_folds = 3, messaging = notification_system)
+    # results, trained_models = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, n_repeats = 1, n_folds = 2,
+    #                                     clinical_input_array = CLIN, input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
+    results, trained_models = glm_continuous_repeated_kfold_cv(IN, OUT, rf_dim, clinX = CLIN, n_repeats = 1, n_folds = 3, messaging = notification_system)
     params = 0
     # score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, IN, OUT)
     # score, roc_auc, f1 = glm_continuous_repeated_kfold_cv()
@@ -69,7 +71,6 @@ try:
     torch.save(results, os.path.join(model_dir, 'scores_' + model_name + '.npy'))
     torch.save(results['model_params'], os.path.join(model_dir, 'params_' + model_name + '.npy'))
     torch.save(trained_models, os.path.join(model_dir, 'trained_models_' + model_name + '.npy'))
-
 
     elapsed = timeit.default_timer() - start
     print('Evaluation done in: ', elapsed)

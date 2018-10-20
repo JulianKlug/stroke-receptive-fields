@@ -24,12 +24,20 @@ def save_to_svmlight(data, labels, path):
     except IOError:
         file = open(path, 'w')
 
+    first = True
     for i, x in enumerate(data):
         indexes = x.nonzero()[0]
         values = x[indexes]
 
+        # Let the first line be not sparse, to mention all columns
+        # This avoids having a different column number between training and testing
+        if first:
+            indexes = np.array(range(x.size))
+            values = x
+            first = False
+
         label = '%i'%(labels[i])
-        pairs = ['%i:%f'%(indexes[i] + 1, values[i]) for i in range(len(indexes))]
+        pairs = ['%i:%f'%(indexes[j] + 1, values[j]) for j in range(len(indexes))]
 
         sep_line = [label]
         sep_line.extend(pairs)

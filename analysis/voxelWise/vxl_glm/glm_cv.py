@@ -11,13 +11,14 @@ import receptiveField as rf
 from scoring_utils import evaluate
 
 
-def glm_continuous_repeated_kfold_cv(X, y, receptive_field_dimensions, n_repeats = 1, n_folds = 5, messaging = None):
+def glm_continuous_repeated_kfold_cv(imgX, y, receptive_field_dimensions, clinX = None, n_repeats = 1, n_folds = 5, messaging = None):
     """
     Patient wise Repeated KFold Crossvalidation for glm
     This function creates and evaluates k datafolds of n-iterations for crossvalidation,
 
     Args:
-        X: data to validate for all subjects in form of an np array [subject, x, y, z, c]
+        imgX: data to validate for all subjects in form of an np array [subject, x, y, z, c]
+        clinX (optional): clinical input data to validate for all subjects in form of a list [subject, clinical_data]
         y: dependent variables of data in a form of an np array [subject, x, y, z]
         receptive_field_dimensions : in the form of a list as  [rf_x, rf_y, rf_z]
         n_repeats (optional, default 1): repeats of kfold CV
@@ -51,8 +52,12 @@ def glm_continuous_repeated_kfold_cv(X, y, receptive_field_dimensions, n_repeats
     trained_models = []
     failed_folds = 0
 
+    if clinX is not None:
+        print('Using clinical data.')
+        if clinX.shape[0] != imgX.shape[0]:
+            raise ValueError('Not the same number of clinical and imaging data points:', clinX.shape, imgX.shape)
 
-    n_x, n_y, n_z, n_c = X[0].shape
+    n_x, n_y, n_z, n_c = imgX[0].shape
     rf_x, rf_y, rf_z = receptive_field_dimensions
     window_d_x, window_d_y, window_d_z  = 2 * np.array(receptive_field_dimensions) + 1
     receptive_field_size = window_d_x * window_d_y * window_d_z * n_c
@@ -65,16 +70,24 @@ def glm_continuous_repeated_kfold_cv(X, y, receptive_field_dimensions, n_repeats
 
         fold = 0
         kf = KFold(n_splits = n_folds, shuffle = True, random_state = j)
-        for train, test in kf.split(X, y):
+        for train, test in kf.split(imgX, y):
             print('Creating fold : ' + str(fold))
             # Create a new glm model for every fold
             glm_model = linear_model.LogisticRegression(verbose = 0, max_iter = 1000000000, n_jobs = -1)
 
-            X_train, y_train = X[train], y[train]
+            input_size = receptive_field_size
+            if clinX is not None:
+                input_size += clinX[0].size
+
+            X_train, y_train = imgX[train], y[train]
+            if clinX is not None:
+                clinX_train = clinX[train]
 
             # Get balancing selector respecting population wide distribution
             balancing_selector = get_undersample_selector_array(y_train)
-            all_subj_X_train = np.empty([np.sum(balancing_selector), receptive_field_size])
+
+            # Initialising arrays that will contain all data
+            all_subj_X_train = np.empty([np.sum(balancing_selector), input_size])
             all_subj_y_train = np.empty(np.sum(balancing_selector))
             all_subj_index = 0
 
@@ -83,23 +96,43 @@ def glm_continuous_repeated_kfold_cv(X, y, receptive_field_dimensions, n_repeats
                 subj_X_train, subj_y_train = np.expand_dims(X_train[subject], axis=0), np.expand_dims(y_train[subject], axis=0)
                 rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_train, subj_y_train, receptive_field_dimensions)
 
+                if clinX is not None:
+                    # Add clinical data to every voxel
+                    # As discussed here: https://stackoverflow.com/questions/52132331/how-to-add-multiple-extra-columns-to-a-numpy-array/52132400#52132400
+                    subj_mixed_inputs = np.zeros((rf_inputs.shape[0], input_size), dtype = np.float) # Initialising matrix of the right size
+                    subj_mixed_inputs[:, : rf_inputs.shape[1]] = rf_inputs
+                    subj_mixed_inputs[:, rf_inputs.shape[1] :]= clinX_train[subject]
+                    all_inputs = subj_mixed_inputs
+                else:
+                    all_inputs = rf_inputs
+
                 # Balance by using predefined balancing_selector
-                subj_X_train, subj_y_train = rf_inputs[balancing_selector[subject].reshape(-1)], rf_outputs[balancing_selector[subject].reshape(-1)]
+                subj_X_train, subj_y_train = all_inputs[balancing_selector[subject].reshape(-1)], rf_outputs[balancing_selector[subject].reshape(-1)]
                 all_subj_X_train[all_subj_index : all_subj_index + subj_X_train.shape[0], :] = subj_X_train
                 all_subj_y_train[all_subj_index : all_subj_index + subj_y_train.shape[0]] = subj_y_train
                 all_subj_index += subj_X_train.shape[0]
 
             glm_model.fit(all_subj_X_train, all_subj_y_train)
 
-            X_test, y_test = X[test], y[test]
+            X_test, y_test = imgX[test], y[test]
+            if clinX is not None:
+                clinX_test = clinX[test]
             n_test_subjects = X_test.shape[0]
             test_rf_inputs, test_rf_outputs = rf.reshape_to_receptive_field(X_test, y_test, receptive_field_dimensions)
+            if clinX is not None:
+                # Add clinical data to every voxel
+                subj_mixed_inputs = np.zeros((test_rf_inputs.shape[0], input_size), np.float) # Initialising matrix of the right size
+                subj_mixed_inputs[:, : test_rf_inputs.shape[1]] = test_rf_inputs
+                subj_mixed_inputs[:, test_rf_inputs.shape[1] :]= clinX_test
+                all_test_inputs = subj_mixed_inputs
+            else:
+                all_test_inputs = test_rf_inputs
 
             # Evaluate this fold
             print('Evaluating fold ' + str(fold) + ' of ' + str(n_folds - 1) + ' of iteration' + str(iteration))
 
             try:
-                fold_result = glm_evaluate_fold_cv(test_rf_inputs, test_rf_outputs, n_test_subjects, glm_model)
+                fold_result = glm_evaluate_fold_cv(all_test_inputs, test_rf_outputs, n_test_subjects, glm_model)
                 accuracies.append(fold_result['accuracy'])
                 f1_scores.append(fold_result['f1'])
                 aucs.append(fold_result['roc_auc'])
@@ -130,12 +163,19 @@ def glm_continuous_repeated_kfold_cv(X, y, receptive_field_dimensions, n_repeats
     end = timeit.default_timer()
     print('Created, saved and evaluated splits in: ', end - start)
 
+
+    used_clinical = False
+    if clinX is not None:
+        used_clinical = True
+
+
     return ({
         'rf': receptive_field_dimensions,
         'settings_repeats': n_repeats,
         'settings_folds': n_folds,
         'failed_folds': failed_folds,
         'model_params': 'glm',
+        'used_clinical': used_clinical,
         'test_accuracy': accuracies,
         'test_roc_auc': aucs,
         'test_f1': f1_scores,
