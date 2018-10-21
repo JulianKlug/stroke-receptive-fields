@@ -5,14 +5,16 @@ import os, timeit, traceback, torch
 import numpy as np
 import timeit
 from vxl_xgboost import model_utils
+from vxl_xgboost.external_mem_xgb import External_Memory_xgb
 from vxl_glm.glm_cv import glm_continuous_repeated_kfold_cv
 import visual
 import data_loader
 import manual_data
 from email_notification import NotificationSystem
+from cv_framework import repeated_kfold_cv
 
-main_dir = '/Users/julian/master/data/clinical_data_test'
-# main_dir = '/home/klug/data/working_data/'
+# main_dir = '/Users/julian/master/data/clinical_data_test'
+main_dir = '/home/klug/data/working_data/'
 data_dir = os.path.join(main_dir, '')
 model_dir = os.path.join(main_dir, 'models')
 if not os.path.exists(model_dir):
@@ -20,17 +22,17 @@ if not os.path.exists(model_dir):
 
 notification_system = NotificationSystem()
 
-main_save_dir = os.path.join(main_dir, 'rf_hyperopt_data')
+main_save_dir = os.path.join(main_dir, 'temp_data')
 
 CLIN, IN, OUT = data_loader.load_saved_data(data_dir)
-# CLIN = None
+CLIN = None
 # IN, OUT = data_loader.load_saved_data(data_dir)
 # IN, OUT = manual_data.load(data_dir)
 
 for rf in range(3):
     rf_dim = [rf, rf, rf]
 
-    model_name = 'clin_rf_hyperopt_' + str(rf)
+    model_name = 'cv_framework_rf_hyperopt_' + str(rf)
     model_path = os.path.join(model_dir, model_name + '.pkl')
     if os.path.isfile(model_path):
         # file exists
@@ -50,6 +52,11 @@ for rf in range(3):
         save_folds = False
         n_repeats = 20
         n_folds = 5
+
+        Model_Generator = External_Memory_xgb
+        results, trained_models = repeated_kfold_cv(Model_Generator, save_dir,
+            input_data_array = IN, output_data_array = OUT, clinical_input_array = CLIN,
+            receptive_field_dimensions = rf_dim, n_repeats = n_repeats, n_folds = n_folds, messaging = notification_system)
         results, trained_models = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, n_repeats = 1, n_folds = 3,
                                             clinical_input_array = CLIN, input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
         # results, trained_models = glm_continuous_repeated_kfold_cv(IN, OUT, rf_dim, n_repeats = 1, n_folds = 3, messaging = notification_system)
