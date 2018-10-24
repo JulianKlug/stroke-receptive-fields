@@ -137,7 +137,6 @@ def repeated_kfold_cv(Model_Generator, save_dir,
                 tb = traceback.format_exc()
                 print(e)
                 print(tb)
-                raise ValueError('A very specific bad thing happened.')
 
                 if (messaging):
                     title = 'Minor error upon fold evaluation rf_hyperopt at ' + str(receptive_field_dimensions)
@@ -209,6 +208,7 @@ def create_fold(model, imgX, y, receptive_field_dimensions, train, test, clinX =
     n_x, n_y, n_z, n_c = imgX[0].shape
     window_d_x, window_d_y, window_d_z  = 2 * np.array(receptive_field_dimensions) + 1
     receptive_field_size = window_d_x * window_d_y * window_d_z * n_c
+    # defines the size of X
     input_size = receptive_field_size
 
     if clinX is not None:
@@ -220,6 +220,8 @@ def create_fold(model, imgX, y, receptive_field_dimensions, train, test, clinX =
 
     # Get balancing selector respecting population wide distribution
     balancing_selector = get_undersample_selector_array(y_train)
+
+    model.initialise_train_data(balancing_selector, input_size)
 
     for subject in range(imgX_train.shape[0]):
         # reshape to rf expects data with n_subjects in first
@@ -245,6 +247,9 @@ def create_fold(model, imgX, y, receptive_field_dimensions, train, test, clinX =
     X_test, y_test = imgX[test], y[test]
     if clinX is not None:
         clinX_test = clinX[test]
+
+    n_vox_per_subj = n_x * n_y * n_z
+    model.initialise_test_data(n_vox_per_subj * X_test.shape[0], input_size)
 
     for subject in range(X_test.shape[0]):
         # reshape to rf expects data with n_subjects in first

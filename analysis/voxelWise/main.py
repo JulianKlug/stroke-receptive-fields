@@ -3,6 +3,7 @@ import numpy as np
 import timeit
 from vxl_xgboost import model_utils
 from vxl_xgboost.external_mem_xgb import External_Memory_xgb
+from vxl_xgboost.ram_xgb import Ram_xgb
 import visual
 import data_loader
 import manual_data
@@ -52,7 +53,7 @@ if not os.path.exists(save_dir):
 try:
     start = timeit.default_timer()
     save_folds = False
-    Model_Generator = External_Memory_xgb
+    Model_Generator = Ram_xgb
     results, trained_models = repeated_kfold_cv(Model_Generator, save_dir,
         input_data_array = IN, output_data_array = OUT, clinical_input_array = CLIN,
         receptive_field_dimensions = rf_dim, n_repeats = n_repeats, n_folds = n_folds, messaging = notification_system)
