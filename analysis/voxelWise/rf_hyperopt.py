@@ -1,4 +1,4 @@
-import sys
+import sys, shutil
 sys.path.insert(0, '../')
 
 import os, timeit, traceback, torch
@@ -8,6 +8,7 @@ from vxl_xgboost import model_utils
 from vxl_xgboost.external_mem_xgb import External_Memory_xgb
 from vxl_xgboost.ram_xgb import Ram_xgb
 from vxl_glm.glm_cv import glm_continuous_repeated_kfold_cv
+from vxl_glm.LogReg_glm import LogReg_glm
 import visual
 import data_loader
 import manual_data
@@ -33,7 +34,7 @@ CLIN = None
 for rf in range(3):
     rf_dim = [rf, rf, rf]
 
-    model_name = 'cv_framework_rf_hyperopt_' + str(rf)
+    model_name = 'cv_framework_glm_rf_hyperopt_' + str(rf)
     model_path = os.path.join(model_dir, model_name + '.pkl')
     if os.path.isfile(model_path):
         # file exists
@@ -54,7 +55,7 @@ for rf in range(3):
         n_repeats = 20
         n_folds = 5
 
-        Model_Generator = Ram_xgb
+        Model_Generator = LogReg_glm
         results, trained_models = repeated_kfold_cv(Model_Generator, save_dir,
             input_data_array = IN, output_data_array = OUT, clinical_input_array = CLIN,
             receptive_field_dimensions = rf_dim, n_repeats = n_repeats, n_folds = n_folds, messaging = notification_system)
@@ -84,6 +85,14 @@ for rf in range(3):
         title = model_name + ' finished Cross-Validation'
         body = 'accuracy ' + str(accuracy) + '\n' + 'ROC AUC ' + str(roc_auc) + '\n' + 'F1 ' + str(f1) + '\n' + 'RF ' + str(rf) + '\n' + 'Time elapsed ' + str(elapsed) + '\n' + str(params)
         notification_system.send_message(title, body)
+
+        if not save_folds:
+            # Erase saved fold to free up space
+            try:
+                shutil.rmtree(save_dir)
+            except:
+                print('No directory to clear.')
+
     except Exception as e:
         title = model_name + ' errored upon rf_hyperopt'
         tb = traceback.format_exc()
