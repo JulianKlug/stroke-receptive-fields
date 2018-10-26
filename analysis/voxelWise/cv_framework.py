@@ -81,11 +81,11 @@ def repeated_kfold_cv(Model_Generator, save_dir,
 
     iteration = 0
     for j in np.random.randint(0, high=10000, size=n_repeats):
+        iteration += 1
         iteration_dir = os.path.join(save_dir, 'iteration_' + str(iteration))
         if not os.path.exists(iteration_dir):
             os.makedirs(iteration_dir)
 
-        iteration += 1
         print('Crossvalidation: Creating iteration ' + str(iteration) + ' of a total of ' + str(n_repeats))
 
         fold = 0
@@ -218,7 +218,7 @@ def create_fold(model, imgX, y, receptive_field_dimensions, train, test, clinX =
     if clinX is not None:
         clinX_train = clinX[train]
 
-    # Get balancing selector respecting population wide distribution
+    # Get balancing selector --> random subset respecting population wide distribution
     balancing_selector = get_undersample_selector_array(y_train)
 
     model.initialise_train_data(balancing_selector, input_size)
