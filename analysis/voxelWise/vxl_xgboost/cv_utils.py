@@ -328,6 +328,8 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, imgX, y, receptive_fi
     unthresholded_volume_deltas = []
     image_wise_error_ratios = []
     image_wise_jaccards = []
+    image_wise_hausdorff = []
+    image_wise_dice = []
     trained_models = []
     train_evals = []
     failed_folds = 0
@@ -391,6 +393,8 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, imgX, y, receptive_fi
                 unthresholded_volume_deltas.append(fold_result['unthresholded_volume_deltas'])
                 image_wise_error_ratios.append(fold_result['image_wise_error_ratios'])
                 image_wise_jaccards.append(fold_result['image_wise_jaccards'])
+                image_wise_hausdorff.append(fold_result['image_wise_hausdorff'])
+                image_wise_dice.append(fold_result['image_wise_dice'])
                 train_evals.append(fold_result['train_evals'])
                 trained_models.append(fold_result['trained_model'])
                 pass
@@ -429,6 +433,8 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, imgX, y, receptive_fi
     return ({
         'settings_repeats': n_repeats,
         'settings_folds': n_folds,
+        'settings_imgX_shape': imgX.shape,
+        'settings_y_shape': y.shape,
         'failed_folds': failed_folds,
         'model_params': params,
         'used_clinical': used_clinical,
@@ -442,7 +448,9 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, imgX, y, receptive_fi
         'test_thresholded_volume_deltas': thresholded_volume_deltas,
         'test_unthresholded_volume_deltas': unthresholded_volume_deltas,
         'test_image_wise_error_ratios': image_wise_error_ratios,
-        'test_image_wise_jaccards': image_wise_jaccards
+        'test_image_wise_jaccards': image_wise_jaccards,
+        'test_image_wise_hausdorff': image_wise_hausdorff,
+        'test_image_wise_dice': image_wise_dice
     },
         trained_models
     )
