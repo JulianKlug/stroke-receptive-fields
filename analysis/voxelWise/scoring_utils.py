@@ -3,8 +3,7 @@ from sklearn.metrics import f1_score, accuracy_score, fbeta_score, jaccard_simil
 import numpy as np
 from scipy.spatial.distance import directed_hausdorff
 
-
-def evaluate(probas_, y_test, n_subjects):
+def evaluate(probas_, y_test, n_subjects, n_x, n_y, n_z):
     # Voxel-wise statistics
     # Compute ROC curve, area under the curve, f1, and accuracy
     fpr, tpr, thresholds = roc_curve(y_test, probas_[:])
@@ -38,9 +37,11 @@ def evaluate(probas_, y_test, n_subjects):
         image_wise_error_ratios.append(
             np.sum(abs(image_wise_y_test[subj] - (image_wise_probas[subj] > threshold))) / n_voxels
         )
-        image_wise_jaccards.append(jaccard_similarity_score(y_test, probas_[:] > threshold))
-        image_wise_dice.append(dice(y_test, probas_[:] > threshold))
-        image_wise_hausdorff.append(directed_hausdorff(y_test, probas_[:] > threshold)[0])
+        image_wise_jaccards.append(jaccard_similarity_score(image_wise_y_test[subj], image_wise_probas[subj][:] > threshold))
+        image_wise_dice.append(dice(image_wise_y_test[subj], image_wise_probas[subj][:] > threshold))
+
+        hsd = hausdorff_distance(image_wise_y_test[subj], image_wise_probas[subj][:] > threshold, n_x, n_y, n_z)
+        image_wise_hausdorff.append(hsd)
 
 
     return {
@@ -100,3 +101,12 @@ def dice(im1, im2, empty_score=1.0):
     intersection = np.logical_and(im1, im2)
 
     return 2. * intersection.sum() / im_sum
+
+def hausdorff_distance(data1, data2, n_x, n_y, n_z):
+    data1 = data1.reshape(n_x, n_y, n_z)
+    data2 = data2.reshape(n_x, n_y, n_z)
+
+    coordinates1 = np.array(np.where(data1 > 0)).transpose()
+    coordinates2 = np.array(np.where(data2 > 0)).transpose()
+
+    return directed_hausdorff(coordinates1, coordinates2)[0]
