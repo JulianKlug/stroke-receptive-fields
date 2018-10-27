@@ -334,6 +334,7 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, imgX, y, receptive_fi
     train_evals = []
     failed_folds = 0
 
+    n_x, n_y, n_z, n_c = imgX[0].shape
     if clinX is not None:
         print('Using clinical data.')
         if clinX.shape[0] != imgX.shape[0]:
@@ -381,7 +382,7 @@ def ext_mem_continuous_repeated_kfold_cv(params, save_dir, imgX, y, receptive_fi
             print('Evaluating fold ' + str(fold) + ' of ' + str(n_folds - 1) + ' of iteration' + str(iteration))
             try:
                 n_test_subjects = imgX[test].shape[0]
-                fold_result = external_evaluate_fold_cv(params, n_test_subjects, fold_dir, 'fold_' + str(fold), ext_mem_extension)
+                fold_result = external_evaluate_fold_cv(params, n_test_subjects, fold_dir, 'fold_' + str(fold), ext_mem_extension, n_x, n_y, n_z)
 
                 accuracies.append(fold_result['accuracy'])
                 f1_scores.append(fold_result['f1'])
@@ -525,7 +526,7 @@ def external_create_fold(fold_dir, fold, imgX, y, receptive_field_dimensions, tr
         save_to_svmlight(all_inputs, rf_outputs, test_data_path)
 
 
-def external_evaluate_fold_cv(params, n_test_subjects, fold_dir, fold, ext_mem_extension):
+def external_evaluate_fold_cv(params, n_test_subjects, fold_dir, fold, ext_mem_extension, n_x, n_y, n_z):
     """
     Patient wise Repeated KFold Crossvalidation for xgboost
     This function evaluates a saved datafold
@@ -566,7 +567,7 @@ def external_evaluate_fold_cv(params, n_test_subjects, fold_dir, fold, ext_mem_e
     y_test = dtest.get_label()
     probas_= trained_model.predict(dtest, ntree_limit=trained_model.best_ntree_limit)
 
-    results = evaluate(probas_, y_test, n_test_subjects)
+    results = evaluate(probas_, y_test, n_test_subjects, n_x, n_y, n_z)
     results['trained_model'] = trained_model
     results['train_evals'] = evals_result
 
