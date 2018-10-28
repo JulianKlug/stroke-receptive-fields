@@ -50,8 +50,7 @@ def plot_train_evaluation(evals, model_name, save_plot):
     plt.legend(loc="lower right")
 
     if save_plot:
-        print(model_dir, model_name, model_name.split('.')[0] + '.png')
-        plt.savefig(os.path.join('/', *model_dir, model_name.split('.')[0] + '.png'))
+        plt.savefig(os.path.join('/', *model_dir, model_name.split('.')[0] + '_AUC_EVAL.png'))
         plt.close()
     else:
         plt.ion()
