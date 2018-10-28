@@ -66,7 +66,7 @@ def wrapper_plot_auc_roc_distribution(score_dir):
     settings_folds = []
     files = os.listdir(score_dir)
     for file in files:
-        if (file.startswith('scores_repeat20_rf')):
+        if (file.startswith('scores_')):
             score_path = os.path.join(score_dir, file)
             score_obj = torch.load(score_path)
             try:
