@@ -1,14 +1,12 @@
 import os, timeit, traceback, torch
 import numpy as np
 import timeit
-from vxl_xgboost import model_utils
 from vxl_xgboost.external_mem_xgb import External_Memory_xgb
 from vxl_xgboost.ram_xgb import Ram_xgb
 import visual
 import data_loader
 import manual_data
 from email_notification import NotificationSystem
-from vxl_glm.glm_cv import glm_continuous_repeated_kfold_cv
 from cv_framework import repeated_kfold_cv
 
 main_dir = '/Users/julian/master/data/clinical_data_test'
@@ -37,6 +35,10 @@ CLIN = None
 # IN, OUT = data_loader.load_saved_data(data_dir)
 # IN, OUT = manual_data.load(data_dir)
 
+n_repeats = 20
+n_folds = 5
+
+Model_Generator = Ram_xgb
 
 rf = 0
 rf_dim = [rf, rf, rf]
@@ -57,15 +59,6 @@ try:
     results, trained_models = repeated_kfold_cv(Model_Generator, save_dir,
         input_data_array = IN, output_data_array = OUT, clinical_input_array = CLIN,
         receptive_field_dimensions = rf_dim, n_repeats = n_repeats, n_folds = n_folds, messaging = notification_system)
-    # results, trained_models = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, n_repeats = 1, n_folds = 2,
-    #                                     clinical_input_array = CLIN, input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
-    # results, trained_models = glm_continuous_repeated_kfold_cv(IN, OUT, rf_dim, clinX = CLIN, n_repeats = 1, n_folds = 3, messaging = notification_system)
-    # params = 0
-    # score, roc_auc, f1 = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, IN, OUT)
-    # score, roc_auc, f1 = glm_continuous_repeated_kfold_cv()
-    # best = model_utils.xgb_hyperopt(data_dir, save_dir, rf_dim, create_folds = False)
-    # model_utils.create(model_dir, model_name, IN, OUT, rf_dim)
-    # model_utils.create_external_memory(model_dir, model_name, data_dir, IN, OUT, rf_dim)
 
     accuracy = np.median(results['test_accuracy'])
     roc_auc = np.median(results['test_roc_auc'])

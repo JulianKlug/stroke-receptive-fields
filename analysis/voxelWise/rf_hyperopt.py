@@ -4,10 +4,8 @@ sys.path.insert(0, '../')
 import os, timeit, traceback, torch
 import numpy as np
 import timeit
-from vxl_xgboost import model_utils
 from vxl_xgboost.external_mem_xgb import External_Memory_xgb
 from vxl_xgboost.ram_xgb import Ram_xgb
-from vxl_glm.glm_cv import glm_continuous_repeated_kfold_cv
 from vxl_glm.LogReg_glm import LogReg_glm
 import visual
 import data_loader
@@ -28,8 +26,12 @@ main_save_dir = os.path.join(main_dir, 'temp_data')
 
 CLIN, IN, OUT = data_loader.load_saved_data(data_dir)
 CLIN = None
-# IN, OUT = data_loader.load_saved_data(data_dir)
 # IN, OUT = manual_data.load(data_dir)
+
+n_repeats = 10
+n_folds = 5
+
+Model_Generator = LogReg_glm
 
 for rf in range(3):
     rf_dim = [rf, rf, rf]
@@ -52,17 +54,10 @@ for rf in range(3):
     try:
         start = timeit.default_timer()
         save_folds = False
-        n_repeats = 20
-        n_folds = 5
 
-        Model_Generator = LogReg_glm
         results, trained_models = repeated_kfold_cv(Model_Generator, save_dir,
             input_data_array = IN, output_data_array = OUT, clinical_input_array = CLIN,
             receptive_field_dimensions = rf_dim, n_repeats = n_repeats, n_folds = n_folds, messaging = notification_system)
-        # results, trained_models = model_utils.evaluate_crossValidation(save_dir, model_dir, model_name, rf_dim, n_repeats = 1, n_folds = 3,
-        #                                     clinical_input_array = CLIN, input_data_array = IN, output_data_array = OUT, create_folds = True, save_folds = save_folds, messaging = notification_system)
-        # results, trained_models = glm_continuous_repeated_kfold_cv(IN, OUT, rf_dim, n_repeats = 1, n_folds = 3, messaging = notification_system)
-        # params = 0
 
         accuracy = np.median(results['test_accuracy'])
         roc_auc = np.median(results['test_roc_auc'])
