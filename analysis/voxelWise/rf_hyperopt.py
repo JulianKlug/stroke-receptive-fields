@@ -12,13 +12,14 @@ import data_loader
 import manual_data
 from email_notification import NotificationSystem
 from cv_framework import repeated_kfold_cv
+from figures.train_test_evaluation import wrapper_plot_train_evaluation
 
 # main_dir = '/Users/julian/master/server_output'
 main_dir = '/home/klug/data/working_data/'
 data_dir = os.path.join(main_dir, 'saved_data')
-model_dir = os.path.join(main_dir, 'models')
-if not os.path.exists(model_dir):
-    os.makedirs(model_dir)
+main_output_dir = os.path.join(main_dir, 'models')
+if not os.path.exists(main_output_dir):
+    os.makedirs(main_output_dir)
 
 notification_system = NotificationSystem()
 
@@ -37,13 +38,15 @@ for rf in range(3):
     rf_dim = [rf, rf, rf]
 
     model_name = 'cv_framework_glm_rf_hyperopt_' + str(rf)
-    model_path = os.path.join(model_dir, model_name + '.pkl')
-    if os.path.isfile(model_path):
+    output_dir = os.path.join(main_output_dir, model_name + '_output')
+    if os.path.exists(output_dir):
         # file exists
-        print('This model already exists: ', model_path)
+        print('This model already has saved output ', output_dir)
         validation = input('Type `yes` if you wish to delete your previous model:\t')
         if (validation != 'yes'):
-            raise ValueError('Model already exists. Choose another model name or delete current model')
+            raise ValueError('Model already has saved data. Choose another model name or delete current model')
+        else:
+            shutil.rmtree(output_dir)
 
     print('Evaluating', model_name, 'with rf:', rf_dim)
 
@@ -70,10 +73,11 @@ for rf in range(3):
         print('F1 score: ', f1)
 
         # save the results and the params objects
-        torch.save(results, os.path.join(model_dir, 'scores_' + model_name + '.npy'))
-        torch.save(results['model_params'], os.path.join(model_dir, 'params_' + model_name + '.npy'))
-        torch.save(trained_models, os.path.join(model_dir, 'trained_models_' + model_name + '.npy'))
-
+        os.makedirs(output_dir)
+        torch.save(results, os.path.join(output_dir, 'scores_' + model_name + '.npy'))
+        torch.save(results['model_params'], os.path.join(output_dir, 'params_' + model_name + '.npy'))
+        torch.save(trained_models, os.path.join(output_dir, 'trained_models_' + model_name + '.npy'))
+        wrapper_plot_train_evaluation(os.path.join(output_dir, 'scores_' + model_name + '.npy'), save_plot = True)
 
         elapsed = timeit.default_timer() - start
         print('Evaluation done in: ', elapsed)

@@ -1,31 +1,38 @@
+import sys, shutil
+sys.path.insert(0, '../')
+
 import os, timeit, traceback, torch
 import numpy as np
 import timeit
 from vxl_xgboost.external_mem_xgb import External_Memory_xgb
 from vxl_xgboost.ram_xgb import Ram_xgb
+from vxl_glm.LogReg_glm import LogReg_glm
 import visual
 import data_loader
 import manual_data
 from email_notification import NotificationSystem
 from cv_framework import repeated_kfold_cv
+from figures.train_test_evaluation import wrapper_plot_train_evaluation
 
 main_dir = '/Users/julian/master/data/clinical_data_test'
 # main_dir = '/home/klug/data/working_data/'
 data_dir = os.path.join(main_dir, '')
 # data_dir = os.path.join(main_dir, 'saved_dataset')
-model_dir = os.path.join(main_dir, 'models')
-if not os.path.exists(model_dir):
-    os.makedirs(model_dir)
+main_output_dir = os.path.join(main_dir, 'models')
+if not os.path.exists(main_output_dir):
+    os.makedirs(main_output_dir)
 
 # Path to save the model to
-model_name = 'cv_framework_test1'
-model_path = os.path.join(model_dir, model_name + '.pkl')
-if os.path.isfile(model_path):
+model_name = 'save_framework_test1'
+output_dir = os.path.join(main_output_dir, model_name + '_output')
+if os.path.exists(output_dir):
     # file exists
-    print('This model already exists: ', model_path)
+    print('This model already has saved output ', output_dir)
     validation = input('Type `yes` if you wish to delete your previous model:\t')
     if (validation != 'yes'):
-        raise ValueError('Model already exists. Choose another model name or delete current model')
+        raise ValueError('Model already has saved data. Choose another model name or delete current model')
+    else:
+        shutil.rmtree(output_dir)
 
 notification_system = NotificationSystem()
 
@@ -35,17 +42,14 @@ CLIN = None
 # IN, OUT = data_loader.load_saved_data(data_dir)
 # IN, OUT = manual_data.load(data_dir)
 
-n_repeats = 20
+n_repeats = 10
 n_folds = 5
 
-Model_Generator = Ram_xgb
+Model_Generator = LogReg_glm
 
 rf = 0
 rf_dim = [rf, rf, rf]
 print('Evaluating', model_name, 'with rf:', rf_dim)
-
-n_repeats = 20
-n_folds = 5
 
 main_save_dir = os.path.join(main_dir, 'external_mem_data')
 save_dir = os.path.join(main_save_dir, model_name + '_data')
@@ -55,7 +59,6 @@ if not os.path.exists(save_dir):
 try:
     start = timeit.default_timer()
     save_folds = False
-    Model_Generator = Ram_xgb
     results, trained_models = repeated_kfold_cv(Model_Generator, save_dir,
         input_data_array = IN, output_data_array = OUT, clinical_input_array = CLIN,
         receptive_field_dimensions = rf_dim, n_repeats = n_repeats, n_folds = n_folds, messaging = notification_system)
@@ -71,9 +74,11 @@ try:
     print('F1 score: ', f1)
 
     # save the results and the params objects
-    torch.save(results, os.path.join(model_dir, 'scores_' + model_name + '.npy'))
-    torch.save(results['model_params'], os.path.join(model_dir, 'params_' + model_name + '.npy'))
-    torch.save(trained_models, os.path.join(model_dir, 'trained_models_' + model_name + '.npy'))
+    os.makedirs(output_dir)
+    torch.save(results, os.path.join(output_dir, 'scores_' + model_name + '.npy'))
+    torch.save(results['model_params'], os.path.join(output_dir, 'params_' + model_name + '.npy'))
+    torch.save(trained_models, os.path.join(output_dir, 'trained_models_' + model_name + '.npy'))
+    wrapper_plot_train_evaluation(os.path.join(output_dir, 'scores_' + model_name + '.npy'), save_plot = True)
 
     elapsed = timeit.default_timer() - start
     print('Evaluation done in: ', elapsed)

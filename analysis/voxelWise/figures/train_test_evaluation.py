@@ -60,6 +60,6 @@ def plot_train_evaluation(evals, model_name, save_plot):
 
 def wrapper_plot_train_evaluation(score_path, save_plot = False):
     evals = torch.load(score_path)['train_evals']
-    if not evals:
+    if not any(evals):
         return
     plot_train_evaluation(evals, score_path, save_plot)
