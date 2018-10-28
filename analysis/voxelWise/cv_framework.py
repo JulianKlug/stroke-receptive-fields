@@ -50,6 +50,8 @@ def repeated_kfold_cv(Model_Generator, save_dir,
     unthresholded_volume_deltas = []
     image_wise_error_ratios = []
     image_wise_jaccards = []
+    image_wise_hausdorff = []
+    image_wise_dice = []
     trained_models = []
     train_evals = []
     failed_folds = 0
@@ -63,6 +65,7 @@ def repeated_kfold_cv(Model_Generator, save_dir,
         imgX = np.expand_dims(imgX, axis=5)
 
     print('Input image data shape:', imgX.shape)
+    n_x, n_y, n_z, n_c = imgX[0].shape
     if clinX is not None:
         print('Using clinical data.')
         if clinX.shape[0] != imgX.shape[0]:
@@ -116,7 +119,7 @@ def repeated_kfold_cv(Model_Generator, save_dir,
             # Evaluate this fold
             print('Evaluating fold ' + str(fold) + ' of ' + str(n_folds - 1) + ' of iteration' + str(iteration) + ' in', str(fold_dir))
             try:
-                fold_result = evaluate_fold(model, n_test_subjects)
+                fold_result = evaluate_fold(model, n_test_subjects, n_x, n_y, n_z)
 
                 accuracies.append(fold_result['accuracy'])
                 f1_scores.append(fold_result['f1'])
@@ -128,6 +131,8 @@ def repeated_kfold_cv(Model_Generator, save_dir,
                 unthresholded_volume_deltas.append(fold_result['unthresholded_volume_deltas'])
                 image_wise_error_ratios.append(fold_result['image_wise_error_ratios'])
                 image_wise_jaccards.append(fold_result['image_wise_jaccards'])
+                image_wise_hausdorff.append(fold_result['image_wise_hausdorff'])
+                image_wise_dice.append(fold_result['image_wise_dice'])
                 train_evals.append(fold_result['train_evals'])
                 trained_models.append(fold_result['trained_model'])
                 pass
@@ -168,6 +173,8 @@ def repeated_kfold_cv(Model_Generator, save_dir,
     return ({
         'settings_repeats': n_repeats,
         'settings_folds': n_folds,
+        'settings_imgX_shape': imgX.shape,
+        'settings_y_shape': y.shape,
         'failed_folds': failed_folds,
         'model_params': model_params,
         'rf': receptive_field_dimensions,
@@ -182,7 +189,9 @@ def repeated_kfold_cv(Model_Generator, save_dir,
         'test_thresholded_volume_deltas': thresholded_volume_deltas,
         'test_unthresholded_volume_deltas': unthresholded_volume_deltas,
         'test_image_wise_error_ratios': image_wise_error_ratios,
-        'test_image_wise_jaccards': image_wise_jaccards
+        'test_image_wise_jaccards': image_wise_jaccards,
+        'test_image_wise_hausdorff': image_wise_hausdorff,
+        'test_image_wise_dice': image_wise_dice
     },
         trained_models
     )
@@ -266,7 +275,7 @@ def create_fold(model, imgX, y, receptive_field_dimensions, train, test, clinX =
 
         model.add_test_data(all_inputs, rf_outputs)
 
-def evaluate_fold(model, n_test_subjects):
+def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z):
     """
     Patient wise Repeated KFold Crossvalidation
     This function evaluates a saved datafold
@@ -278,10 +287,12 @@ def evaluate_fold(model, n_test_subjects):
     """
 
     trained_model, evals_result = model.train()
+    print('Model sucessfully trained.')
     probas_ = model.predict_test_data()
     y_test = model.get_test_labels()
 
-    results = evaluate(probas_, y_test, n_test_subjects)
+    results = evaluate(probas_, y_test, n_test_subjects, n_x, n_y, n_z)
+    print('Model sucessfully tested.')
     results['trained_model'] = trained_model
     results['train_evals'] = evals_result
 
