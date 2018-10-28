@@ -2,7 +2,7 @@ import os
 import xgboost as xgb
 import numpy as np
 
-class Ram_xgb():
+class Default_ram_xgb():
     """
     """
     def __init__(self, fold_dir, fold_name):
