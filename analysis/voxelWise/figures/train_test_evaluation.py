@@ -50,8 +50,7 @@ def plot_train_evaluation(evals, model_name, save_plot):
     plt.legend(loc="lower right")
 
     if save_plot:
-        print(model_dir, model_name, model_name.split('.')[0] + '.png')
-        plt.savefig(os.path.join('/', *model_dir, model_name.split('.')[0] + '.png'))
+        plt.savefig(os.path.join('/', *model_dir, model_name.split('.')[0] + '_AUC_EVAL.png'))
         plt.close()
     else:
         plt.ion()
@@ -60,6 +59,6 @@ def plot_train_evaluation(evals, model_name, save_plot):
 
 def wrapper_plot_train_evaluation(score_path, save_plot = False):
     evals = torch.load(score_path)['train_evals']
-    if not evals:
+    if not any(evals):
         return
     plot_train_evaluation(evals, score_path, save_plot)

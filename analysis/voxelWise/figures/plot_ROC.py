@@ -4,7 +4,7 @@ from sklearn.metrics import f1_score, accuracy_score, fbeta_score, jaccard_simil
 import numpy as np
 import scipy.stats as stats
 
-def plot_roc(tprs, fprs):
+def plot_roc(tprs, fprs, model_dir = None, model_name = None, save_plot = False):
     """
     Plot ROC curves
 
@@ -23,8 +23,8 @@ def plot_roc(tprs, fprs):
         roc_auc = auc(fprs[i], tprs[i])
         aucs.append(roc_auc)
         tprs_interp.append(np.interp(mean_fpr, fprs[i], tprs[i]))
-        plt.plot(fprs[i], tprs[i], lw=1, alpha=0.3,
-                label='ROC fold %d (AUC = %0.2f)' % (i, roc_auc))
+        # plt.plot(fprs[i], tprs[i], lw=1, alpha=0.3,
+        #         label='ROC fold %d (AUC = %0.2f)' % (i, roc_auc))
 
     plt.plot([0, 1], [0, 1], linestyle='--', lw=0.5, color='r',
         label='Chance', alpha=.8)
@@ -47,8 +47,15 @@ def plot_roc(tprs, fprs):
     plt.ylim([-0.05, 1.05])
     plt.xlabel('1 - Specificity (False Positive Rate)')
     plt.ylabel('Sensibility (True Positive Rate)')
-    plt.title('Receiver operating characteristic')
+    if not model_name:
+        model_name = 'Receiver Operating Caracteristic'
+    plt.title(model_name)
     plt.legend(loc="lower right")
-    plt.ion()
-    plt.draw()
-    plt.show()
+
+    if save_plot:
+        plt.savefig(os.path.join(model_dir, model_name.split('.')[0] + '_ROC.png'))
+        plt.close()
+    else:
+        plt.ion()
+        plt.draw()
+        plt.show()
