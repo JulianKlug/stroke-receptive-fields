@@ -15,6 +15,10 @@ def plot_roc(tprs, fprs, model_dir = None, model_name = None, save_plot = False)
     Returns:
         undefined
     """
+    if save_plot:
+        plt.ioff()
+        plt.switch_backend('agg')
+        
     tprs_interp = []
     aucs = []
     mean_fpr = np.linspace(0, 1, 100)

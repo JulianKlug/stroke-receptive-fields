@@ -18,6 +18,7 @@ def plot_train_evaluation(evals, model_name, save_plot):
     """
     if save_plot:
         plt.ioff()
+        plt.switch_backend('agg')
 
     train_scores = pd.DataFrame([x['train']['auc'] for x in evals])
     test_scores = pd.DataFrame([x['eval']['auc'] for x in evals])
