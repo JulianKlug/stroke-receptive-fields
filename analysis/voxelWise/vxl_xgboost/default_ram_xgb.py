@@ -6,7 +6,7 @@ class Default_ram_xgb():
     """
     """
     def __init__(self, fold_dir, fold_name):
-        super(Ram_xgb, self).__init__()
+        super(Default_ram_xgb, self).__init__()
         self.n_estimators = 999
         self.evals_result = {}
         self.trained_model = None
