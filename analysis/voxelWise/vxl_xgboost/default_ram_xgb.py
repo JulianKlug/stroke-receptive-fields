@@ -2,11 +2,18 @@ import os
 import xgboost as xgb
 import numpy as np
 
+PARAMS = {
+    'eval_metric': 'auc',
+    'n_jobs': -1,
+    'objective': 'binary:logistic'
+}
+
 class Default_ram_xgb():
     """
     """
     def __init__(self, fold_dir, fold_name):
         super(Default_ram_xgb, self).__init__()
+        self.params = PARAMS
         self.n_estimators = 999
         self.evals_result = {}
         self.trained_model = None
@@ -27,11 +34,11 @@ class Default_ram_xgb():
     @staticmethod
     def hello_world():
         print('DEFAULT RAM XGB Model')
-        print('default xgb params')
+        print('default xgb params', PARAMS)
 
     @staticmethod
     def get_settings():
-        return 'default xgb'
+        return PARAMS
 
     def initialise_train_data(self, n_datapoints, data_dimensions):
         self.X_train = np.empty([np.sum(n_datapoints), data_dimensions])
@@ -68,8 +75,7 @@ class Default_ram_xgb():
         self.dtrain = xgb.DMatrix(self.X_train, self.y_train)
         self.dtest = xgb.DMatrix(self.X_test, self.y_test)
 
-        params = {}
-        self.trained_model = xgb.train(params, self.dtrain,
+        self.trained_model = xgb.train(self.params, self.dtrain,
             num_boost_round = self.n_estimators,
             evals = [(self.dtest, 'eval'), (self.dtrain, 'train')],
             early_stopping_rounds = 30,
