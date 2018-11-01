@@ -86,12 +86,12 @@ def wrapper_plot_auc_roc(score_dir, model_name, color = 'C0', display_legend = T
     plot_auc_roc(rf_dims, roc_auc_scores, model_name, color, display_legend)
     # plt.show()
 
-def compare(dir1, dir2, dir3, dir4):
+def compare(dir1, dir2, dir3, dir4 ):
     fig, ax = plt.subplots()
-    wrapper_plot_auc_roc(dir1, 'xgboost based model', 'C0')
-    wrapper_plot_auc_roc(dir2, 'multi-parameter glm', 'C1', display_legend = False)
+    wrapper_plot_auc_roc(dir1, 'multi-parameter glm', 'C0')
+    wrapper_plot_auc_roc(dir2, 'MTT glm', 'C1', display_legend = False)
     wrapper_plot_auc_roc(dir3, 'Tmax glm', 'C2', display_legend = False)
-    wrapper_plot_auc_roc(dir4, 'CBF glm', 'C3', display_legend = False)
+    wrapper_plot_auc_roc(dir4, 'xgb', 'C3', display_legend = False)
     plt.legend(loc="lower right")
     plt.title('CV Framework')
     plt.show()
