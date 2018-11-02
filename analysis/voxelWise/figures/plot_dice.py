@@ -87,13 +87,12 @@ def wrapper_plot_dice(score_dir, model_name, color = 'C0', display_legend = True
     plot_dice(rf_dims, dice_scores, model_name, color, display_legend)
     # plt.show()
 
-def compare(dir1, dir2, dir3, dir4, dir5):
+def compare(dir1, dir2, dir3, dir4):
     fig, ax = plt.subplots()
     wrapper_plot_dice(dir1, 'multi-parameter glm', 'C0')
     wrapper_plot_dice(dir2, 'MTT glm', 'C1', display_legend = False)
     wrapper_plot_dice(dir3, 'Tmax glm', 'C2', display_legend = False)
     wrapper_plot_dice(dir4, 'xgb', 'C3', display_legend = False)
-    wrapper_plot_dice(dir5, 'def xgb', 'C4', display_legend = False)
     plt.legend(loc="upper right")
     plt.title('CV Framework')
     plt.show()
