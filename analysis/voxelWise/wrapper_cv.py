@@ -17,7 +17,7 @@ from figures.plot_ROC import plot_roc
 
 notification_system = NotificationSystem()
 
-def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, feature_scaling
+def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, feature_scaling,
                 n_repeats, n_folds, main_save_dir, main_output_dir):
 
     if not os.path.exists(main_output_dir):
@@ -59,7 +59,7 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, feature
         save_folds = False
 
         results, trained_models = repeated_kfold_cv(Model_Generator, save_dir, save_function = save_function,
-            input_data_array = IN, output_data_array = OUT, clinical_input_array = CLIN, mask_array = MASKS, feature_scaling = feature_scaling
+            input_data_array = IN, output_data_array = OUT, clinical_input_array = CLIN, mask_array = MASKS, feature_scaling = feature_scaling,
             receptive_field_dimensions = rf_dim, n_repeats = n_repeats, n_folds = n_folds, messaging = notification_system)
 
         accuracy = np.median(results['test_accuracy'])
