@@ -17,7 +17,7 @@ from figures.plot_ROC import plot_roc
 
 notification_system = NotificationSystem()
 
-def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN,
+def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS,
                 n_repeats, n_folds, main_save_dir, main_output_dir):
 
     if not os.path.exists(main_output_dir):
@@ -59,23 +59,25 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN,
         save_folds = False
 
         results, trained_models = repeated_kfold_cv(Model_Generator, save_dir, save_function = save_function,
-            input_data_array = IN, output_data_array = OUT, clinical_input_array = CLIN,
+            input_data_array = IN, output_data_array = OUT, clinical_input_array = CLIN, mask_array = MASKS,
             receptive_field_dimensions = rf_dim, n_repeats = n_repeats, n_folds = n_folds, messaging = notification_system)
 
         accuracy = np.median(results['test_accuracy'])
         roc_auc = np.median(results['test_roc_auc'])
         f1 = np.median(results['test_f1'])
+        dice = np.median([item for sublist in results['test_image_wise_dice'] for item in sublist])
         params = results['model_params']
 
         print('Results for', model_name)
         print('Voxel-wise accuracy: ', accuracy)
         print('ROC AUC score: ', roc_auc)
+        print('Dice score: ', dice)
         print('F1 score: ', f1)
 
         elapsed = timeit.default_timer() - start
         print('Evaluation done in: ', elapsed)
         title = model_name + ' finished Cross-Validation'
-        body = 'accuracy ' + str(accuracy) + '\n' + 'ROC AUC ' + str(roc_auc) + '\n' + 'F1 ' + str(f1) + '\n' + 'RF ' + str(rf_dim) + '\n' + 'Time elapsed ' + str(elapsed) + '\n' + str(params)
+        body = 'accuracy ' + str(accuracy) + '\n' + 'ROC AUC ' + str(roc_auc) + '\n' + 'Dice ' + str(dice) + '\n' + 'F1 ' + str(f1) + '\n' + 'RF ' + str(rf_dim) + '\n' + 'Time elapsed ' + str(elapsed) + '\n' + str(params)
         notification_system.send_message(title, body)
 
         if not save_folds:

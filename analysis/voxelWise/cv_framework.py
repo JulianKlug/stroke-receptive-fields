@@ -7,7 +7,7 @@ import receptiveField as rf
 from scoring_utils import evaluate
 
 def repeated_kfold_cv(Model_Generator, save_dir, save_function,
-            input_data_array, output_data_array, clinical_input_array = None,
+            input_data_array, output_data_array, clinical_input_array = None, mask_array = None,
             receptive_field_dimensions = [1,1,1], n_repeats = 1, n_folds = 5, messaging = None):
     """
     Patient wise Repeated KFold Crossvalidation for a given model
@@ -20,6 +20,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
         clinX (optional): clinical input data to validate for all subjects in form of a list [subject, clinical_data]
         imgX: image input data to validate for all subjects in form of an np array [subject, x, y, z, c]
         y: dependent variables of data in a form of an np array [subject, x, y, z]
+        mask_array: boolean array differentiating brain from brackground
         receptive_field_dimensions : in the form of a list as  [rf_x, rf_y, rf_z]
         n_repeats (optional, default 1): repeats of kfold CV
         n_folds (optional, default 5): number of folds in kfold (ie. k)
@@ -44,14 +45,16 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
     if len(imgX.shape) < 5:
         imgX = np.expand_dims(imgX, axis=5)
 
-    used_clinical = False
-    if clinX is not None:
-        used_clinical = True
-
     model_params = Model_Generator.get_settings()
     Model_Generator.hello_world()
 
     # Initialising variables for evaluation
+    used_clinical = False
+    if clinX is not None:
+        used_clinical = True
+    used_brain_masking = False
+    if mask_array is not None:
+        used_brain_masking = True
     failed_folds = 0
     trained_models = []
     results = {
@@ -63,6 +66,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
         'model_params': model_params,
         'rf': receptive_field_dimensions,
         'used_clinical': used_clinical,
+        'masked_background': used_brain_masking,
         'train_evals': [],
         'test_accuracy': [],
         'test_roc_auc': [],
@@ -121,7 +125,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
             # Create this fold
             try:
                 print('Creating fold : ' + str(fold))
-                create_fold(model, imgX, y, receptive_field_dimensions, train, test, clinX = clinX)
+                create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, test, clinX = clinX)
             except Exception as e:
                 tb = traceback.format_exc()
                 print('Creation of fold failed.')
@@ -135,7 +139,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
             # Evaluate this fold
             print('Evaluating fold ' + str(fold) + ' of ' + str(n_folds - 1) + ' of iteration' + str(iteration) + ' in', str(fold_dir))
             try:
-                fold_result = evaluate_fold(model, n_test_subjects, n_x, n_y, n_z)
+                fold_result = evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, mask_array, test)
 
                 results['test_accuracy'].append(fold_result['accuracy'])
                 results['test_f1'].append(fold_result['f1'])
@@ -187,7 +191,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
 
     return (results, trained_models)
 
-def create_fold(model, imgX, y, receptive_field_dimensions, train, test, clinX = None):
+def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, test, clinX = None):
     """
     Create a fold given the data and the test / train distribution
     External Memory: saves the folds as libsvm files
@@ -213,12 +217,13 @@ def create_fold(model, imgX, y, receptive_field_dimensions, train, test, clinX =
     if clinX is not None:
         input_size += clinX[0].size
 
-    imgX_train, y_train = imgX[train], y[train]
+    imgX_train, y_train, mask_train = imgX[train], y[train], mask_array[train]
     if clinX is not None:
         clinX_train = clinX[train]
 
     # Get balancing selector --> random subset respecting population wide distribution
-    balancing_selector = get_undersample_selector_array(y_train)
+    # Balancing chooses only data inside the brain (mask is applied through balancing)
+    balancing_selector = get_undersample_selector_array(y_train, mask_train)
 
     model.initialise_train_data(balancing_selector, input_size)
 
@@ -243,12 +248,11 @@ def create_fold(model, imgX, y, receptive_field_dimensions, train, test, clinX =
         model.add_train_data(subj_X_train, subj_y_train)
 
 
-    X_test, y_test = imgX[test], y[test]
+    X_test, y_test, mask_test = imgX[test], y[test], mask_array[test]
     if clinX is not None:
         clinX_test = clinX[test]
 
-    n_vox_per_subj = n_x * n_y * n_z
-    model.initialise_test_data(n_vox_per_subj * X_test.shape[0], input_size)
+    model.initialise_test_data(np.sum(mask_test), input_size)
 
     for subject in range(X_test.shape[0]):
         # reshape to rf expects data with n_subjects in first
@@ -263,9 +267,11 @@ def create_fold(model, imgX, y, receptive_field_dimensions, train, test, clinX =
         else:
             all_inputs = rf_inputs
 
-        model.add_test_data(all_inputs, rf_outputs)
+        subj_X_test, subj_y_test = all_inputs[mask_test[subject].reshape(-1)], rf_outputs[mask_test[subject].reshape(-1)]
 
-def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z):
+        model.add_test_data(subj_X_test, subj_y_test)
+
+def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, mask_array, test):
     """
     Patient wise Repeated KFold Crossvalidation
     This function evaluates a saved datafold
@@ -280,8 +286,9 @@ def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z):
     print('Model sucessfully trained.')
     probas_ = model.predict_test_data()
     y_test = model.get_test_labels()
+    mask_test = mask_array[test]
 
-    results = evaluate(probas_, y_test, n_test_subjects, n_x, n_y, n_z)
+    results = evaluate(probas_, y_test, mask_test, n_test_subjects, n_x, n_y, n_z)
     print('Model sucessfully tested.')
     results['trained_model'] = trained_model
     results['train_evals'] = evals_result
