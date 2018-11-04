@@ -1,7 +1,7 @@
 import os
 import nibabel as nib
 import numpy as np
-from .clinical_data.clinical_data_loader import load_clinical_data
+from clinical_data.clinical_data_loader import load_clinical_data
 
 # provided a given directory return list of paths to ct_sequences and lesion_maps
 def get_paths_and_ids(data_dir, ct_sequences, mri_sequences):

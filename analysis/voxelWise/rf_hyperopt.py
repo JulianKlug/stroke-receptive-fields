@@ -17,14 +17,14 @@ CLIN, IN, OUT = data_loader.load_saved_data(data_dir)
 CLIN = None
 # IN, OUT = manual_data.load(data_dir)
 
-n_repeats = 10
-n_folds = 5
+n_repeats = 1
+n_folds = 2
 
 Model_Generator = LogReg_glm
 
-for rf in range(3):
+for rf in range(0,1):
     rf_dim = [rf, rf, rf]
-    model_name = 'cv_framework_glm_rf_hyperopt_' + str(rf)
+    model_name = 'saving_glm_rf_hyperopt_' + str(rf)
     launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN,
                     n_repeats, n_folds, main_save_dir, main_output_dir)
 
