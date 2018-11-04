@@ -6,7 +6,7 @@ from sampling_utils import get_undersample_selector_array
 import receptiveField as rf
 from scoring_utils import evaluate
 
-def repeated_kfold_cv(Model_Generator, save_dir,
+def repeated_kfold_cv(Model_Generator, save_dir, save_function,
             input_data_array, output_data_array, clinical_input_array = None,
             receptive_field_dimensions = [1,1,1], n_repeats = 1, n_folds = 5, messaging = None):
     """
@@ -14,7 +14,9 @@ def repeated_kfold_cv(Model_Generator, save_dir,
     This function creates and evaluates k datafolds of n-iterations for crossvalidation
 
     Args:
-        data_dir: directory to use for saving the intermittent states
+        Model_Generator: initialises a given model
+        save_dir: directory to use for saving the intermittent states
+        save_function: function for saving the states --> save(results, trained_models)
         clinX (optional): clinical input data to validate for all subjects in form of a list [subject, clinical_data]
         imgX: image input data to validate for all subjects in form of an np array [subject, x, y, z, c]
         y: dependent variables of data in a form of an np array [subject, x, y, z]
@@ -39,30 +41,44 @@ def repeated_kfold_cv(Model_Generator, save_dir,
     y = output_data_array
     clinX = clinical_input_array
 
-    # Initialising variables for evaluation
-    tprs = []
-    fprs = []
-    aucs = []
-    accuracies = []
-    f1_scores = []
-    jaccards = []
-    thresholded_volume_deltas = []
-    unthresholded_volume_deltas = []
-    image_wise_error_ratios = []
-    image_wise_jaccards = []
-    image_wise_hausdorff = []
-    image_wise_dice = []
-    trained_models = []
-    train_evals = []
-    failed_folds = 0
+    if len(imgX.shape) < 5:
+        imgX = np.expand_dims(imgX, axis=5)
+
+    used_clinical = False
+    if clinX is not None:
+        used_clinical = True
 
     model_params = Model_Generator.get_settings()
     Model_Generator.hello_world()
 
-    print('Repeated kfold', n_repeats, n_folds)
+    # Initialising variables for evaluation
+    failed_folds = 0
+    trained_models = []
+    results = {
+        'settings_repeats': n_repeats,
+        'settings_folds': n_folds,
+        'settings_imgX_shape': imgX.shape,
+        'settings_y_shape': y.shape,
+        'failed_folds': failed_folds,
+        'model_params': model_params,
+        'rf': receptive_field_dimensions,
+        'used_clinical': used_clinical,
+        'train_evals': [],
+        'test_accuracy': [],
+        'test_roc_auc': [],
+        'test_f1': [],
+        'test_jaccard': [],
+        'test_TPR': [],
+        'test_FPR': [],
+        'test_thresholded_volume_deltas': [],
+        'test_unthresholded_volume_deltas': [],
+        'test_image_wise_error_ratios': [],
+        'test_image_wise_jaccards': [],
+        'test_image_wise_hausdorff': [],
+        'test_image_wise_dice': []
+    }
 
-    if len(imgX.shape) < 5:
-        imgX = np.expand_dims(imgX, axis=5)
+    print('Repeated kfold', n_repeats, n_folds)
 
     print('Input image data shape:', imgX.shape)
     n_x, n_y, n_z, n_c = imgX[0].shape
@@ -121,23 +137,23 @@ def repeated_kfold_cv(Model_Generator, save_dir,
             try:
                 fold_result = evaluate_fold(model, n_test_subjects, n_x, n_y, n_z)
 
-                accuracies.append(fold_result['accuracy'])
-                f1_scores.append(fold_result['f1'])
-                aucs.append(fold_result['roc_auc'])
-                tprs.append(fold_result['tpr'])
-                fprs.append(fold_result['fpr'])
-                jaccards.append(fold_result['jaccard'])
-                thresholded_volume_deltas.append(fold_result['thresholded_volume_deltas'])
-                unthresholded_volume_deltas.append(fold_result['unthresholded_volume_deltas'])
-                image_wise_error_ratios.append(fold_result['image_wise_error_ratios'])
-                image_wise_jaccards.append(fold_result['image_wise_jaccards'])
-                image_wise_hausdorff.append(fold_result['image_wise_hausdorff'])
-                image_wise_dice.append(fold_result['image_wise_dice'])
-                train_evals.append(fold_result['train_evals'])
+                results['test_accuracy'].append(fold_result['accuracy'])
+                results['test_f1'].append(fold_result['f1'])
+                results['test_roc_auc'].append(fold_result['roc_auc'])
+                results['test_TPR'].append(fold_result['tpr'])
+                results['test_FPR'].append(fold_result['fpr'])
+                results['test_jaccard'].append(fold_result['jaccard'])
+                results['test_thresholded_volume_deltas'].append(fold_result['thresholded_volume_deltas'])
+                results['test_unthresholded_volume_deltas'].append(fold_result['unthresholded_volume_deltas'])
+                results['test_image_wise_error_ratios'].append(fold_result['image_wise_error_ratios'])
+                results['test_image_wise_jaccards'].append(fold_result['image_wise_jaccards'])
+                results['test_image_wise_hausdorff'].append(fold_result['image_wise_hausdorff'])
+                results['test_image_wise_dice'].append(fold_result['image_wise_dice'])
+                results['train_evals'].append(fold_result['train_evals'])
                 trained_models.append(fold_result['trained_model'])
                 pass
             except Exception as e:
-                failed_folds += 1
+                results['failed_folds'] += 1
                 print('Evaluation of fold failed.')
                 tb = traceback.format_exc()
                 print(e)
@@ -154,6 +170,9 @@ def repeated_kfold_cv(Model_Generator, save_dir,
             except:
                 print('No fold to clear.')
 
+            # save current state of progression
+            save_function(results, trained_models)
+
             fold += 1
             # End of fold iteration
 
@@ -166,36 +185,7 @@ def repeated_kfold_cv(Model_Generator, save_dir,
     end = timeit.default_timer()
     print('Created, saved and evaluated splits in: ', str(end - start))
 
-    used_clinical = False
-    if clinX is not None:
-        used_clinical = True
-
-    return ({
-        'settings_repeats': n_repeats,
-        'settings_folds': n_folds,
-        'settings_imgX_shape': imgX.shape,
-        'settings_y_shape': y.shape,
-        'failed_folds': failed_folds,
-        'model_params': model_params,
-        'rf': receptive_field_dimensions,
-        'used_clinical': used_clinical,
-        'train_evals': train_evals,
-        'test_accuracy': accuracies,
-        'test_roc_auc': aucs,
-        'test_f1': f1_scores,
-        'test_jaccard': jaccards,
-        'test_TPR': tprs,
-        'test_FPR': fprs,
-        'test_thresholded_volume_deltas': thresholded_volume_deltas,
-        'test_unthresholded_volume_deltas': unthresholded_volume_deltas,
-        'test_image_wise_error_ratios': image_wise_error_ratios,
-        'test_image_wise_jaccards': image_wise_jaccards,
-        'test_image_wise_hausdorff': image_wise_hausdorff,
-        'test_image_wise_dice': image_wise_dice
-    },
-        trained_models
-    )
-
+    return (results, trained_models)
 
 def create_fold(model, imgX, y, receptive_field_dimensions, train, test, clinX = None):
     """

@@ -39,11 +39,26 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN,
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
+    def saveGenerator(output_dir, model_name):
+        def save(results, trained_models):
+            a = timeit.default_timer()
+            # save the results and the params objects
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            torch.save(results, os.path.join(output_dir, 'scores_' + model_name + '.npy'))
+            torch.save(results['model_params'], os.path.join(output_dir, 'params_' + model_name + '.npy'))
+            torch.save(trained_models, os.path.join(output_dir, 'trained_models_' + model_name + '.npy'))
+            wrapper_plot_train_evaluation(os.path.join(output_dir, 'scores_' + model_name + '.npy'), save_plot = True)
+            plot_roc(results['test_TPR'], results['test_FPR'], output_dir, model_name, save_plot = True)
+        return save
+
+    save_function = saveGenerator(output_dir, model_name)
+
     try:
         start = timeit.default_timer()
         save_folds = False
 
-        results, trained_models = repeated_kfold_cv(Model_Generator, save_dir,
+        results, trained_models = repeated_kfold_cv(Model_Generator, save_dir, save_function = save_function,
             input_data_array = IN, output_data_array = OUT, clinical_input_array = CLIN,
             receptive_field_dimensions = rf_dim, n_repeats = n_repeats, n_folds = n_folds, messaging = notification_system)
 
@@ -56,14 +71,6 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN,
         print('Voxel-wise accuracy: ', accuracy)
         print('ROC AUC score: ', roc_auc)
         print('F1 score: ', f1)
-
-        # save the results and the params objects
-        os.makedirs(output_dir)
-        torch.save(results, os.path.join(output_dir, 'scores_' + model_name + '.npy'))
-        torch.save(results['model_params'], os.path.join(output_dir, 'params_' + model_name + '.npy'))
-        torch.save(trained_models, os.path.join(output_dir, 'trained_models_' + model_name + '.npy'))
-        wrapper_plot_train_evaluation(os.path.join(output_dir, 'scores_' + model_name + '.npy'), save_plot = True)
-        plot_roc(results['test_TPR'], results['test_FPR'], output_dir, model_name, save_plot = True)
 
         elapsed = timeit.default_timer() - start
         print('Evaluation done in: ', elapsed)
