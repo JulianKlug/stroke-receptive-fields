@@ -23,7 +23,7 @@ n_folds = 5
 
 Model_Generator = Ram_xgb
 
-for rf in range(0,1):
+for rf in range(3):
     rf_dim = [rf, rf, rf]
     model_name = 'cv_framework_glm_rf_hyperopt_' + str(rf)
     launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS,
