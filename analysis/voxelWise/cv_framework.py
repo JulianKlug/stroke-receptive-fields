@@ -1,13 +1,14 @@
 import os, sys, shutil, traceback, timeit
 sys.path.insert(0, '../')
 from sklearn.model_selection import train_test_split, KFold
+from sklearn.preprocessing import StandardScaler
 import numpy as np
 from sampling_utils import get_undersample_selector_array
 import receptiveField as rf
 from scoring_utils import evaluate
 
 def repeated_kfold_cv(Model_Generator, save_dir, save_function,
-            input_data_array, output_data_array, clinical_input_array = None, mask_array = None,
+            input_data_array, output_data_array, clinical_input_array = None, mask_array = None, feature_scaling = True,
             receptive_field_dimensions = [1,1,1], n_repeats = 1, n_folds = 5, messaging = None):
     """
     Patient wise Repeated KFold Crossvalidation for a given model
@@ -102,6 +103,11 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
         os.makedirs(save_dir)
     start = timeit.default_timer()
 
+    # Standardise data (data - mean / std)
+    if feature_scaling == True:
+        imgX, clinX = standardise(imgX, clinX)
+
+    # Start iteration of repeated_kfold_cv
     iteration = 0
     for j in np.random.randint(0, high=10000, size=n_repeats):
         iteration += 1
@@ -294,3 +300,14 @@ def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, mask_array, test):
     results['train_evals'] = evals_result
 
     return results
+
+def standardise(imgX, clinX):
+    original_shape = imgX.shape
+    imgX = imgX.reshape(-1, imgX.shape[-1])
+    scaler = StandardScaler(copy = False)
+    rescaled_imgX = scaler.fit_transform(imgX).reshape(original_shape)
+    if clinX is not None:
+        rescaled_clinX = scaler.fit_transform(clinX)
+    else:
+        rescaled_clinX = clinX
+    return rescaled_imgX, rescaled_clinX
