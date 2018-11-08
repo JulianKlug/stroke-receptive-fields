@@ -10,6 +10,7 @@ def evaluate(probas_, y_test, n_subjects, n_x, n_y, n_z):
     roc_auc = auc(fpr, tpr)
     # get optimal cutOff
     threshold = cutoff_youdens_j(fpr, tpr, thresholds)
+    print('Using threshold:', str(threshold))
     # threshold = 0.5 # threshold choosen to evaluate f1 and accuracy of model
 
     jaccard = jaccard_similarity_score(y_test, probas_[:] > threshold)

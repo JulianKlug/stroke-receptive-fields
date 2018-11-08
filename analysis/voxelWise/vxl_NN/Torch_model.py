@@ -1,17 +1,21 @@
-import os
+import os, timeit
 import numpy as np
 from torch import nn, Tensor, optim, cuda, device
 from torch.multiprocessing import cpu_count
 from torch.utils.data import TensorDataset, DataLoader
+from sklearn.metrics import roc_curve, auc
 
 class Torch_model():
     """
     """
 
-    def __init__(self, fold_dir, fold_name, model = None):
+    def __init__(self, fold_dir, fold_name, model = None, n_channels = 4, rf_dim = 1, n_epochs = 100):
         super(Torch_model, self).__init__()
         self.model = model
         self.optimizer = optim.Adam(self.model.parameters())
+        self.n_channels = n_channels
+        self.rf_width = 2 * np.max(rf_dim) + 1
+        self.n_epochs = n_epochs
 
         self.X_train = None
         self.y_train = None
@@ -25,6 +29,7 @@ class Torch_model():
 
         self.device = 'cpu'
         # if cuda.is_available():
+        #     print ('Using GPU')
         #     self.device = device('cuda')
         # self.device = 'cuda:0'
 
@@ -70,35 +75,47 @@ class Torch_model():
     def forward(self, model, dl, optimizer=None):
         total_acc = 0
         total_loss = 0
+        # print('éjhjh', dl.shape)
+        roc_aucs = []
         c = 0
         criterion = nn.BCEWithLogitsLoss()
         for inputs, labels in dl:
             c += 1
             inputs = inputs.to(self.device)
             labels = labels.to(self.device)
-            prediction = model(inputs).squeeze()
-            acc = ((prediction > 0) == (labels == 1)).float().mean().item()
-            total_acc += acc
-            loss = criterion(prediction, labels.float())
+            probas_ = model(inputs).squeeze()
+            threshold = 0.5
+            acc = ((probas_ > threshold) == (labels == 1)).float().mean().item()
+            fpr, tpr, thresholds = roc_curve(labels.detach().numpy(), probas_.detach().numpy())
+            roc_aucs.append(auc(fpr, tpr))
+            loss = criterion(probas_, labels.float())
             total_loss += loss.item()
             if optimizer is not None:
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
 
-        return total_acc / c, total_loss / c
+        return np.nanmean(roc_aucs), total_acc / c, total_loss / c
 
     def train(self):
         self.model.to(self.device)
         print(self.X_train.shape, self.X_test.shape, self.y_train.shape, self.y_test.shape)
-        ds_train = TensorDataset(Tensor(self.X_train.reshape(-1,4,1,1,1)), Tensor(self.y_train))
-        ds_test = TensorDataset(Tensor(self.X_test.reshape(-1,4,1,1,1)), Tensor(self.y_test))
+        ds_train = TensorDataset(
+            Tensor(self.X_train.reshape(-1, self.n_channels, self.rf_width, self.rf_width, self.rf_width)),
+            Tensor(self.y_train)
+            )
+        ds_test = TensorDataset(
+            Tensor(self.X_test.reshape(-1, self.n_channels, self.rf_width, self.rf_width, self.rf_width)),
+            Tensor(self.y_test)
+            )
         dl_train = DataLoader(ds_train, batch_size=128, num_workers=cpu_count(), pin_memory=True)
         dl_test = DataLoader(ds_test, batch_size=1024, num_workers=cpu_count(), pin_memory=True)
-        for e in range(10):
-            train_acc, train_loss = self.forward(self.model, dl_train, self.optimizer)
-            test_acc, test_loss = self.forward(self.model, dl_test)
-            print(e, train_acc, train_loss, test_acc, test_loss)
+        for e in range(self.n_epochs):
+            a = timeit.default_timer()
+            train_roc_auc, train_acc, train_loss = self.forward(self.model, dl_train, self.optimizer)
+            test_roc_auc, test_acc, test_loss = self.forward(self.model, dl_test)
+            print(e, train_roc_auc, test_roc_auc, train_acc, train_loss, test_acc, test_loss)
+            print('this took' + str(timeit.default_timer() - a))
         # try:
         #     for e in range(1000):
         #         train_acc, train_loss = self.forward(self.model, dl_train, self.optimizer)
@@ -111,7 +128,7 @@ class Torch_model():
 
     def predict(self, data):
         n_samples = data.shape[0]
-        data = Tensor(data.reshape(n_samples,4,1,1,1))
+        data = Tensor(data.reshape(n_samples, self.n_channels, self.rf_width, self.rf_width, self.rf_width))
         print('joooooooooioioioioioio',data.shape)
         probas_ = self.model(data)
         probas_ = probas_.data.numpy().squeeze()

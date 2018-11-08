@@ -23,7 +23,7 @@ n_folds = 2
 
 Model_Generator = LogReg_NN
 
-for rf in range(0,1):
+for rf in range(1,2):
     rf_dim = [rf, rf, rf]
     model_name = 'NN_test' + str(rf)
     launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN,
