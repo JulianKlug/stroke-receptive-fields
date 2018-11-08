@@ -14,6 +14,8 @@ main_save_dir = os.path.join(main_dir, 'temp_data')
 
 CLIN, IN, OUT, MASKS = data_loader.load_saved_data(data_dir)
 CLIN = None
+MAKS = numpy.full(IN.shape, True)
+
 
 rf = 1
 model_name = 'test1_{}'.format(rf)

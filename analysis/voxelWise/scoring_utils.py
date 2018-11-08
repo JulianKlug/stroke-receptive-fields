@@ -47,6 +47,7 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
         subj_3D_probas[mask_test[subj]] = subj_image_wise_probas
         subj_3D_y_test = np.full(mask_test[subj].shape, 0)
         subj_3D_y_test[mask_test[subj]] = subj_image_wise_y_test
+        print('hoooooo', subj_image_wise_probas.shape, mask_test.shape, subj_3D_probas.shape)
 
         hsd = hausdorff_distance(subj_3D_y_test, subj_3D_probas > threshold, n_x, n_y, n_z)
         image_wise_hausdorff.append(hsd)
