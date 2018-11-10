@@ -15,7 +15,6 @@ class Torch_model():
         self.optimizer = optim.Adam(self.model.parameters())
         self.n_channels = n_channels
         self.rf_width = 2 * np.max(rf_dim) + 1
-        print('ldkjfdsélkfhsédflkhsdfldkshfélkfj', self.rf_width, np.max(rf_dim), rf_dim)
         self.n_epochs = n_epochs
 
         self.X_train = None
@@ -29,9 +28,11 @@ class Torch_model():
         self.fold_name = fold_name
 
         self.device = 'cpu'
-        # if cuda.is_available():
-        #     print ('Using GPU')
-        #     self.device = device('cuda')
+        if cuda.is_available():
+            print ('Using GPU')
+            self.device = device('cuda')
+        else:
+            print('Using CPU')
         # self.device = 'cuda:0'
 
     @staticmethod
@@ -90,6 +91,7 @@ class Torch_model():
             probas_ = nn.Softmax(dim = 0)(prediction)
             threshold = 0.5
             acc = ((probas_ > threshold) == (labels == 1)).float().mean().item()
+            total_acc += acc
             fpr, tpr, thresholds = roc_curve(labels.detach().numpy(), probas_.detach().numpy())
             roc_aucs.append(auc(fpr, tpr))
             if optimizer is not None:
@@ -101,8 +103,6 @@ class Torch_model():
 
     def train(self):
         self.model.to(self.device)
-        print(self.X_train.shape, self.X_test.shape, self.y_train.shape, self.y_test.shape)
-        print(self.n_channels, self.rf_width, self.rf_width, self.rf_width)
         ds_train = TensorDataset(
             Tensor(self.X_train.reshape(-1, self.n_channels, self.rf_width, self.rf_width, self.rf_width)),
             Tensor(self.y_train)
@@ -113,12 +113,14 @@ class Torch_model():
             )
         dl_train = DataLoader(ds_train, batch_size=128, num_workers=cpu_count(), pin_memory=True)
         dl_test = DataLoader(ds_test, batch_size=1024, num_workers=cpu_count(), pin_memory=True)
+        train_eval = {'loss_train': [], 'auc_train': [], 'acc_train': [], 'loss_test': [], 'auc_test': [], 'acc_test': []}
         for e in range(self.n_epochs):
             a = timeit.default_timer()
             train_roc_auc, train_acc, train_loss = self.forward(self.model, dl_train, self.optimizer)
             test_roc_auc, test_acc, test_loss = self.forward(self.model, dl_test)
-            print('this took' + str(timeit.default_timer() - a))
-        train_eval = []
+            train_eval['auc_train'].append(train_roc_auc); train_eval['acc_train'].append(train_acc); train_eval['loss_train'].append(train_loss)
+            train_eval['auc_test'].append(test_roc_auc); train_eval['acc_test'].append(test_acc); train_eval['loss_test'].append(test_loss)
+            print(str(e) + ' took' + str(timeit.default_timer() - a), train_loss, train_roc_auc, train_acc)
         return self.model, train_eval
 
     def predict(self, data):
