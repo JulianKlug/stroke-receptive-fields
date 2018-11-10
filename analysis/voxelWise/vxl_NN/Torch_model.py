@@ -15,6 +15,7 @@ class Torch_model():
         self.optimizer = optim.Adam(self.model.parameters())
         self.n_channels = n_channels
         self.rf_width = 2 * np.max(rf_dim) + 1
+        print('ldkjfdsélkfhsédflkhsdfldkshfélkfj', self.rf_width, np.max(rf_dim), rf_dim)
         self.n_epochs = n_epochs
 
         self.X_train = None
@@ -83,13 +84,14 @@ class Torch_model():
             c += 1
             inputs = inputs.to(self.device)
             labels = labels.to(self.device)
-            probas_ = model(inputs).squeeze()
+            prediction = model(inputs).squeeze()
+            loss = criterion(prediction, labels.float())
+            total_loss += loss.item()
+            probas_ = nn.Softmax(dim = 0)(prediction)
             threshold = 0.5
             acc = ((probas_ > threshold) == (labels == 1)).float().mean().item()
             fpr, tpr, thresholds = roc_curve(labels.detach().numpy(), probas_.detach().numpy())
             roc_aucs.append(auc(fpr, tpr))
-            loss = criterion(probas_, labels.float())
-            total_loss += loss.item()
             if optimizer is not None:
                 optimizer.zero_grad()
                 loss.backward()
@@ -100,6 +102,7 @@ class Torch_model():
     def train(self):
         self.model.to(self.device)
         print(self.X_train.shape, self.X_test.shape, self.y_train.shape, self.y_test.shape)
+        print(self.n_channels, self.rf_width, self.rf_width, self.rf_width)
         ds_train = TensorDataset(
             Tensor(self.X_train.reshape(-1, self.n_channels, self.rf_width, self.rf_width, self.rf_width)),
             Tensor(self.y_train)
@@ -114,25 +117,15 @@ class Torch_model():
             a = timeit.default_timer()
             train_roc_auc, train_acc, train_loss = self.forward(self.model, dl_train, self.optimizer)
             test_roc_auc, test_acc, test_loss = self.forward(self.model, dl_test)
-            print(e, train_roc_auc, test_roc_auc, train_acc, train_loss, test_acc, test_loss)
             print('this took' + str(timeit.default_timer() - a))
-        # try:
-        #     for e in range(1000):
-        #         train_acc, train_loss = self.forward(self.model, dl_train, self.optimizer)
-        #         test_acc, test_loss = self.forward(self.model, dl_test)
-        #         print(train_acc, train_loss, test_acc, test_loss)
-        # except:
-        #     pass
         train_eval = []
         return self.model, train_eval
 
     def predict(self, data):
         n_samples = data.shape[0]
         data = Tensor(data.reshape(n_samples, self.n_channels, self.rf_width, self.rf_width, self.rf_width))
-        print('joooooooooioioioioioio',data.shape)
-        probas_ = self.model(data)
+        probas_ = nn.Softmax(dim = 0)(self.model(data))
         probas_ = probas_.data.numpy().squeeze()
-        print('pppppppppopopopopo', probas_.shape)
         return probas_
 
     def predict_test_data(self):
