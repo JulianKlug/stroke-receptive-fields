@@ -9,9 +9,10 @@ import visual, scoring_utils
 import data_loader
 from cv_framework import standardise
 
-main_dir = '/Users/julian/master/data/from_Server'
+main_dir = '/Users/julian/master/server_output'
 data_dir = os.path.join(main_dir, '')
-main_model_dir = os.path.join(main_dir, 'models')
+# main_model_dir = os.path.join(main_dir, 'models')
+main_model_dir = '/Users/julian/master/server_output/trained_std_ram_mask_xgb_rf_1_output'
 model_extension = '.npy'
 
 input_dir = os.path.join(data_dir, '')
@@ -19,16 +20,16 @@ input_image_path = os.path.join(input_dir, '316724/Ct2_Cerebrale/wcoreg_RAPID_MT
 input_img = nib.load(input_image_path)
 # input_data = input_img.get_data()
 
-model_name = 'test1_1'
+model_name = 'trained_model_trained_std_ram_mask_xgb_rf_1'
 rf = 1
 feature_scaling = True
 
 CLIN, IN, OUT, MASKS = data_loader.load_saved_data(data_dir)
 CLIN = None
 
-input_data = IN[1]
-output_GT = OUT[1]
-mask_data = MASKS[1]
+input_data = IN[0]
+output_GT = OUT[0]
+mask_data = MASKS[0]
 # MAKS = np.full(IN.shape, True)
 
 print('input shape', input_data.shape)
