@@ -10,17 +10,17 @@ import data_loader
 from cv_framework import standardise
 
 main_dir = '/Users/julian/master/server_output'
-data_dir = os.path.join(main_dir, '')
+data_dir = os.path.join(main_dir, 'LOO')
 # main_model_dir = os.path.join(main_dir, 'models')
-main_model_dir = '/Users/julian/master/server_output/trained_std_ram_mask_xgb_rf_1_output'
+main_model_dir = '/Users/julian/master/server_output/'
 model_extension = '.npy'
 
 input_dir = os.path.join(data_dir, '')
-input_image_path = os.path.join(input_dir, '316724/Ct2_Cerebrale/wcoreg_RAPID_MTT_1062561.nii')
+input_image_path = os.path.join(input_dir, '448776/Ct2_Cerebrale/wcoreg_RAPID_MTT_448776.nii')
 input_img = nib.load(input_image_path)
 # input_data = input_img.get_data()
 
-model_name = 'trained_model_trained_std_ram_mask_xgb_rf_1'
+model_name = 'trained_std_ram_mask_xgb_rf_1'
 rf = 1
 feature_scaling = True
 
@@ -42,7 +42,7 @@ n_x, n_y, n_z, n_c = input_data.shape
 
 print('Predict output image with model: ', model_name)
 model_dir = os.path.join(main_model_dir, model_name + '_output')
-model_path = os.path.join(model_dir, 'trained_model_' + model_name + model_extension)
+model_path = os.path.join(model_dir, 'trained_model_' +model_name + model_extension)
 model = torch.load(model_path)
 
 input_data, output_GT, masks = np.expand_dims(input_data, axis=0), np.expand_dims(output_GT, axis=0), np.expand_dims(mask_data, axis=0)
@@ -93,4 +93,4 @@ nib.save(predicted_img, os.path.join(model_dir, model_name + '' + image_extensio
 torch.save(results, os.path.join(model_dir, 'LOO_scores_' + model_name + '.npy'))
 
 visual.display(subj_3D_probas)
-visual.display(OUT[1])
+visual.display(OUT[0])
