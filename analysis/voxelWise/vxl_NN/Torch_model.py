@@ -113,14 +113,17 @@ class Torch_model():
             )
         dl_train = DataLoader(ds_train, batch_size=128, num_workers=cpu_count(), pin_memory=True)
         dl_test = DataLoader(ds_test, batch_size=1024, num_workers=cpu_count(), pin_memory=True)
-        train_eval = {'loss_train': [], 'auc_train': [], 'acc_train': [], 'loss_test': [], 'auc_test': [], 'acc_test': []}
+        train = {'loss': [], 'auc': [], 'acc': []}
+        eval = {'loss': [], 'auc': [], 'acc': []}
         for e in range(self.n_epochs):
             a = timeit.default_timer()
             train_roc_auc, train_acc, train_loss = self.forward(self.model, dl_train, self.optimizer)
             test_roc_auc, test_acc, test_loss = self.forward(self.model, dl_test)
-            train_eval['auc_train'].append(train_roc_auc); train_eval['acc_train'].append(train_acc); train_eval['loss_train'].append(train_loss)
-            train_eval['auc_test'].append(test_roc_auc); train_eval['acc_test'].append(test_acc); train_eval['loss_test'].append(test_loss)
+            train['auc'].append(train_roc_auc); train['acc'].append(train_acc); train['loss'].append(train_loss)
+            eval['auc'].append(test_roc_auc); eval['acc'].append(test_acc); eval['loss'].append(test_loss)
             print(str(e) + ' took' + str(timeit.default_timer() - a), train_loss, train_roc_auc, train_acc)
+
+        train_eval = {'train': train, 'eval': eval}
         return self.model, train_eval
 
     def predict(self, data):
