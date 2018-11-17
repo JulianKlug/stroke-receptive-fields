@@ -2,10 +2,10 @@ import os
 import subprocess
 
 main_dir = '/Users/julian/master/data'
-data_dir = os.path.join(main_dir, 'extracted_test')
-output_dir = os.path.join(main_dir, 'reorganised_test')
-ct_sequences = ['SPC_301mm_Std', 'RAPID_TMax_[s]', 'RAPID_MTT_[s]', 'RAPID_CBV', 'RAPID_CBF']
-mri_sequences = ['t2_tse_tra', 'T2W_TSE_tra']
+data_dir = os.path.join(main_dir, 'extracted_data')
+output_dir = os.path.join(main_dir, 'DWI_test')
+ct_sequences = []
+mri_sequences = ['t2_tse_tra', 'T2W_TSE_tra', 'dADC', 'diff_resolve_3scan_trace_tra_ADC', 'ep2d_diff_3scan_trace_p2_ADC']
 sequences = ct_sequences + mri_sequences
 
 subjects = os.listdir(data_dir)
