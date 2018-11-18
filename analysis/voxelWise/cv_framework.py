@@ -126,7 +126,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
                 os.makedirs(fold_dir)
 
             # Create a new model for every fold
-            model = Model_Generator(fold_dir, fold)
+            model = Model_Generator(fold_dir, fold, n_channels = n_c, n_channels_out = 1, rf = receptive_field_dimensions)
 
             # Create this fold
             try:
