@@ -4,6 +4,7 @@ import data_loader, manual_data
 from vxl_xgboost.default_ram_xgb import Default_ram_xgb
 from vxl_xgboost.ram_xgb import Ram_xgb
 from vxl_glm.LogReg_glm import LogReg_glm
+from vxl_NN.LogReg_NN import LogReg_NN
 from wrapper_cv import launch_cv
 
 main_dir = '/Users/julian/master/data/from_Server'
@@ -22,11 +23,11 @@ n_repeats = 10
 n_folds = 5
 feature_scaling = True
 
-Model_Generator = Ram_xgb
+Model_Generator = LogReg_NN
 
 for rf in range(3):
     rf_dim = [rf, rf, rf]
-    model_name = 'cv_framework_glm_rf_hyperopt_' + str(rf)
+    model_name = 'NN_test' + str(rf)
     launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, feature_scaling
                     n_repeats, n_folds, main_save_dir, main_output_dir)
 
