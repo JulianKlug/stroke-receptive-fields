@@ -28,22 +28,6 @@ class LogisticRegression(nn.Sequential):
     def get_params():
         return {}
 
-
-# class LogisticRegression(nn.Sequential):
-#     def __init__(self, n_channels, n_channels_out, rf):
-#         super(LogisticRegression, self).__init__()
-#         self.l1 = nn.Conv3d(n_channels, n_channels_out, 2 * np.max(rf) + 1)
-#         self.softmax = nn.Softmax(dim = 0)
-#
-#     def forward(self, x):
-#         x = self.l1(x)
-#         x = self.softmax(x)
-#         return x
-#
-#     @staticmethod
-#     def get_params():
-#         return {}
-
 class LogReg_NN(Torch_model):
     def __init__(self, fold_dir, fold_name, n_channels = 4, n_channels_out = 1, rf = 1):
         n_features = n_channels * ((2 * np.max(rf)) + 1)**3
