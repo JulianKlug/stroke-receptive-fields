@@ -68,11 +68,16 @@ class Ram_xgb():
 
     def train(self):
         self.dtrain = xgb.DMatrix(self.X_train, self.y_train)
-        self.dtest = xgb.DMatrix(self.X_test, self.y_test)
+
+        if self.y_test.size > 0:
+            self.dtest = xgb.DMatrix(self.X_test, self.y_test)
+            evals = [(self.dtest, 'eval'), (self.dtrain, 'train')]
+        else :
+            evals = [(self.dtrain, 'train')]
 
         self.trained_model = xgb.train(self.params, self.dtrain,
             num_boost_round = self.n_estimators,
-            evals = [(self.dtest, 'eval'), (self.dtrain, 'train')],
+            evals = evals,
             early_stopping_rounds = 30,
             evals_result = self.evals_result,
             verbose_eval = False)
