@@ -3,7 +3,7 @@ sys.path.insert(0, '../')
 
 import os, timeit, traceback, torch
 import numpy as np
-import timeit
+import matplotlib.pyplot as plt
 from vxl_xgboost.external_mem_xgb import External_Memory_xgb
 from vxl_xgboost.ram_xgb import Ram_xgb
 from vxl_glm.LogReg_glm import LogReg_glm
@@ -40,8 +40,7 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, feature
         os.makedirs(save_dir)
 
     def saveGenerator(output_dir, model_name):
-        def save(results, trained_models):
-            a = timeit.default_timer()
+        def save(results, trained_models, figures):
             # save the results and the params objects
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
@@ -50,6 +49,10 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, feature
             torch.save(trained_models, os.path.join(output_dir, 'trained_models_' + model_name + '.npy'))
             wrapper_plot_train_evaluation(os.path.join(output_dir, 'scores_' + model_name + '.npy'), save_plot = True)
             plot_roc(results['test_TPR'], results['test_FPR'], output_dir, model_name, save_plot = True)
+            for i, figure in enumerate(figures):
+                figure_path = os.path.join(output_dir, model_name + '_test_predictions_fold_' + str(i))
+                figure.savefig(figure_path)
+                plt.close(figure)
         return save
 
     save_function = saveGenerator(output_dir, model_name)

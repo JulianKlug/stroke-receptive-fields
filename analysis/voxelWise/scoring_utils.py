@@ -2,6 +2,7 @@ import os, torch, math
 from sklearn.metrics import f1_score, accuracy_score, fbeta_score, jaccard_similarity_score, roc_auc_score, precision_score, roc_curve, auc, accuracy_score
 import numpy as np
 from scipy.spatial.distance import directed_hausdorff
+import matplotlib.pyplot as plt
 
 def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
     # Voxel-wise statistics
@@ -24,8 +25,11 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
     image_wise_jaccards = []
     image_wise_hausdorff = []
     image_wise_dice = []
+    # figure for visual evaluation
+    figure = plt.figure()
 
     vxl_index = 0
+
     for subj in range(n_subjects):
         subj_n_vxl = np.sum(mask_test[subj])
         subj_image_wise_probas = probas_[vxl_index : vxl_index + subj_n_vxl]
@@ -49,9 +53,10 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
         subj_3D_y_test = np.full(mask_test[subj].shape, 0)
         subj_3D_y_test[mask_test[subj]] = subj_image_wise_y_test
 
+        visual_compare(subj_3D_y_test, subj_3D_probas, n_subjects, subj, n_z)
+
         hsd = hausdorff_distance(subj_3D_y_test, subj_3D_probas > threshold, n_x, n_y, n_z)
         image_wise_hausdorff.append(hsd)
-
 
     return {
         'fpr': fpr,
@@ -67,6 +72,7 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
         'image_wise_jaccards': image_wise_jaccards,
         'image_wise_hausdorff': image_wise_hausdorff,
         'image_wise_dice': image_wise_dice,
+        'figure': figure
         }
 
 def cutoff_youdens_j(fpr, tpr, thresholds):
@@ -119,3 +125,22 @@ def hausdorff_distance(data1, data2, n_x, n_y, n_z):
     coordinates2 = np.array(np.where(data2 > 0)).transpose()
 
     return directed_hausdorff(coordinates1, coordinates2)[0]
+
+# draw GT and test image on canvas
+def visual_compare(GT, pred, n_images, i_image, n_z):
+    center_z = (n_z - 1) // 2
+    # plot GT image
+    ax = plt.subplot(2, n_images, i_image + 1)
+    plt.imshow(-GT[:, :, center_z].T)
+    plt.gca().invert_yaxis()
+    plt.set_cmap('Greys')
+    plt.axis('off')
+
+    # plot reconstructed image
+    ax = plt.subplot(2, n_images, n_images + i_image + 1)
+    plt.imshow(pred[:, :, center_z].T)
+    plt.gca().invert_yaxis()
+    plt.set_cmap('jet')
+    plt.clim(0, 1)
+    plt.colorbar()
+    plt.axis('off')
