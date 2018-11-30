@@ -143,5 +143,4 @@ def visual_compare(GT, pred, n_images, i_image, n_z):
     plt.gca().invert_yaxis()
     plt.set_cmap('jet')
     plt.clim(0, 1)
-    plt.colorbar()
     plt.axis('off')
