@@ -3,6 +3,7 @@ from sklearn.metrics import f1_score, accuracy_score, fbeta_score, jaccard_simil
 import numpy as np
 from scipy.spatial.distance import directed_hausdorff
 import matplotlib.pyplot as plt
+from matplotlib import gridspec
 
 def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
     # Voxel-wise statistics
@@ -26,7 +27,12 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
     image_wise_hausdorff = []
     image_wise_dice = []
     # figure for visual evaluation
-    figure = plt.figure()
+    nrow = 2; ncol = n_subjects
+    figure = plt.figure(figsize=(ncol+1, nrow+1))
+    gs = gridspec.GridSpec(nrow, ncol,
+             wspace=0.0, hspace=0.0,
+             top=1.-0.5/(nrow+1), bottom=0.5/(nrow+1),
+             left=0.5/(ncol+1), right=1-0.5/(ncol+1))
 
     vxl_index = 0
 
@@ -53,7 +59,7 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
         subj_3D_y_test = np.full(mask_test[subj].shape, 0)
         subj_3D_y_test[mask_test[subj]] = subj_image_wise_y_test
 
-        visual_compare(subj_3D_y_test, subj_3D_probas, n_subjects, subj, n_z)
+        visual_compare(subj_3D_y_test, subj_3D_probas, n_subjects, subj, n_z, gs)
 
         hsd = hausdorff_distance(subj_3D_y_test, subj_3D_probas > threshold, n_x, n_y, n_z)
         image_wise_hausdorff.append(hsd)
@@ -127,19 +133,24 @@ def hausdorff_distance(data1, data2, n_x, n_y, n_z):
     return directed_hausdorff(coordinates1, coordinates2)[0]
 
 # draw GT and test image on canvas
-def visual_compare(GT, pred, n_images, i_image, n_z):
+def visual_compare(GT, pred, n_images, i_image, n_z, gs):
     center_z = (n_z - 1) // 2
     # plot GT image
-    ax = plt.subplot(2, n_images, i_image + 1)
+    # ax = plt.subplot(2, n_images, i_image + 1)
+    print(i_image)
+    ax= plt.subplot(gs[0, i_image])
     plt.imshow(-GT[:, :, center_z].T)
     plt.gca().invert_yaxis()
     plt.set_cmap('Greys')
     plt.axis('off')
+    # plt.subplots_adjust(wspace=0, hspace=0)
 
     # plot reconstructed image
-    ax = plt.subplot(2, n_images, n_images + i_image + 1)
+    # ax = plt.subplot(2, n_images, n_images + i_image + 1)
+    ax= plt.subplot(gs[1, i_image])
     plt.imshow(pred[:, :, center_z].T)
     plt.gca().invert_yaxis()
     plt.set_cmap('jet')
     plt.clim(0, 1)
     plt.axis('off')
+    # plt.subplots_adjust(wspace=0, hspace=0)
