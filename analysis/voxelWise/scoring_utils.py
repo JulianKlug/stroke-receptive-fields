@@ -26,6 +26,7 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
     image_wise_hausdorff = []
     image_wise_dice = []
     # figure for visual evaluation
+    plt.switch_backend('agg')
     figure = plt.figure()
 
     vxl_index = 0
