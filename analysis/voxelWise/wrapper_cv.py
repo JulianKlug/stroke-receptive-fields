@@ -49,10 +49,14 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, feature
             torch.save(trained_models, os.path.join(output_dir, 'trained_models_' + model_name + '.npy'))
             wrapper_plot_train_evaluation(os.path.join(output_dir, 'scores_' + model_name + '.npy'), save_plot = True)
             plot_roc(results['test_TPR'], results['test_FPR'], output_dir, model_name, save_plot = True)
+
+            plt.ioff()
+            plt.switch_backend('agg')
             for i, figure in enumerate(figures):
                 figure_path = os.path.join(output_dir, model_name + '_test_predictions_fold_' + str(i))
                 figure.savefig(figure_path)
                 plt.close(figure)
+
         return save
 
     save_function = saveGenerator(output_dir, model_name)

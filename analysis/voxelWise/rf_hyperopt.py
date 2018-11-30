@@ -16,7 +16,7 @@ main_save_dir = os.path.join(main_dir, 'temp_data')
 
 CLIN, IN, OUT, MASKS = data_loader.load_saved_data(data_dir)
 CLIN = None
-MASKS = numpy.full(OUT.shape, True)
+# MASKS = numpy.full(OUT.shape, True)
 # IN, OUT = manual_data.load(data_dir)
 
 n_repeats = 3
