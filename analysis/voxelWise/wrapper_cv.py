@@ -40,6 +40,10 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, feature
         os.makedirs(save_dir)
 
     def saveGenerator(output_dir, model_name):
+        visual_dir = os.path.join(output_dir, 'visual_check')
+        if not os.path.exists(visual_dir):
+            os.makedirs(visual_dir)
+
         def save(results, trained_models, figures):
             # save the results and the params objects
             if not os.path.exists(output_dir):
@@ -53,7 +57,7 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, feature
             plt.ioff()
             plt.switch_backend('agg')
             for i, figure in enumerate(figures):
-                figure_path = os.path.join(output_dir, model_name + '_test_predictions_fold_' + str(i))
+                figure_path = os.path.join(visual_dir, model_name + '_test_predictions_fold_' + str(i))
                 figure.savefig(figure_path)
                 plt.close(figure)
 
