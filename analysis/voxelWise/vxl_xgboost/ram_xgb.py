@@ -6,7 +6,7 @@ from vxl_xgboost.xgb_params import XGB_PARAMS
 class Ram_xgb():
     """
     """
-    def __init__(self, fold_dir, fold_name):
+    def __init__(self, fold_dir, fold_name, n_channels = 4, n_channels_out = 1, rf = 1):
         super(Ram_xgb, self).__init__()
         self.params = XGB_PARAMS
         self.n_estimators = self.params['n_estimators']

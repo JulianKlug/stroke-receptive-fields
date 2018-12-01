@@ -17,7 +17,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
     Args:
         Model_Generator: initialises a given model
         save_dir: directory to use for saving the intermittent states
-        save_function: function for saving the states --> save(results, trained_models)
+        save_function: function for saving the states --> save(results, trained_models, figures)
         clinX (optional): clinical input data to validate for all subjects in form of a list [subject, clinical_data]
         imgX: image input data to validate for all subjects in form of an np array [subject, x, y, z, c]
         y: dependent variables of data in a form of an np array [subject, x, y, z]
@@ -58,6 +58,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
         used_brain_masking = True
     failed_folds = 0
     trained_models = []
+    figures = []
     results = {
         'settings_repeats': n_repeats,
         'settings_folds': n_folds,
@@ -161,6 +162,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
                 results['test_image_wise_dice'].append(fold_result['image_wise_dice'])
                 results['train_evals'].append(fold_result['train_evals'])
                 trained_models.append(fold_result['trained_model'])
+                figures.append(fold_result['figure'])
                 pass
             except Exception as e:
                 results['failed_folds'] += 1
@@ -181,7 +183,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
                 print('No fold to clear.')
 
             # save current state of progression
-            save_function(results, trained_models)
+            save_function(results, trained_models, figures)
 
             fold += 1
             # End of fold iteration

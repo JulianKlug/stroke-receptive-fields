@@ -11,7 +11,7 @@ PARAMS = {
 class Default_ram_xgb():
     """
     """
-    def __init__(self, fold_dir, fold_name):
+    def __init__(self, fold_dir, fold_name, n_channels = 4, n_channels_out = 1, rf = 1):
         super(Default_ram_xgb, self).__init__()
         self.params = PARAMS
         self.n_estimators = 999

@@ -8,7 +8,7 @@ class External_Memory_xgb():
     """
     External Memory: saves the folds as libsvm files and uses the external memory version of xgboost to avoid overloading the RAM
     """
-    def __init__(self, fold_dir, fold_name):
+    def __init__(self, fold_dir, fold_name, n_channels = 4, n_channels_out = 1, rf = 1):
         super(External_Memory_xgb, self).__init__()
         self.params = XGB_PARAMS
         self.n_estimators = self.params['n_estimators']
