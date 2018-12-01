@@ -138,21 +138,17 @@ def hausdorff_distance(data1, data2, n_x, n_y, n_z):
 def visual_compare(GT, pred, n_images, i_image, n_z, gs):
     center_z = (n_z - 1) // 2
     # plot GT image
-    # ax = plt.subplot(2, n_images, i_image + 1)
-    print(i_image)
     ax= plt.subplot(gs[0, i_image])
     plt.imshow(-GT[:, :, center_z].T)
     plt.gca().invert_yaxis()
     plt.set_cmap('Greys')
+    plt.clim(-1, 0)
     plt.axis('off')
-    # plt.subplots_adjust(wspace=0, hspace=0)
 
     # plot reconstructed image
-    # ax = plt.subplot(2, n_images, n_images + i_image + 1)
     ax= plt.subplot(gs[1, i_image])
     plt.imshow(pred[:, :, center_z].T)
     plt.gca().invert_yaxis()
     plt.set_cmap('jet')
     plt.clim(0, 1)
     plt.axis('off')
-    # plt.subplots_adjust(wspace=0, hspace=0)
