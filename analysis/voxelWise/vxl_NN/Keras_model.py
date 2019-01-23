@@ -1,6 +1,6 @@
 import numpy as np
 from keras.models import Sequential
-from keras.layers import Conv3D
+from keras.layers import Conv3D, Dense, Flatten
 from keras.layers.normalization import BatchNormalization
 
 EPOCHS = 10
@@ -43,7 +43,7 @@ class Keras_model():
         return {}
 
     def initialise_train_data(self, n_datapoints, data_dimensions):
-        self.X_train = np.empty([np.sum(n_datapoints), data_dimensions])
+        self.X_train = np.empty([np.sum(n_datapoints), self.rf_width, self.rf_width, self.rf_width, self.n_channels])
         self.y_train = np.empty(np.sum(n_datapoints))
         self.train_index = 0
 
@@ -55,12 +55,13 @@ class Keras_model():
             batch_X_train: batch of training data
             batch_y_train: batch of training labels
         """
+        batch_X_train = batch_X_train.reshape(-1, self.rf_width, self.rf_width, self.rf_width, self.n_channels)
         self.X_train[self.train_index : self.train_index + batch_X_train.shape[0], :] = batch_X_train
         self.y_train[self.train_index : self.train_index + batch_y_train.shape[0]] = batch_y_train
         self.train_index += batch_X_train.shape[0]
 
     def initialise_test_data(self, n_datapoints, data_dimensions):
-        self.X_test = np.empty([np.sum(n_datapoints), data_dimensions])
+        self.X_test = np.empty([np.sum(n_datapoints), self.rf_width, self.rf_width, self.rf_width, self.n_channels])
         self.y_test = np.empty(np.sum(n_datapoints))
         self.test_index = 0
 
@@ -69,6 +70,7 @@ class Keras_model():
         Add a batch of testing data to the whole testing data pool
         All testing data is saved in a svmlight file
         """
+        batch_X_test = batch_X_test.reshape(-1, self.rf_width, self.rf_width, self.rf_width, self.n_channels)
         self.X_test[self.test_index : self.test_index + batch_X_test.shape[0], :] = batch_X_test
         self.y_test[self.test_index : self.test_index + batch_y_test.shape[0]] = batch_y_test
         self.test_index += batch_X_test.shape[0]
@@ -99,14 +101,19 @@ class TwoLayerNetwork(Keras_model):
     def __init__(self, fold_dir, fold_name, n_channels = 4, n_channels_out = 1, rf = 1):
         self.model_name = 'TwoLayerNetwork'
 
+        # NN should go over the input only once, taken the whole image patch as input
         image_width = 2 * np.max(rf) + 1
         img_shape = (image_width, image_width, image_width, n_channels)
-        kernel_size = image_width
+        kernel_size = (image_width, image_width, image_width)
+
         self.model = Sequential()
         self.model.add(Conv3D(32, kernel_size, activation='relu', padding='same', input_shape=img_shape))
         self.model.add(BatchNormalization())
         self.model.add(Conv3D(1, kernel_size, activation='sigmoid', padding='same'))
         self.model.add(BatchNormalization())
+        # As we only have one voxel as output, Flatten is needed to reduce dimensionality
+        self.model.add(Flatten())
+
         super().__init__(fold_dir, fold_name, self.model, n_channels = n_channels, rf_dim = rf, n_epochs = EPOCHS)
 
     @staticmethod
