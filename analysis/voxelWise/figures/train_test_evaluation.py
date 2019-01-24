@@ -10,7 +10,7 @@ def plot_train_evaluation(evals, model_name, save_plot):
     Plot evaluation during training
 
     Args:
-        evals: evals object returned by xgb
+        evals: evals object returned by model
         model_name: name of the model
 
     Returns:
@@ -20,8 +20,15 @@ def plot_train_evaluation(evals, model_name, save_plot):
         plt.ioff()
         plt.switch_backend('agg')
 
-    train_scores = pd.DataFrame([x['train']['auc'] for x in evals])
-    test_scores = pd.DataFrame([x['eval']['auc'] for x in evals])
+    if 'loss' in evals[0]['train']:
+        eval_metric = 'loss'
+        eval_label = 'Loss'
+    else:
+        eval_metric = 'auc'
+        eval_label = 'ROC AUC'
+
+    train_scores = pd.DataFrame([x['train'][eval_metric] for x in evals])
+    test_scores = pd.DataFrame([x['eval'][eval_metric] for x in evals])
 
     train_scores_mean = train_scores[:].mean().values
     train_scores_std = train_scores[:].std().values
@@ -40,10 +47,11 @@ def plot_train_evaluation(evals, model_name, save_plot):
     plt.plot(test_size, train_scores_mean, '-', color="r",
              label="Training score")
     plt.plot(test_size, test_scores_mean, '-', color="g",
-             label="Cross-validation score")
+             label="Validation score")
 
-    plt.ylim([-0.05, 1.05])
-    plt.ylabel('ROC AUC')
+    if eval_metric == 'auc':
+        plt.ylim([-0.05, 1.05])
+    plt.ylabel(eval_label)
     plt.xlabel('iterations')
     model_dir = model_name.split('/')[:-1]
     model_name = model_name.split('/')[-1]
@@ -51,7 +59,7 @@ def plot_train_evaluation(evals, model_name, save_plot):
     plt.legend(loc="lower right")
 
     if save_plot:
-        plt.savefig(os.path.join('/', *model_dir, model_name.split('.')[0] + '_AUC_EVAL.png'))
+        plt.savefig(os.path.join('/', *model_dir, model_name.split('.')[0] + '_' + eval_metric + '_EVAL.png'))
         plt.close()
     else:
         plt.ion()

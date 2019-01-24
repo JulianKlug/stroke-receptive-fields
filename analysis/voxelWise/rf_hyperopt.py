@@ -20,8 +20,8 @@ CLIN = None
 # MASKS = numpy.full(OUT.shape, True)
 # IN, OUT = manual_data.load(data_dir)
 
-n_repeats = 1
-n_folds = 2
+n_repeats = 10
+n_folds = 5
 feature_scaling = True
 
 Model_Generator = TwoLayerNetwork

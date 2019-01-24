@@ -77,16 +77,15 @@ class Keras_model():
 
     def train(self):
         history = self.model.fit(self.X_train, self.y_train, validation_split=0.15, batch_size = self.batch_size, epochs = self.n_epochs, verbose=1)
-        print(history.history.keys())
-
-        # plt.plot(history.history['acc'])
-        # plt.plot(history.history['val_acc'])
-
-        train_eval = {'train': history.history['loss'], 'eval': history.history['val_loss']}
+        train_eval = {
+            'train': { 'loss': history.history['loss'], 'acc': history.history['acc'] },
+            'eval': { 'loss': history.history['val_loss'], 'acc': history.history['val_acc'] }
+            }
         return self.model, train_eval
 
     def predict(self, data):
         probas_ =  self.model.predict(data)
+        probas_ = np.squeeze(probas_) # reduce single dimension to flat array of predicted voxels
         return probas_
 
     def predict_test_data(self):
