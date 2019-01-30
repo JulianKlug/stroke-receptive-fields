@@ -46,7 +46,6 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
         subj_image_wise_probas = probas_[vxl_index : vxl_index + subj_n_vxl]
         subj_image_wise_y_test = y_test[vxl_index : vxl_index + subj_n_vxl]
         vxl_index += subj_n_vxl
-        print(subj, subj_image_wise_probas.shape, subj_image_wise_y_test.shape)
 
         # Volume delta is defined as GT - predicted volume
         thresholded_volume_deltas.append(np.sum(subj_image_wise_y_test) - np.sum(subj_image_wise_probas >= threshold))
