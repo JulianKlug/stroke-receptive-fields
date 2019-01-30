@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 
 def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
+    probas_ = np.squeeze(probas_)
+    if probas_.shape != y_test.shape:
+        print('PROBAS AND TEST IMAGE DO NOT HAVE THE SAME SHAPE', probas_.shape, y_test.shape)
     # Voxel-wise statistics
     # Compute ROC curve, area under the curve, f1, and accuracy
     fpr, tpr, thresholds = roc_curve(y_test, probas_[:])
@@ -15,9 +18,9 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
     print('Using threshold:', str(threshold))
     # threshold = 0.5 # threshold choosen to evaluate f1 and accuracy of model
 
-    jaccard = jaccard_similarity_score(y_test, probas_[:] > threshold)
-    accuracy = accuracy_score(y_test, probas_[:] > threshold)
-    f1 = f1_score(y_test, probas_[:] > threshold)
+    jaccard = jaccard_similarity_score(y_test, probas_[:] >= threshold)
+    accuracy = accuracy_score(y_test, probas_[:] >= threshold)
+    f1 = f1_score(y_test, probas_[:] >= threshold)
 
     # Image-wise statistics
     thresholded_volume_deltas = []
@@ -43,17 +46,19 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
         subj_image_wise_probas = probas_[vxl_index : vxl_index + subj_n_vxl]
         subj_image_wise_y_test = y_test[vxl_index : vxl_index + subj_n_vxl]
         vxl_index += subj_n_vxl
+        print(subj, subj_image_wise_probas.shape, subj_image_wise_y_test.shape)
 
         # Volume delta is defined as GT - predicted volume
-        thresholded_volume_deltas.append(np.sum(subj_image_wise_y_test) - np.sum(subj_image_wise_probas > threshold))
+        thresholded_volume_deltas.append(np.sum(subj_image_wise_y_test) - np.sum(subj_image_wise_probas >= threshold))
         unthresholded_volume_deltas.append(np.sum(subj_image_wise_y_test) - np.sum(subj_image_wise_probas))
         n_voxels = subj_image_wise_y_test.shape[0]
+
         # error ratio being defined as sum(FP + FN)/all
         image_wise_error_ratios.append(
-            np.sum(abs(subj_image_wise_y_test - (subj_image_wise_probas > threshold))) / n_voxels
+            np.sum(abs(subj_image_wise_y_test - (subj_image_wise_probas >= threshold))) / n_voxels
         )
-        image_wise_jaccards.append(jaccard_similarity_score(subj_image_wise_y_test, subj_image_wise_probas[:] > threshold))
-        image_wise_dice.append(dice(subj_image_wise_y_test, subj_image_wise_probas[:] > threshold))
+        image_wise_jaccards.append(jaccard_similarity_score(subj_image_wise_y_test, subj_image_wise_probas[:] >= threshold))
+        image_wise_dice.append(dice(subj_image_wise_y_test, subj_image_wise_probas[:] >= threshold))
 
         # To calculate the hausdorff_distance, the image has to be rebuild as a 3D image
         subj_3D_probas = np.full(mask_test[subj].shape, 0, dtype = np.float64)
@@ -63,7 +68,7 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
 
         visual_compare(subj_3D_y_test, subj_3D_probas, n_subjects, subj, n_z, gs)
 
-        hsd = hausdorff_distance(subj_3D_y_test, subj_3D_probas > threshold, n_x, n_y, n_z)
+        hsd = hausdorff_distance(subj_3D_y_test, subj_3D_probas >= threshold, n_x, n_y, n_z)
         image_wise_hausdorff.append(hsd)
 
     return {
