@@ -64,13 +64,19 @@ def wrapper_plot_image_wise_scores_boxplot(score_dir):
     rf_dims = []
     settings_iterations = []
     settings_folds = []
+
     files = os.listdir(score_dir)
     for file in files:
-        if (file.startswith('scores_voxel_wise')):
+        if (file.startswith('scores_')):
             score_path = os.path.join(score_dir, file)
             score_obj = torch.load(score_path)
+
+            # In older versions params were not seperated
+            param_obj = score_obj
+            if 'params' in score_obj:
+                param_obj = score_obj['params']
             try:
-                rf_dims.append(score_obj['rf'])
+                rf_dims.append(param_obj['rf'])
             except KeyError:
                 rf_dims.append(file.split('_')[-1].split('.')[0])
 
@@ -83,8 +89,8 @@ def wrapper_plot_image_wise_scores_boxplot(score_dir):
             image_wise_j = flatten(score_obj['test_image_wise_jaccards'])
             image_wise_jaccards.append(image_wise_j)
 
-            settings_iterations.append(score_obj['settings_repeats'])
-            settings_folds.append(score_obj['settings_folds'])
+            settings_iterations.append(param_obj['settings_repeats'])
+            settings_folds.append(param_obj['settings_folds'])
             print('For rf:', rf_dims[-1], 'found', settings_folds[-1], 'folds, repeated', settings_iterations[-1], 'times')
 
     plot_image_wise_scores_boxplot(rf_dims, thresholded_volume_deltas, unthresholded_volume_deltas, image_wise_error_ratios, image_wise_jaccards)
