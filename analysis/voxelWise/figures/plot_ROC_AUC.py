@@ -78,8 +78,11 @@ def wrapper_plot_auc_roc(score_dir, model_name, color = 'C0', display_legend = T
         if (file.startswith('scores_') and file.endswith('.npy')):
             score_path = os.path.join(score_dir, file)
             score_obj = torch.load(score_path)
+            
+            if 'params' in score_obj:
+                param_obj = score_obj['params']
             try:
-                rf_dims.append(np.mean(score_obj['rf']))
+                rf_dims.append(param_obj['rf'])
             except KeyError:
                 rf_dims.append(int(file.split('_')[-1].split('.')[0]))
             roc_auc_scores.append(score_obj['test_roc_auc'])

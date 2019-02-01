@@ -42,7 +42,7 @@ class Tmax6(Treshold_Model):
 
     @staticmethod
     def get_settings():
-        return ""
+        return "Treshold Tmax > 6"
 
 def Tmax6_Model_Generator(X_shape, feature_scaling):
     """

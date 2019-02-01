@@ -40,7 +40,7 @@ class Keras_model():
 
     @staticmethod
     def get_settings():
-        return {}
+        return "Keras NN Model"
 
     def initialise_train_data(self, n_datapoints, data_dimensions):
         self.X_train = np.empty([np.sum(n_datapoints), self.rf_width, self.rf_width, self.rf_width, self.n_channels])
@@ -121,4 +121,4 @@ class TwoLayerNetwork(Keras_model):
 
     @staticmethod
     def get_settings():
-        return {}
+        return "TwoLayerNetwork"

@@ -49,7 +49,7 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, feature
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
             torch.save(results, os.path.join(output_dir, 'scores_' + model_name + '.npy'))
-            torch.save(results['model_params'], os.path.join(output_dir, 'params_' + model_name + '.npy'))
+            torch.save(results['params'], os.path.join(output_dir, 'params_' + model_name + '.npy'))
             torch.save(trained_models, os.path.join(output_dir, 'trained_models_' + model_name + '.npy'))
             wrapper_plot_train_evaluation(os.path.join(output_dir, 'scores_' + model_name + '.npy'), save_plot = True)
             plot_roc(results['test_TPR'], results['test_FPR'], output_dir, model_name, save_plot = True)
@@ -77,7 +77,7 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, feature
         roc_auc = np.median(results['test_roc_auc'])
         f1 = np.median(results['test_f1'])
         dice = np.median([item for sublist in results['test_image_wise_dice'] for item in sublist])
-        params = results['model_params']
+        params = results['params']
 
         print('Results for', model_name)
         print('Voxel-wise accuracy: ', accuracy)

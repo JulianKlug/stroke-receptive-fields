@@ -60,15 +60,18 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
     trained_models = []
     figures = []
     results = {
-        'settings_repeats': n_repeats,
-        'settings_folds': n_folds,
-        'settings_imgX_shape': imgX.shape,
-        'settings_y_shape': y.shape,
-        'failed_folds': failed_folds,
-        'model_params': model_params,
-        'rf': receptive_field_dimensions,
-        'used_clinical': used_clinical,
-        'masked_background': used_brain_masking,
+        'params': {
+            'model_params': model_params,
+            'rf': receptive_field_dimensions,
+            'used_clinical': used_clinical,
+            'masked_background': used_brain_masking,
+            'scaled': feature_scaling,
+            'settings_repeats': n_repeats,
+            'settings_folds': n_folds,
+            'settings_imgX_shape': imgX.shape,
+            'settings_y_shape': y.shape,
+            'failed_folds': failed_folds
+        },
         'train_evals': [],
         'test_accuracy': [],
         'test_roc_auc': [],
