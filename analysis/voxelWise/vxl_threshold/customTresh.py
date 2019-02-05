@@ -4,7 +4,7 @@ from sklearn.metrics import roc_curve
 from vxl_threshold.Treshold_Model import Treshold_Model
 from scoring_utils import cutoff_youdens_j
 
-class custom_treshold():
+class custom_threshold():
     def __init__(self, rf):
         self.rf = np.max(rf)
         self.train_threshold = np.nan
@@ -27,9 +27,9 @@ class custom_treshold():
         else:
             raise ValueError('Model only valid for Rf = 0.')
 
-class custom_treshold_model(Treshold_Model):
+class custom_threshold_model(Treshold_Model):
     def __init__(self, fold_dir, fold_name, n_channels = 1, n_channels_out = 1, rf = 1):
-        super().__init__(fold_dir, fold_name, model = custom_treshold(rf))
+        super().__init__(fold_dir, fold_name, model = custom_threshold(rf))
         if (n_channels != 1):
             raise Exception('Treshold model only works with one channel.')
 
@@ -42,7 +42,7 @@ class custom_treshold_model(Treshold_Model):
     def get_settings():
         return "Custom threshold model"
 
-def customTreshold_Model_Generator(X_shape, feature_scaling):
+def customThreshold_Model_Generator(X_shape, feature_scaling):
     """
     Model Generator for custom threshold models.
     Verifies if feature_scaling is off, and only 1 metric is used.
@@ -57,4 +57,4 @@ def customTreshold_Model_Generator(X_shape, feature_scaling):
     if (len(X_shape) != 4):
         raise ValueError('Only one channel allowed.')
 
-    return custom_treshold_model
+    return custom_threshold_model
