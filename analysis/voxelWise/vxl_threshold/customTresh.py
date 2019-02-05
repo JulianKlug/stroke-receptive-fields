@@ -4,7 +4,7 @@ from sklearn.metrics import roc_curve
 from vxl_threshold.Treshold_Model import Treshold_Model
 from scoring_utils import cutoff_youdens_j
 
-class custom_Tmax_treshold():
+class custom_treshold():
     def __init__(self, rf):
         self.rf = np.max(rf)
         self.train_threshold = np.nan
@@ -27,25 +27,24 @@ class custom_Tmax_treshold():
         else:
             raise ValueError('Model only valid for Rf = 0.')
 
-class custom_Tmax_treshold_model(Treshold_Model):
+class custom_treshold_model(Treshold_Model):
     def __init__(self, fold_dir, fold_name, n_channels = 1, n_channels_out = 1, rf = 1):
-        super().__init__(fold_dir, fold_name, model = custom_Tmax_treshold(rf))
+        super().__init__(fold_dir, fold_name, model = custom_treshold(rf))
         if (n_channels != 1):
-            raise Exception('Tmax Treshold model only works with one channel (Preferably Tmax).')
+            raise Exception('Treshold model only works with one channel.')
 
     @staticmethod
     def hello_world():
-        print('Tmax custom threshold Model')
-        print('CAN ONLY BE USED WITH TMAX')
+        print('Custom threshold Model')
         print('Feature scaling is not allowed, as it changes the threshold')
 
     @staticmethod
     def get_settings():
-        return "Custom threshold used for Tmax"
+        return "Custom threshold model"
 
-def customTmaxTresh_Model_Generator(X_shape, feature_scaling):
+def customTreshold_Model_Generator(X_shape, feature_scaling):
     """
-    Model Generator for custom Tmax threshold models.
+    Model Generator for custom threshold models.
     Verifies if feature_scaling is off, and only 1 metric is used.
     Args:
         X_shape: expected to be (n, x, y, z, c), where c = 1
@@ -56,6 +55,6 @@ def customTmaxTresh_Model_Generator(X_shape, feature_scaling):
     if (feature_scaling):
         raise ValueError('Feature scaling is not allowed, as it changes the threshold')
     if (len(X_shape) != 4):
-        raise ValueError('Only one channel allowed. Preferably Tmax.')
+        raise ValueError('Only one channel allowed.')
 
-    return custom_Tmax_treshold_model
+    return custom_treshold_model
