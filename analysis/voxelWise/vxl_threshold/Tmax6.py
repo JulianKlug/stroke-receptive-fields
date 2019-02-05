@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn import linear_model
 
-from vxl_threshold.Treshold_Model import Treshold_Model
+from vxl_threshold.Threshold_Model import Threshold_Model
 
 class Tmax6_treshold():
     def __init__(self, rf):
@@ -28,7 +28,7 @@ class Tmax6_treshold():
             probas_ = self.combinator.predict_proba(tresholded_voxels)
             return probas_[:, 1]
 
-class Tmax6(Treshold_Model):
+class Tmax6(Threshold_Model):
     def __init__(self, fold_dir, fold_name, n_channels = 1, n_channels_out = 1, rf = 1):
         super().__init__(fold_dir, fold_name, model = Tmax6_treshold(rf))
         if (n_channels != 1):

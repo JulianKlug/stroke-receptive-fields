@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.metrics import roc_curve
 
-from vxl_threshold.Treshold_Model import Treshold_Model
+from vxl_threshold.Threshold_Model import Threshold_Model
 from scoring_utils import cutoff_youdens_j
 
 class custom_threshold():
@@ -19,7 +19,6 @@ class custom_threshold():
 
         return self
 
-
     def predict_proba(self, data):
         if self.rf == 0:
             # Simple Treshold case
@@ -27,7 +26,7 @@ class custom_threshold():
         else:
             raise ValueError('Model only valid for Rf = 0.')
 
-class custom_threshold_model(Treshold_Model):
+class custom_threshold_model(Threshold_Model):
     def __init__(self, fold_dir, fold_name, n_channels = 1, n_channels_out = 1, rf = 1):
         super().__init__(fold_dir, fold_name, model = custom_threshold(rf))
         if (n_channels != 1):
