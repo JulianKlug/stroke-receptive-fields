@@ -7,7 +7,7 @@ from vxl_glm.LogReg_glm import LogReg_glm
 from vxl_NN.LogReg_NN import LogReg_NN
 from vxl_NN.Keras_model import TwoLayerNetwork
 from vxl_threshold.Tmax6 import Tmax6_Model_Generator
-from vxl_threshold.customTresh import customTreshold_Model_Generator
+from vxl_threshold.customTresh import customThreshold_Model_Generator
 from wrapper_cv import launch_cv
 
 # main_dir = '/Users/julian/master/data/from_Server'
@@ -30,7 +30,7 @@ n_folds = 5
 # n_folds = 2
 feature_scaling = False
 
-Model_Generator = customTreshold_Model_Generator(IN.shape, feature_scaling)
+Model_Generator = customThreshold_Model_Generator(IN.shape, feature_scaling)
 
 for rf in range(1):
     rf_dim = [rf, rf, rf]
