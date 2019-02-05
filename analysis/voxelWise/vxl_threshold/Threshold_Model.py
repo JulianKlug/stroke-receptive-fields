@@ -1,13 +1,13 @@
 import os
 import numpy as np
 
-class Treshold_Model():
+class Threshold_Model():
     """
     This model predicts any voxel by using a threshold
     """
 
     def __init__(self, fold_dir, fold_name, model = None):
-        super(Treshold_Model, self).__init__()
+        super(Threshold_Model, self).__init__()
         self.model = model
         self.trained_model = None
 

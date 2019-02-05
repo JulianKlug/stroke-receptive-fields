@@ -74,6 +74,7 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
         'fpr': fpr,
         'tpr': tpr,
         'thresholds': thresholds,
+        'evaluation_threshold': threshold,
         'accuracy': accuracy,
         'jaccard': jaccard,
         'f1': f1,
