@@ -84,7 +84,8 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
         'test_image_wise_error_ratios': [],
         'test_image_wise_jaccards': [],
         'test_image_wise_hausdorff': [],
-        'test_image_wise_dice': []
+        'test_image_wise_dice': [],
+        'evaluation_thresholds': []
     }
 
     print('Repeated kfold', n_repeats, n_folds)
@@ -164,6 +165,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
                 results['test_image_wise_hausdorff'].append(fold_result['image_wise_hausdorff'])
                 results['test_image_wise_dice'].append(fold_result['image_wise_dice'])
                 results['train_evals'].append(fold_result['train_evals'])
+                results['evaluation_thresholds'].append(fold_result['evaluation_threshold'])
                 trained_models.append(fold_result['trained_model'])
                 figures.append(fold_result['figure'])
                 pass
