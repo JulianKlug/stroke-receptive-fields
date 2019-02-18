@@ -7,7 +7,7 @@ main_dir = '/Users/julian/master/server_output/selected_for_article1_13022019'
 output_dir = '/Users/julian/master/saved_results'
 
 columns = ['model','rf', 'test_roc_auc', 'test_image_wise_dice', 'test_image_wise_hausdorff',
-'test_accuracy', 'test_f1', 'test_jaccard', 'test_thresholded_volume_deltas', 'test_unthresholded_volume_deltas', 'test_image_wise_error_ratios']
+'test_accuracy', 'test_f1', 'test_jaccard', 'test_thresholded_volume_deltas', 'test_unthresholded_volume_deltas', 'test_image_wise_error_ratios', 'evaluation_thresholds']
 
 modalites = os.listdir(main_dir)
 
@@ -45,12 +45,15 @@ for modality in modalites:
             except (KeyError, TypeError):
                 rf = int(result_files[0].split('_')[-1].split('.')[0])
 
-            median_list = [[model_name, rf] + [np.median(flatten(results[i])) for i in columns[2:]]]
+            median_list = [[model_name, rf] + [np.median(flatten(results[i])) if i in results else np.nan for i in columns[2:]]]
 
+            # print(np.array([np.array(results[i]) if i in results else np.repeat(np.nan, 50).reshape(1,50) for i in columns[2:-1]]).shape)
+            # print(np.repeat(np.nan, 50).reshape(1,50).shape)
+            # print(np.array([np.array(results[i]) if i in results else np.repeat(np.nan, 50).reshape(1,50) for i in columns[2:]]).shape)
             all_list = np.concatenate((
                 np.repeat(model_name, 50).reshape(1, 50),
                 np.repeat(rf, 50).reshape(1,50),
-                [np.array(results[i]) for i in columns[2:]]
+                [np.array(results[i]) if i in results else np.repeat(np.nan, 50) for i in columns[2:]]
                 ))
 
             try:
@@ -72,17 +75,13 @@ for modality in modalites:
 
 median_results_df = pd.DataFrame(median_results_array, columns = columns)
 
-models = median_results_array[:,0]
-
-p_val_df_columns = ['model','median_rf0', 'median_rf3', 'Pval', 'compared_variable']
-
 # Compare rf3 to rf0 for the same model
+rf_comp_df_columns = ['model','median_rf0', 'median_rf3', 'Pval', 'compared_variable']
 rf_3_model_results = np.array([k for k in all_results_array if k[1,0] == 3])
 for rf_3_model_result in rf_3_model_results:
     model_base = '_'.join(rf_3_model_result[0, 0].split('_')[:-1])
-    print(rf_3_model_result[0, 0], model_base)
     corres_rf0_model = [k for k in all_results_array if k[1,0] == 0 and k[0,0].startswith(model_base)][0]
-    print(corres_rf0_model[0,0], corres_rf0_model[1,0])
+
     # compare roc auc
     compared_variable_index = 2
     print('Comparing', columns[compared_variable_index], 'for', model_base)
@@ -101,10 +100,10 @@ for rf_3_model_result in rf_3_model_results:
     else :
         comparative_results_array = np.concatenate((comparative_results_array,
                         np.array(comparative_list)))
+rf_comp_results_df = pd.DataFrame(comparative_results_array, columns = rf_comp_df_columns)
 
-p_val_results_df = pd.DataFrame(comparative_results_array, columns = p_val_df_columns)
 
 
 with pd.ExcelWriter(os.path.join(output_dir, 'rf_article_results.xlsx')) as writer:
     median_results_df.to_excel(writer, sheet_name='median_results')
-    p_val_results_df.to_excel(writer, sheet_name='comparative_results')
+    rf_comp_results_df.to_excel(writer, sheet_name='comparative_results')
