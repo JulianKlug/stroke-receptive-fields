@@ -84,7 +84,7 @@ for rf_3_model_result in rf_3_model_results:
 
     # compare roc auc
     compared_variable_index = 2
-    print('Comparing', columns[compared_variable_index], 'for', model_base)
+    print('Comparing rf with', columns[compared_variable_index], 'for', model_base)
     t, p = wilcoxon(flatten(rf_3_model_result[compared_variable_index]), flatten(corres_rf0_model[compared_variable_index]))
     comparative_list = [[model_base,
         np.median(flatten(corres_rf0_model[compared_variable_index])),
@@ -102,8 +102,38 @@ for rf_3_model_result in rf_3_model_results:
                         np.array(comparative_list)))
 rf_comp_results_df = pd.DataFrame(comparative_results_array, columns = rf_comp_df_columns)
 
+# Compare modalities to best (Tmax0_logRegGLM at rf3)
+modality_comp_df_columns = ['model','rf', 'model_result', 'ref_model_result', 'Pval', 'compared_variable', 'reference_rf3_model']
+reference_rf3_model_results = np.squeeze(np.array([k for k in all_results_array if k[1,0] == 3 and 'Tmax0_logRegGLM' in k[0,0]]))
+rf_3_model_results = np.array([k for k in all_results_array if k[1,0] == 3])
+for rf_3_model_result in rf_3_model_results:
+    model_base = '_'.join(rf_3_model_result[0, 0].split('_')[:-1])
+
+    # compare roc auc
+    compared_variable_index = 2
+    print('Comparing modality with', columns[compared_variable_index], 'for', rf_3_model_result[0,0])
+    t, p = wilcoxon(flatten(rf_3_model_result[compared_variable_index]), flatten(reference_rf3_model_results[compared_variable_index]))
+    modality_comp_list = [[model_base,
+        rf_3_model_result[1,0],
+        np.median(flatten(rf_3_model_result[compared_variable_index])),
+        np.median(flatten(reference_rf3_model_results[compared_variable_index])),
+        p,
+        columns[compared_variable_index],
+        reference_rf3_model_results[0,0]
+        ]]
+
+    try:
+        modality_comp_results_array
+    except NameError:
+        modality_comp_results_array = np.array(modality_comp_list)
+    else :
+        modality_comp_results_array = np.concatenate((modality_comp_results_array,
+                        np.array(modality_comp_list)))
+modality_comp_results_df = pd.DataFrame(modality_comp_results_array, columns = modality_comp_df_columns)
+
 
 
 with pd.ExcelWriter(os.path.join(output_dir, 'rf_article_results.xlsx')) as writer:
     median_results_df.to_excel(writer, sheet_name='median_results')
-    rf_comp_results_df.to_excel(writer, sheet_name='comparative_results')
+    rf_comp_results_df.to_excel(writer, sheet_name='rf_comparative_results')
+    modality_comp_results_df.to_excel(writer, sheet_name='modality_comparative_results')
