@@ -77,6 +77,8 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, feature
         roc_auc = np.median(results['test_roc_auc'])
         f1 = np.median(results['test_f1'])
         dice = np.median([item for sublist in results['test_image_wise_dice'] for item in sublist])
+        mhd = np.median([item for sublist in results['test_image_wise_modified_hausdorff'] for item in sublist])
+        print('median modified_hsd', mhd)
         params = results['params']
 
         print('Results for', model_name)

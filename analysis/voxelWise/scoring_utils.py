@@ -2,6 +2,7 @@ import os, torch, math
 from sklearn.metrics import f1_score, accuracy_score, fbeta_score, jaccard_similarity_score, roc_auc_score, precision_score, roc_curve, auc, accuracy_score
 import numpy as np
 from scipy.spatial.distance import directed_hausdorff
+from numpy.core.umath_tests import inner1d
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 
@@ -28,6 +29,7 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
     image_wise_error_ratios = []
     image_wise_jaccards = []
     image_wise_hausdorff = []
+    image_wise_modified_hausdorff = []
     image_wise_dice = []
     # figure for visual evaluation
 
@@ -67,8 +69,9 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
 
         visual_compare(subj_3D_y_test, subj_3D_probas, n_subjects, subj, n_z, gs)
 
-        hsd = hausdorff_distance(subj_3D_y_test, subj_3D_probas >= threshold, n_x, n_y, n_z)
+        hsd, modified_hsd = hausdorff_distance(subj_3D_y_test, subj_3D_probas >= threshold, n_x, n_y, n_z)
         image_wise_hausdorff.append(hsd)
+        image_wise_modified_hausdorff.append(modified_hsd)
 
     return {
         'fpr': fpr,
@@ -84,6 +87,7 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
         'image_wise_error_ratios': image_wise_error_ratios,
         'image_wise_jaccards': image_wise_jaccards,
         'image_wise_hausdorff': image_wise_hausdorff,
+        'image_wise_modified_hausdorff': image_wise_modified_hausdorff,
         'image_wise_dice': image_wise_dice,
         'figure': figure
         }
@@ -137,7 +141,48 @@ def hausdorff_distance(data1, data2, n_x, n_y, n_z):
     coordinates1 = np.array(np.where(data1 > 0)).transpose()
     coordinates2 = np.array(np.where(data2 > 0)).transpose()
 
-    return directed_hausdorff(coordinates1, coordinates2)[0]
+    return directed_hausdorff(coordinates1, coordinates2)[0], ModHausdorffDist(coordinates1, coordinates2)[0]
+
+def ModHausdorffDist(A,B):
+    #This function computes the Modified Hausdorff Distance (MHD) which is
+    #proven to function better than the directed HD as per Dubuisson et al.
+    #in the following work:
+    #
+    #M. P. Dubuisson and A. K. Jain. A Modified Hausdorff distance for object
+    #matching. In ICPR94, pages A:566-568, Jerusalem, Israel, 1994.
+    #http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=576361
+    #
+    #The function computed the forward and reverse distances and outputs the
+    #maximum/minimum of both.
+    #Optionally, the function can return forward and reverse distance.
+    #
+    #Format for calling function:
+    #
+    #[MHD,FHD,RHD] = ModHausdorffDist(A,B);
+    #
+    #where
+    #MHD = Modified Hausdorff Distance.
+    #FHD = Forward Hausdorff Distance: minimum distance from all points of B
+    #      to a point in A, averaged for all A
+    #RHD = Reverse Hausdorff Distance: minimum distance from all points of A
+    #      to a point in B, averaged for all B
+    #A -> Point set 1, [row as observations, and col as dimensions]
+    #B -> Point set 2, [row as observations, and col as dimensions]
+    #
+    #No. of samples of each point set may be different but the dimension of
+    #the points must be the same.
+    #
+    #Edward DongBo Cui Stanford University; 06/17/2014
+
+    # Find pairwise distance
+    D_mat = np.sqrt(inner1d(A,A)[np.newaxis].T + inner1d(B,B)-2*(np.dot(A,B.T)))
+    # Calculating the forward HD: mean(min(each col))
+    FHD = np.mean(np.min(D_mat,axis=1))
+    # Calculating the reverse HD: mean(min(each row))
+    RHD = np.mean(np.min(D_mat,axis=0))
+    # Calculating mhd
+    MHD = np.max(np.array([FHD, RHD]))
+    return(MHD, FHD, RHD)
 
 # draw GT and test image on canvas
 def visual_compare(GT, pred, n_images, i_image, n_z, gs):
