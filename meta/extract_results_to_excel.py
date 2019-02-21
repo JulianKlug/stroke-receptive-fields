@@ -75,17 +75,53 @@ for modality in modalites:
 
 median_results_df = pd.DataFrame(median_results_array, columns = columns)
 
+# Compare all rfs for the same model
+all_rf_comp_df_columns = ['model','compared_variable', 'p0-1', 'p1-2', 'p2-3', 'p3-4', 'p4-5']
+all_rf_0_model_results = np.array([k for k in all_results_array if k[1,0] == 0])
+for all_rf_0_model_result in all_rf_0_model_results:
+    # compare roc auc
+    compared_variable_index = 2
+    model_base = '_'.join(all_rf_0_model_result[0, 0].split('_')[:-1])
+    all_rf_comp_list = [model_base, columns[compared_variable_index]]
+    for i in range(5):
+        ref_model = [k for k in all_results_array if k[1,0] == i and k[0,0].startswith(model_base)]
+        corres_rf_plus1_model = [k for k in all_results_array if k[1,0] == i+1 and k[0,0].startswith(model_base)]
+        if not ref_model or not corres_rf_plus1_model:
+            all_rf_comp_list.append(np.nan)
+            continue
+        ref_model = ref_model[0]
+        corres_rf_plus1_model = corres_rf_plus1_model[0]
+
+        print('Comparing rf with', columns[compared_variable_index], 'for', model_base, 'for', i, 'and', i+1)
+        t, p = wilcoxon(flatten(ref_model[compared_variable_index]), flatten(corres_rf_plus1_model[compared_variable_index]))
+        all_rf_comp_list.append(p)
+
+    all_rf_comp_list = [all_rf_comp_list]
+
+    try:
+        all_rf_comp_array
+    except NameError:
+        all_rf_comp_array = np.array(all_rf_comp_list)
+    else :
+        all_rf_comp_array = np.concatenate((all_rf_comp_array,
+                        np.array(all_rf_comp_list)))
+all_rf_comp_results_df = pd.DataFrame(all_rf_comp_array, columns = all_rf_comp_df_columns)
+
 # Compare rf3 to rf0 for the same model
+# compare roc auc
+compared_variable_index = 2
 rf_comp_df_columns = ['model','median_rf0', 'median_rf3', 'Pval', 'compared_variable']
 rf_3_model_results = np.array([k for k in all_results_array if k[1,0] == 3])
+all_rf0 = []
+all_rf3 = []
 for rf_3_model_result in rf_3_model_results:
     model_base = '_'.join(rf_3_model_result[0, 0].split('_')[:-1])
     corres_rf0_model = [k for k in all_results_array if k[1,0] == 0 and k[0,0].startswith(model_base)][0]
 
-    # compare roc auc
-    compared_variable_index = 2
     print('Comparing rf with', columns[compared_variable_index], 'for', model_base)
     t, p = wilcoxon(flatten(rf_3_model_result[compared_variable_index]), flatten(corres_rf0_model[compared_variable_index]))
+    all_rf3.append(flatten(rf_3_model_result[compared_variable_index]))
+    all_rf0.append(flatten(corres_rf0_model[compared_variable_index]))
     comparative_list = [[model_base,
         np.median(flatten(corres_rf0_model[compared_variable_index])),
         np.median(flatten(rf_3_model_result[compared_variable_index])),
@@ -100,6 +136,16 @@ for rf_3_model_result in rf_3_model_results:
     else :
         comparative_results_array = np.concatenate((comparative_results_array,
                         np.array(comparative_list)))
+
+t, p = wilcoxon(flatten(all_rf0), flatten(all_rf3))
+comparative_results_array = np.concatenate((comparative_results_array,
+                np.array([[
+                'mean_model',
+                np.mean(flatten(all_rf0)),
+                np.mean(flatten(all_rf3)),
+                p,
+                columns[compared_variable_index]
+                ]])))
 rf_comp_results_df = pd.DataFrame(comparative_results_array, columns = rf_comp_df_columns)
 
 # Compare modalities to best (Tmax0_logRegGLM at rf3)
@@ -135,5 +181,6 @@ modality_comp_results_df = pd.DataFrame(modality_comp_results_array, columns = m
 
 with pd.ExcelWriter(os.path.join(output_dir, 'rf_article_results.xlsx')) as writer:
     median_results_df.to_excel(writer, sheet_name='median_results')
-    rf_comp_results_df.to_excel(writer, sheet_name='rf_comparative_results')
+    rf_comp_results_df.to_excel(writer, sheet_name='0-3_rf_comparative_results')
+    all_rf_comp_results_df.to_excel(writer, sheet_name='all_rf_comparative_results')
     modality_comp_results_df.to_excel(writer, sheet_name='modality_comparative_results')

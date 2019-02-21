@@ -4,7 +4,12 @@ from sklearn.metrics import f1_score, accuracy_score, fbeta_score, jaccard_simil
 import numpy as np
 import scipy.stats as stats
 
-def plot_auc_roc(rf_dims, roc_auc_scores, model_name = 'model', color = 'C0', display_legend = True):
+def flatten(l):
+    if not (type(l[0]) == list or isinstance(l[0], np.ndarray)):
+        return l
+    return [item for sublist in l for item in sublist]
+
+def plot_auc_roc(rf_dims, roc_auc_scores, model_name = 'model', color = 'C0', display_legend = True, display_points = False):
     """
     Plot roc_auc for each value of rf (receptive field dimension)
 
@@ -42,8 +47,9 @@ def plot_auc_roc(rf_dims, roc_auc_scores, model_name = 'model', color = 'C0', di
             auc_upper_limits.append(mean_roc_auc_scores[i] + margin_of_error)
             auc_lower_limits.append(np.maximum(mean_roc_auc_scores[i] - margin_of_error, 0))
 
-        for j in range(len(roc_auc_scores[i])):
-            plt.plot(rf_dims[i], roc_auc_scores[i][j], 'k.', lw=1, alpha=0.3)
+        if display_points:
+            for j in range(len(roc_auc_scores[i])):
+                plt.plot(rf_dims[i], roc_auc_scores[i][j], 'k.', lw=1, alpha=0.3)
 
     print('means', mean_roc_auc_scores)
     print('Rf used:', mean_rf_dims)
@@ -52,8 +58,9 @@ def plot_auc_roc(rf_dims, roc_auc_scores, model_name = 'model', color = 'C0', di
     print('up', auc_upper_limits)
 
     if (display_legend):
-        # Plot one additional point to have only one label
-        plt.plot(0, 2, 'k.', lw=1, alpha=0.3, label=r'ROC AUC score')
+        if display_points:
+            # Plot one additional point to have only one label
+            plt.plot(0, 2, 'k.', lw=1, alpha=0.3, label=r'ROC AUC score')
         plt.fill_between(mean_rf_dims, auc_upper_limits, auc_lower_limits, color='grey', alpha=.2,
                          # label=r'$\pm$ 1 std. dev.')
                          label=r'$\pm$ 1 std. err.')
@@ -62,39 +69,59 @@ def plot_auc_roc(rf_dims, roc_auc_scores, model_name = 'model', color = 'C0', di
 
     plt.plot(mean_rf_dims, mean_roc_auc_scores, color, label=r'Mean ROC AUC for %s' % (model_name))
     plt.ylim([-0.05, 1.05])
-    plt.ylabel('ROC AUC')
-    plt.xlabel('Receptive field size (as voxels from center)')
+    plt.ylabel('AUC ROC')
+    plt.xlabel('Receptive field size (rf)')
     plt.title('Area under the ROC curve')
     # plt.legend(loc="lower right")
 
     plt.ion()
     plt.draw()
 
-def wrapper_plot_auc_roc(score_dir, model_name, color = 'C0', display_legend = True):
+def wrapper_plot_auc_roc(modality_dir, model_name, color = 'C0', display_legend = True):
     roc_auc_scores = []
     rf_dims = []
-    files = os.listdir(score_dir)
-    for file in files:
-        if (file.startswith('scores_') and file.endswith('.npy')):
-            score_path = os.path.join(score_dir, file)
-            score_obj = torch.load(score_path)
-            
-            if 'params' in score_obj:
-                param_obj = score_obj['params']
-            try:
-                rf_dims.append(param_obj['rf'])
-            except KeyError:
-                rf_dims.append(int(file.split('_')[-1].split('.')[0]))
-            roc_auc_scores.append(score_obj['test_roc_auc'])
+    evals = [o for o in os.listdir(modality_dir)
+                        if os.path.isdir(os.path.join(modality_dir,o))]
+
+    for eval_dir in evals:
+        files = os.listdir(os.path.join(modality_dir, eval_dir))
+        for file in files:
+            if (file.startswith('scores_') and file.endswith('.npy')):
+                score_path = os.path.join(modality_dir, eval_dir, file)
+                score_obj = torch.load(score_path)
+
+                # In older versions params were not seperated
+                param_obj = score_obj
+                if 'params' in score_obj:
+                    param_obj = score_obj['params']
+                try:
+                    rf_dims.append(np.median(param_obj['rf']))
+                except KeyError:
+                    rf_dims.append(int(file.split('_')[-1].split('.')[0]))
+                roc_auc_scores.append(score_obj['test_roc_auc'])
     plot_auc_roc(rf_dims, roc_auc_scores, model_name, color, display_legend)
     # plt.show()
 
-def compare(dir1, dir2, dir3, dir4 ):
+def compare(dir1, dir2, dir3, dir4, dir5):
     fig, ax = plt.subplots()
     wrapper_plot_auc_roc(dir1, 'multi-parameter glm', 'C0')
     wrapper_plot_auc_roc(dir2, 'MTT glm', 'C1', display_legend = False)
     wrapper_plot_auc_roc(dir3, 'Tmax glm', 'C2', display_legend = False)
-    wrapper_plot_auc_roc(dir4, 'xgb', 'C3', display_legend = False)
+    wrapper_plot_auc_roc(dir4, 'CBF glm', 'C3', display_legend = False)
+    wrapper_plot_auc_roc(dir5, 'CBV glm', 'C4', display_legend = False)
+
     plt.legend(loc="lower right")
-    plt.title('CV Framework')
+    plt.title('Area under the ROC curve')
+    # Hide the right and top spines
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
     plt.show()
+
+main_dir = '/Users/julian/master/server_output/selected_for_article1_13022019/'
+multiGLM = os.path.join(main_dir, 'multi_modal_LogRegGLM')
+MTT = os.path.join(main_dir, 'MTT2_logRegGLM')
+Tmax = os.path.join(main_dir, 'Tmax0_logRegGLM')
+CBF = os.path.join(main_dir, 'CBF1_logRegGLM')
+CBV = os.path.join(main_dir, 'CBV3_logRegGLM')
+
+compare(multiGLM, MTT, Tmax, CBF, CBV)

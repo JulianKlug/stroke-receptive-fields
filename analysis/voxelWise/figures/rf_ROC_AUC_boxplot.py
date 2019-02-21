@@ -58,27 +58,37 @@ def plot_auc_roc_boxplot(rf_dims, roc_auc_scores, settings_iterations, settings_
     plt.draw()
     plt.show()
 
-def wrapper_plot_auc_roc_boxplot(score_dir):
+def wrapper_plot_auc_roc_boxplot(modality_dir):
     roc_auc_scores = []
     rf_dims = []
     settings_iterations = []
     settings_folds = []
-    files = os.listdir(score_dir)
-    for file in files:
-        if (file.startswith('scores_repeat20_rf')):
-            score_path = os.path.join(score_dir, file)
-            score_obj = torch.load(score_path)
+    roc_auc_scores = []
+    rf_dims = []
+    evals = [o for o in os.listdir(modality_dir)
+                        if os.path.isdir(os.path.join(modality_dir,o))]
 
-            # In older versions params were not seperated
-            param_obj = score_obj
-            if 'params' in score_obj:
-                param_obj = score_obj['params']
-            try:
-                rf_dims.append(param_obj['rf'])
-            except KeyError:
-                rf_dims.append(file.split('_')[-1].split('.')[0])
-            roc_auc_scores.append(score_obj['test_roc_auc'])
-            settings_iterations.append(param_obj['settings_repeats'])
-            settings_folds.append(param_obj['settings_folds'])
+    for eval_dir in evals:
+        files = os.listdir(os.path.join(modality_dir, eval_dir))
+        for file in files:
+            if (file.startswith('scores_') and file.endswith('.npy')):
+                score_path = os.path.join(modality_dir, eval_dir, file)
+                score_obj = torch.load(score_path)
+
+                # In older versions params were not seperated
+                param_obj = score_obj
+                if 'params' in score_obj:
+                    param_obj = score_obj['params']
+                try:
+                    rf_dims.append(np.median(param_obj['rf']))
+                except KeyError:
+                    rf_dims.append(int(file.split('_')[-1].split('.')[0]))
+                roc_auc_scores.append(score_obj['test_roc_auc'])
+                settings_iterations.append(param_obj['settings_repeats'])
+                settings_folds.append(param_obj['settings_folds'])
 
     plot_auc_roc_boxplot(rf_dims, roc_auc_scores, settings_iterations, settings_folds)
+
+main_dir = '/Users/julian/master/server_output/selected_for_article1_13022019/'
+multiGLM = os.path.join(main_dir, 'multi_modal_LogRegGLM')
+wrapper_plot_auc_roc_boxplot(multiGLM)
