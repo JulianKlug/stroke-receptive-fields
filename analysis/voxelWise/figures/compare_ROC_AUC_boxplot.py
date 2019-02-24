@@ -54,17 +54,17 @@ def wrapper_plot_auc_roc_boxplot(modality_dirs):
                     rf = int(result_files[0].split('_')[-1].split('.')[0])
 
                 if 'logRegGLM' in model_name:
-                    model_class = 'logRegGLM'
+                    model_class = 'glm(multi)'
                 if 'Tmax' in model_name:
-                    model_class = 'Tmax'
+                    model_class = 'glm(Tmax)'
                 if 'Tmax6' in model_name:
                     model_class = 'Tmax > 6s'
                 if 'CBV' in model_name:
-                    model_class = 'CBV'
+                    model_class = 'glm(CBV)'
                 if 'CBF' in model_name:
-                    model_class = 'CBF'
+                    model_class = 'glm(CBF)'
                 if 'MTT' in model_name:
-                    model_class = 'MTT'
+                    model_class = 'glm(MTT)'
 
                 model_tag = model_class + ' at rf ' + str(rf)
 
