@@ -172,7 +172,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
                 figures.append(fold_result['figure'])
                 pass
             except Exception as e:
-                results['failed_folds'] += 1
+                results['params']['failed_folds'] += 1
                 print('Evaluation of fold failed.')
                 tb = traceback.format_exc()
                 print(e)
