@@ -37,7 +37,6 @@ def get_subject_info(dir):
     study_0 = [o for o in os.listdir(modality_0_path)
                     if os.path.isdir(os.path.join(modality_0_path,o))][0]
     study_0_path = os.path.join(modality_0_path, study_0)
-    print(study_0_path)
     dcms = [f for f in os.listdir(study_0_path) if f.endswith(".dcm")]
     dcm = pydicom.dcmread(os.path.join(study_0_path, dcms[0]))
 
@@ -238,10 +237,29 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
     selected_study_paths = selected_mri_study_paths + selected_ct_study_paths
     for selected_study_path in selected_study_paths:
         selected_study_name = os.path.basename(selected_study_path)
-        output_modality_dir = os.path.join(patient_output_folder, os.path.basename(os.path.dirname(selected_study_path)))
+        # rename to constant name space
+        if selected_study_name in mri_sequences:
+            new_study_name = 't2_tse_tra' + '_' + patient_identifier
+            modality_name = 'MRI'
+        else:
+            modality_name = 'pCT'
+
+        if 'Tmax' in selected_study_name or 'TMax' in selected_study_name:
+            new_study_name = 'Tmax' + '_' + patient_identifier
+        if 'MTT' in selected_study_name:
+            new_study_name = 'MTT' + '_' + patient_identifier
+        if 'CBF' in selected_study_name:
+            new_study_name = 'CBF' + '_' + patient_identifier
+        if 'CBV' in selected_study_name:
+            new_study_name = 'CBV' + '_' + patient_identifier
+
+        if selected_study_name in spc_ct_sequences:
+            new_study_name = 'SPC_301mm_Std' + '_' + patient_identifier
+
+        output_modality_dir = os.path.join(patient_output_folder, modality_name)
         if not os.path.exists(output_modality_dir):
             os.makedirs(output_modality_dir)
-        new_study_name = selected_study_name + '_' + patient_identifier
+
         new_study_path = os.path.join(output_modality_dir, new_study_name)
         if not os.path.exists(new_study_path):
             subprocess.run(['cp', '-rf', selected_study_path, new_study_path])
@@ -255,19 +273,22 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
 def main(dir, output_dir):
     error_log_df = pd.DataFrame(columns=error_log_columns)
     move_log_df = pd.DataFrame(columns=move_log_columns)
-    anonymisation_columns = ['patient_identifier', 'anonymised_id']
+    anonymisation_columns = ['patient_identifier', 'anonymised_id', 'original_ct_path', 'ct_date', 'original_mri_path', 'mri_date']
     anonymisation_df = pd.DataFrame(columns=anonymisation_columns)
     imaging_info, error_log_df = get_ct_paths_and_date(dir, error_log_df)
     imaging_info, error_log_df = add_MRI_paths_and_date(dir, imaging_info, error_log_df)
     id = 0
     for patient_identifier in imaging_info:
         # use sequential id for anonymisation
-        pid = 'subj' + id
+        pid = 'subj' + str(id)
         move_log_df = move_selected_patient_data(pid, imaging_info[patient_identifier]['pct_path'], imaging_info[patient_identifier]['mri_path'], output_dir, move_log_df)
         anonymisation_df = anonymisation_df.append(
-            pd.DataFrame([[patient_identifier, pid]], columns = anonymisation_columns),
+            pd.DataFrame([[patient_identifier, pid,
+                imaging_info[patient_identifier]['pct_path'], imaging_info[patient_identifier]['pct_date'], imaging_info[patient_identifier]['mri_path'], imaging_info[patient_identifier]['mri_date']
+                ]], columns = anonymisation_columns),
             ignore_index=True)
         id += 1
+
     error_log_df.to_excel(os.path.join(dir, 'reorganisation_error_log.xlsx'))
     move_log_df.to_excel(os.path.join(dir, 'reorganisation_path_log.xlsx'))
     anonymisation_df.to_excel(os.path.join(dir, 'anonymisation_key.xlsx'))
@@ -275,21 +296,3 @@ def main(dir, output_dir):
     # todo check integrity of patients
 
 main(data_dir, output_dir)
-
-# if not os.path.exists(modality_output_dir):
-#     os.makedirs(modality_output_dir)
-                    # for file in os.listdir(study_dir):
-                    #     if file.endswith(".nii"):
-                    #         file_path = os.path.join(study_dir, file)
-                    #         new_file_name = study + '_' + subject + '.nii'
-                    #         new_file_path = os.path.join(modality_output_dir, new_file_name)
-                    #         if not os.path.exists(new_file_path):
-                    #             subprocess.run(['cp', file_path, new_file_path])
-
-        # # copy lesions file into subject dir
-        # lesion_path = os.path.join(main_dir, 'working_data', subject, 'VOI lesion.nii')
-        # new_lesion_name = 'VOI_lesion_' + subject + '.nii'
-        # new_lesion_path = os.path.join(output_dir, subject, new_lesion_name)
-        # if not os.path.exists(new_lesion_path):
-        #     # print(new_lesion_path)
-        #     subprocess.run(['cp', lesion_path, new_lesion_path])
