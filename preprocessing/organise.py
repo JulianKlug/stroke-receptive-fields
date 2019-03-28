@@ -1,7 +1,4 @@
-import os
-import subprocess
-import pydicom
-import datetime
+import os, subprocess, pydicom, datetime
 from dateutil import parser
 import numpy as np
 import pandas as pd

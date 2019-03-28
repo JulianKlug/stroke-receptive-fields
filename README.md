@@ -5,8 +5,10 @@ This repository hosts scripts for a research project on prediction of ischemic s
 
 Pre :
 
-- to_nii_batch.py : batch convert subject DICOMs to Nifti
-- organise.py : organise into a new working directory, extracting only useful and renaming to something sensible
+- 1. organise.py : organise into a new working directory, extracting only useful and renaming to something sensible
+- 2. to_nii_batch.py : batch convert subject DICOMs to Nifti
+- 3. flatten.py : flatten into an MRI and a CT folder
+- 4. verify_completeness.py : verify that all necessary files are present
 
 CT :
 
@@ -18,8 +20,8 @@ MRI :
 
 - matlab/mri_coreg_normalisation_wrapper.m : recenter subject CT, co-register T2 to subject CT, co-register T2 to CT-MNI and normalise to CT-MNI
 
-Post: 
-As RAPID performs excessive skull-stripping, same crop has to be applied to esion maps to remove lesions without underlying input data. 
+Post:
+As RAPID performs excessive skull-stripping, same crop has to be applied to esion maps to remove lesions without underlying input data.
 - masking/brain_mask.py : create brain masks based on RAPID perfusion maps
 - masking/mask_lesions.py : apply brain masks to lesions
 
