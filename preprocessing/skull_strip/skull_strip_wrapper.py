@@ -4,7 +4,7 @@ import subprocess
 # mount = '/run/media/jk/Elements'
 # main_dir = os.path.join(mount, 'MASTER/')
 main_dir = '/Users/julian/master/data'
-data_dir = os.path.join(main_dir, 'reorganised_test')
+data_dir = os.path.join(main_dir, 'extracted_test2')
 skull_strip_path = os.path.join(os.getcwd(), 'skull_strip.sh')
 print(skull_strip_path)
 
@@ -20,10 +20,11 @@ for subject in subjects:
     for modality in modalities:
         modality_dir = os.path.join(subject_dir, modality)
         studies = [o for o in os.listdir(modality_dir)
-                        if os.path.isfile(os.path.join(modality_dir,o))]
-
+                        if o.endswith(".nii")]
 
         for study in studies:
             study_path = os.path.join(modality_dir, study)
-            if modality.startswith('Ct') & study.startswith('SPC'):
+            if modality.startswith('pCT') & study.startswith('SPC'):
+                print(study)
+
                 subprocess.run([skull_strip_path, '-i', study], cwd = modality_dir)

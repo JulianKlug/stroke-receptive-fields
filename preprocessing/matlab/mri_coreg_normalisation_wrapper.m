@@ -11,7 +11,7 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/master/data/preprocessed';
+data_path = '/Users/julian/master/data/betted_test2';
 
 if ~(exist(data_path))
     fprintf('Data directory does not exist. Please enter a valid directory.')
@@ -51,10 +51,10 @@ addpath(template_dir, data_path)
 %% Loop to load data from folders and run the job
 for i = 1: numel ( subjects )
 
-    ct_dir = dir(fullfile(data_path,subjects{i}, 'Ct*'));
+    ct_dir = dir(fullfile(data_path,subjects{i}, 'pCT*'));
     ct_dir = ct_dir.name;
 
-    mri_dir = dir(fullfile(data_path,subjects{i}, 'Neuro*'));
+    mri_dir = dir(fullfile(data_path,subjects{i}, 'MRI*'));
     if (~ isempty(mri_dir))
         mri_dir = mri_dir.name;
     else
@@ -82,14 +82,14 @@ for i = 1: numel ( subjects )
     setOrigin(center_base_image, false, 3);
         
     % load data for each sequence without a prompt
-    mri_files =  dir(fullfile(data_path, subjects{i}, mri_dir,'t2*'));
+    mri_files =  dir(fullfile(data_path, subjects{i}, mri_dir, strcat('t2_tse_tra_', subjects{i}, '.nii')));
     mri_input = fullfile(data_path, subjects{i}, mri_dir, ...
                  mri_files.name);
 
     lesion_map_initial = fullfile(data_path, subjects{i}, ...
-                 strcat('VOI_lesion_', subjects{i}, '.nii'));
+                 strcat('VOI_', subjects{i}, '.nii'));
     lesion_map = fullfile(data_path, subjects{i}, mri_dir, ...
-                 strcat('VOI_lesion_', subjects{i}, '.nii'));     
+                 strcat('VOI_', subjects{i}, '.nii'));     
          
     if (exist(lesion_map_initial))
         movefile(lesion_map_initial, lesion_map);
@@ -116,7 +116,7 @@ for i = 1: numel ( subjects )
     coreg_mri_input = fullfile(data_path, subjects{i}, mri_dir, ...
                                    strcat('coreg_', mri_files.name));
     coreg_lesion_map = fullfile(data_path, subjects{i}, mri_dir, ...
-                            strcat('coreg_','VOI_lesion_', subjects{i}, '.nii'));
+                            strcat('coreg_','VOI_', subjects{i}, '.nii'));
                         
     % Use coregistration and resetting origin 
     % (ref: rorden lab Clinical toolbox)

@@ -33,10 +33,11 @@ def to_nii_batch_conversion(data_dir, output_dir):
 
             for study in studies:
                 study_dir = os.path.join(modality_dir, study)
-                study_output_dir = os.path.join(output_dir, subject, modality, study)
+                study_output_dir = os.path.join(output_dir, subject, modality)
                 if not os.path.exists(study_output_dir):
                     os.makedirs(study_output_dir)
-                subprocess.run([dcm2niix_path, '-m', 'y', '-o', study_output_dir, study_dir], cwd = modality_dir)
+                subprocess.run([dcm2niix_path, '-m', 'y', '-b', 'y',
+                                    '-f', study, '-o', study_output_dir, study_dir], cwd = modality_dir)
             # search for lesion files at study level
             move_lesion_files(modality_dir, os.path.join(output_dir, subject))
 

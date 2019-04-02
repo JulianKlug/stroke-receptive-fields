@@ -9,7 +9,7 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/master/data/preprocessed';
+data_path = '/Users/julian/master/data/betted_test2';
 
 if ~(exist(data_path))
     fprintf('Data directory does not exist. Please enter a valid directory.')
@@ -37,10 +37,10 @@ else
 end
 
 sequences = {
-    'RAPID_CBF' ,...
-    'RAPID_CBV', ...
-    'RAPID_MTT_[s]', ...
-    'RAPID_TMax_[s]'
+    'CBF' ,...
+    'CBV', ...
+    'MTT', ...
+    'Tmax'
     };
 
 % Base image to co-register to
@@ -55,7 +55,7 @@ addpath(template_dir, data_path)
 %% Initialise SPM defaults
 %% Loop to load data from folders and run the job
 for i = 1: numel ( subjects )
-    modalities = dir(fullfile(data_path,subjects{i}, 'Ct2*'));
+    modalities = dir(fullfile(data_path,subjects{i}, 'pCT*'));
     modality = modalities(1).name;
 
     base_image = fullfile(base_image_dir, subjects{i}, modality, ...
