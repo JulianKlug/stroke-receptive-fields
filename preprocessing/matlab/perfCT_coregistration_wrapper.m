@@ -8,7 +8,7 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/master/data/betted_test2';
+data_path = '/Users/julian/master/data/extracted_test2_noVOI';
 
 if ~(exist(data_path))
     fprintf('Data directory does not exist. Please enter a valid directory.')

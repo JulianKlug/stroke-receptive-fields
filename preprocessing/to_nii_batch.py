@@ -1,9 +1,9 @@
 import os
 import subprocess
 
-main_dir = '/Users/julian/master/data'
-data_dir = os.path.join(main_dir, 'reorganised_test2')
-output_dir = os.path.join(main_dir, 'extracted_test2/')
+main_dir = '/Users/julian/temp/'
+data_dir = os.path.join(main_dir, 'dir')
+output_dir = os.path.join(main_dir, 'extracted_dir')
 dcm2niix_path = '/Users/julian/master/dcm2niix/build/bin/dcm2niix'
 
 
@@ -15,7 +15,6 @@ def move_lesion_files(search_dir, output_sub_dir):
             new_file_path = os.path.join(output_sub_dir, file)
             if not os.path.exists(new_file_path):
                 subprocess.run(['cp', '-rf', file_path, new_file_path])
-
 
 def to_nii_batch_conversion(data_dir, output_dir):
     subjects = [o for o in os.listdir(data_dir)

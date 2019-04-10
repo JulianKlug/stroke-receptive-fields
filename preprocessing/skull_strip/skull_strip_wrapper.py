@@ -4,7 +4,7 @@ import subprocess
 # mount = '/run/media/jk/Elements'
 # main_dir = os.path.join(mount, 'MASTER/')
 main_dir = '/Users/julian/master/data'
-data_dir = os.path.join(main_dir, 'extracted_test2')
+data_dir = os.path.join(main_dir, 'extracted_test2_noVOI')
 skull_strip_path = os.path.join(os.getcwd(), 'skull_strip.sh')
 print(skull_strip_path)
 

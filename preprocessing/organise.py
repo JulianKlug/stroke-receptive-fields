@@ -2,15 +2,16 @@ import os, subprocess, pydicom, datetime
 from dateutil import parser
 import numpy as np
 import pandas as pd
+import image_name_config
 
-main_dir = '/Users/julian/master/data'
-data_dir = os.path.join(main_dir, 'working_data')
-output_dir = os.path.join(main_dir, 'reorganised_test2')
-spc_ct_sequences = ['SPC_301mm_Std', 'SPC 3.0-1mm Std']
-pct_sequences = ['TMax', 'Tmax', 'MTT', 'CBV', 'CBF']
-ct_perf_sequence_names = ['VPCT_Perfusion_4D_50_Hr36', 'VPCT Perfusion 4D 5.0 Hr36']
-mri_sequences = ['t2_tse_tra', 'T2W_TSE_tra']
-subject_name_seperator = '_'
+main_dir = '/Users/julian/temp/'
+data_dir = os.path.join(main_dir, 'dir')
+output_dir = os.path.join(main_dir, 'reorganised_test')
+spc_ct_sequences = image_name_config.spc_ct_sequences
+pct_sequences = image_name_config.pct_sequences
+ct_perf_sequence_names = image_name_config.ct_perf_sequence_names
+mri_sequences = image_name_config.mri_sequences
+subject_name_seperator = ' '
 error_log_columns = ['folder', 'error', 'exclusion', 'message']
 move_log_columns = ['folder', 'initial_path', 'new_path']
 
@@ -151,7 +152,7 @@ def add_MRI_paths_and_date(dir, imaging_info, error_log_df):
     folders = [o for o in os.listdir(dir)
                     if os.path.isdir(os.path.join(dir,o))]
     for folder in folders:
-        folder_dir = os.path.join(data_dir, folder)
+        folder_dir = os.path.join(dir, folder)
 
         (last_name, first_name, patient_birth_date) = get_subject_info(folder_dir)
         subject_key = last_name + '^' + first_name + '^' + patient_birth_date
@@ -268,10 +269,13 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
 
 
 def main(dir, output_dir):
+    # initialise logs
     error_log_df = pd.DataFrame(columns=error_log_columns)
     move_log_df = pd.DataFrame(columns=move_log_columns)
     anonymisation_columns = ['patient_identifier', 'anonymised_id', 'original_ct_path', 'ct_date', 'original_mri_path', 'mri_date']
     anonymisation_df = pd.DataFrame(columns=anonymisation_columns)
+
+    # get CT and MRI paths and image info
     imaging_info, error_log_df = get_ct_paths_and_date(dir, error_log_df)
     imaging_info, error_log_df = add_MRI_paths_and_date(dir, imaging_info, error_log_df)
     id = 0
