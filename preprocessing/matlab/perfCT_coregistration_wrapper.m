@@ -6,9 +6,12 @@
 
 %% Clear variables and command window
 clear all , clc
+addpath(genpath(pwd))
 %% Specify paths
 % Experiment folder
 data_path = '/Volumes/stroke_hdd1/stroke_db/2016/temp/extracted_test';
+spm_path = '/Users/julian/Documents/MATLAB/spm12'
+addpath(genpath(spm_path));
 
 if ~(exist(data_path))
     fprintf('Data directory does not exist. Please enter a valid directory.')
