@@ -1,10 +1,8 @@
 import os
 import subprocess
 
-# mount = '/run/media/jk/Elements'
-# main_dir = os.path.join(mount, 'MASTER/')
-main_dir = '/Users/julian/master/data'
-data_dir = os.path.join(main_dir, 'extracted_test2_noVOI')
+main_dir = '/Volumes/stroke_hdd1/stroke_db/2016/temp/'
+data_dir = os.path.join(main_dir, 'extracted_test')
 skull_strip_path = os.path.join(os.getcwd(), 'skull_strip.sh')
 print(skull_strip_path)
 

@@ -1,7 +1,7 @@
 import os, shutil
 
-main_dir = '/Users/julian/master/data'
-data_dir = os.path.join(main_dir, 'extracted_test2')
+main_dir = '/Volumes/stroke_hdd1/stroke_db/2017'
+data_dir = os.path.join(main_dir, 'extracted_data')
 
 def flatten(data_dir):
     subject_folders = [o for o in os.listdir(data_dir)

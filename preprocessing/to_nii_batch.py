@@ -1,9 +1,9 @@
 import os
 import subprocess
 
-main_dir = '/Users/julian/temp/'
-data_dir = os.path.join(main_dir, 'dir')
-output_dir = os.path.join(main_dir, 'extracted_dir')
+main_dir = '/Volumes/stroke_hdd1/stroke_db/2017'
+data_dir = os.path.join(main_dir, 'reorganised_data')
+output_dir = os.path.join(main_dir, 'extracted_data')
 dcm2niix_path = '/Users/julian/master/dcm2niix/build/bin/dcm2niix'
 
 

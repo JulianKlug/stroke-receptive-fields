@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 
-main_dir = '/Volumes/stroke_hdd1/stroke_db/2016/part2/'
+main_dir = '/Volumes/stroke_hdd1/stroke_db/2017/imaging_data'
 data_dir = os.path.join(main_dir, '')
 
 def find_empty_folders(data_dir):

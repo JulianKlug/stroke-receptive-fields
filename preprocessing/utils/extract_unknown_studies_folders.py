@@ -1,5 +1,5 @@
 import os, pydicom
-from shutil import move
+from shutil import copy
 
 """
 Given a main directory, check if any subjects has a study named "study" that contains inaccurately named images
@@ -35,25 +35,25 @@ def extract_unknown_studies_folder(dir):
                     if os.path.isdir(os.path.join(dir,o))]
 
     for serie in series:
-        dcms = [f for f in os.listdir(os.path.join(dir, serie)) if f.endswith(".dcm")]
+        dcms = [f for f in os.listdir(os.path.join(dir, serie)) if f.endswith(".dcm") and not f.startswith('.')]
         for dcm in dcms:
-            dcm_data = pydicom.dcmread(os.path.join(dir, serie, dcm))
+            print(dcm)
+            dcm_data = pydicom.dcmread(os.path.join(dir, serie, dcm), force = True)
             modality = dcm_data.Modality
             date = dcm_data.StudyDate
             time = dcm_data.StudyTime
             serie_name = dcm_data.SeriesDescription
+            print(dcm, modality, date, time, serie_name)
             modality_dir = find_matching_modality_folder(modality, date, time, subject_dir)
             if not modality_dir:
                 modality_dir = os.path.join(subject_dir, modality + '_' + date)
                 os.makedirs(modality_dir)
-            new_serie_path = os.path.join(modality_dir, serie_name)
-            if os.path.exists(new_serie_path):
-                new_serie_path = os.path.join(modality_dir, serie_name + '_' + time)
-            os.makedirs(new_serie_path)
-            # move(os.path.join(dir, serie, dcm), new_serie_path)
-        # Remove the empty directory at the end
-        if not os.listdir(os.path.join(dir, serie)):
-            os.rmdir(os.path.join(dir, serie))
+            new_serie_path = os.path.join(modality_dir, serie_name + '_' + time)
+            if not os.path.exists(new_serie_path):
+                os.makedirs(new_serie_path)
+            new_file_path = os.path.join(new_serie_path, dcm)
+            if not os.path.exists(new_file_path):
+                copy(os.path.join(dir, serie, dcm), new_serie_path)
 
 def extract_unknown_studies_folders_wrapper(main_dir):
     folders = [o for o in os.listdir(main_dir)
@@ -64,3 +64,6 @@ def extract_unknown_studies_folders_wrapper(main_dir):
                         if os.path.isdir(os.path.join(folder_dir,o)) and o.startswith('study')]
         for modality in modalities:
             extract_unknown_studies_folder(os.path.join(folder_dir, modality))
+
+subject_dir = '/Volumes/stroke_hdd1/stroke_db/2016/temp/test/Aeby Fabienne 19701111 473290/study'
+extract_unknown_studies_folder(subject_dir)

@@ -9,7 +9,7 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/master/data/extracted_test2_noVOI';
+data_path = '/Volumes/stroke_hdd1/stroke_db/2016/temp/extracted_test';
 
 if ~(exist(data_path))
     fprintf('Data directory does not exist. Please enter a valid directory.')

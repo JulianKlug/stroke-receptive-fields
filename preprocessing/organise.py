@@ -1,16 +1,19 @@
-import os, subprocess, pydicom, datetime
+import os, subprocess, pydicom, datetime, re
 from dateutil import parser
 import numpy as np
 import pandas as pd
 import image_name_config
+from unidecode import unidecode
+import hashlib
 
-main_dir = '/Users/julian/temp/'
-data_dir = os.path.join(main_dir, 'dir')
-output_dir = os.path.join(main_dir, 'reorganised_test')
+main_dir = '/Volumes/stroke_hdd1/stroke_db/2017/'
+data_dir = os.path.join(main_dir, 'imaging_data')
+output_dir = os.path.join(main_dir, 'reorganised_data')
 spc_ct_sequences = image_name_config.spc_ct_sequences
 pct_sequences = image_name_config.pct_sequences
 ct_perf_sequence_names = image_name_config.ct_perf_sequence_names
 mri_sequences = image_name_config.mri_sequences
+alternative_mri_sequences = image_name_config.alternative_mri_sequences
 subject_name_seperator = ' '
 error_log_columns = ['folder', 'error', 'exclusion', 'message']
 move_log_columns = ['folder', 'initial_path', 'new_path']
@@ -26,8 +29,7 @@ def get_subject_info(dir):
 
     # verify that name on folder corresponds
     folder = os.path.basename(dir)
-    folder_subject_first_name = folder.split(subject_name_seperator)[1].upper()
-    folder_subject_last_name = folder.split(subject_name_seperator)[0].upper()
+    subject_name_from_folder = '_'.join(unidecode(folder[:re.search("\d", folder).start() - 1].upper()).split(subject_name_seperator))
 
     modality_0 = [o for o in os.listdir(dir)
                     if os.path.isdir(os.path.join(dir,o))][0]
@@ -38,13 +40,14 @@ def get_subject_info(dir):
     dcms = [f for f in os.listdir(study_0_path) if f.endswith(".dcm")]
     dcm = pydicom.dcmread(os.path.join(study_0_path, dcms[0]))
 
-    last_name = str(dcm.PatientName).split('^')[0].upper()
-    first_name = str(dcm.PatientName).split('^')[1].upper()
+    full_name = '_'.join(re.split(r'[/^ ]', unidecode(str(dcm.PatientName).upper())))
+    last_name = unidecode(str(dcm.PatientName).split('^')[0].upper())
+    first_name = unidecode(str(dcm.PatientName).split('^')[1].upper())
     patient_birth_date = dcm.PatientBirthDate
 
-    if folder_subject_first_name != first_name or folder_subject_last_name != last_name:
+    if subject_name_from_folder != full_name:
         raise Exception('Names do not match between folder name and name in dicom',
-            first_name, last_name, folder_subject_first_name, folder_subject_last_name)
+            subject_name_from_folder, full_name)
 
     return (last_name, first_name, patient_birth_date)
 
@@ -84,11 +87,11 @@ def get_ct_paths_and_date(dir, error_log_df):
                     # verify CT is unique
                     if pCT_found == 1:
                         message = 'Two perfusion CTs found'
+                        print(folder, message)
                         error_log_df = error_log_df.append(
                             pd.DataFrame([[folder, True, False, message]], columns = error_log_columns),
                             ignore_index=True)
                         break
-                        # TODO: handle exception
 
                     dcms = [f for f in os.listdir(study_dir) if f.endswith(".dcm")]
                     dcm = pydicom.dcmread(os.path.join(study_dir, dcms[0]))
@@ -120,6 +123,8 @@ def choose_correct_MRI(dir, pct_date):
         studies = [o for o in os.listdir(modality_dir)
                         if os.path.isdir(os.path.join(modality_dir,o))]
         dcms = [f for f in os.listdir(os.path.join(modality_dir, studies[0])) if f.endswith(".dcm")]
+        if len(dcms) == 0:
+            continue
         dcm = pydicom.dcmread(os.path.join(os.path.join(modality_dir, studies[0]), dcms[0]))
         modality_date = datetime.datetime.combine(parser.parse(dcm.StudyDate), parser.parse(dcm.StudyTime).time())
         # don't take into account if MRI was done before the CT
@@ -166,6 +171,8 @@ def add_MRI_paths_and_date(dir, imaging_info, error_log_df):
             error_log_df = error_log_df.append(
                 pd.DataFrame([[folder, False, True, 'MRI not found']], columns = error_log_columns),
                 ignore_index=True)
+            # if no MRI for this subject, remove it from the list of usable subjects
+            del imaging_info[subject_key]
             continue
         if multiple_mri_studies_found:
             error_log_df = error_log_df.append(
@@ -202,27 +209,37 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
     selected_ct_study_paths = []
     for ct_study in ct_studies:
         ct_study_path = os.path.join(ct_folder_path, ct_study)
-        if ct_study in spc_ct_sequences:
-            selected_ct_study_paths.append(ct_study_path)
+
+        # find SPC
+        for possible_sequence_name in spc_ct_sequences:
+            # allow for variations in sequence names with sequence Id at the end
+            spc_ct_name_regex = possible_sequence_name + '(| ([0-9]|[1-9][0-9]|[1-9][0-9][0-9]))$'
+            if re.match(spc_ct_name_regex, ct_study):
+                selected_ct_study_paths.append(ct_study_path)
 
         if 'color' in ct_study or not 'RAPID' in ct_study:
             continue
-        dcms = [f for f in os.listdir(os.path.join(ct_folder_path, ct_study)) if f.endswith(".dcm")]
+        dcms = [f for f in os.listdir(os.path.join(ct_folder_path, ct_study)) if f.endswith(".dcm") and not f.startswith('.')]
         # exclude pCTs with something else than 37 images
-        if len(dcms) != 37:
+        if len(dcms) < 37:
             continue
+
         for pct_seq in pct_sequences:
             if pct_seq in ct_study:
                 selected_ct_study_paths.append(ct_study_path)
 
     # select MRI files
+    # find T2w sequence that VOI was drawn on
     mri_studies = [o for o in os.listdir(mri_folder_path)
                     if os.path.isdir(os.path.join(mri_folder_path,o))]
     selected_mri_study_paths = []
     for mri_study in mri_studies:
         mri_study_path = os.path.join(mri_folder_path, mri_study)
-        if mri_study in mri_sequences:
-            selected_ct_study_paths.append(mri_study_path)
+        for possible_sequence_name in mri_sequences:
+            # allow for variations in sequence names with sequence Id at the end
+            mri_sequence_name_regex = possible_sequence_name + '(| ([0-9]|[1-9][0-9]|[1-9][0-9][0-9]))$'
+            if re.match(mri_sequence_name_regex, mri_study):
+                selected_mri_study_paths.append(mri_study_path)
         if 'VOI' in mri_study or 'lesion' in mri_study or 'Lesion' in mri_study:
             new_file_name = 'VOI_' + patient_identifier + '.nii'
             new_file_path = os.path.join(patient_output_folder, new_file_name)
@@ -232,11 +249,21 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
                     pd.DataFrame([[patient_identifier, mri_study_path, new_file_path]], columns = move_log_columns),
                     ignore_index=True)
 
+    # if no MRI with primary sequence found, try with secondary sequence
+    if not selected_mri_study_paths: # ie not mri study found yet
+        for mri_study in mri_studies:
+            mri_study_path = os.path.join(mri_folder_path, mri_study)
+            for possible_sequence_name in alternative_mri_sequences:
+                mri_sequence_name_regex = possible_sequence_name + '(| ([0-9]|[1-9][0-9]|[1-9][0-9][0-9]))$'
+                if re.match(mri_sequence_name_regex, mri_study):
+                    selected_mri_study_paths.append(mri_study_path)
+
+    print(selected_mri_study_paths)
     selected_study_paths = selected_mri_study_paths + selected_ct_study_paths
     for selected_study_path in selected_study_paths:
         selected_study_name = os.path.basename(selected_study_path)
         # rename to constant name space
-        if selected_study_name in mri_sequences:
+        if selected_study_path in selected_mri_study_paths:
             new_study_name = 't2_tse_tra' + '_' + patient_identifier
             modality_name = 'MRI'
         else:
@@ -251,8 +278,11 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
         if 'CBV' in selected_study_name:
             new_study_name = 'CBV' + '_' + patient_identifier
 
-        if selected_study_name in spc_ct_sequences:
-            new_study_name = 'SPC_301mm_Std' + '_' + patient_identifier
+        for possible_sequence_name in spc_ct_sequences:
+            # allow for variations in sequence names with sequence Id at the end
+            spc_ct_name_regex = possible_sequence_name + '(| ([0-9]|[1-9][0-9]|[1-9][0-9][0-9]))$'
+            if re.match(spc_ct_name_regex, selected_study_name):
+                new_study_name = 'SPC_301mm_Std' + '_' + patient_identifier
 
         output_modality_dir = os.path.join(patient_output_folder, modality_name)
         if not os.path.exists(output_modality_dir):
@@ -276,19 +306,32 @@ def main(dir, output_dir):
     anonymisation_df = pd.DataFrame(columns=anonymisation_columns)
 
     # get CT and MRI paths and image info
+    print('Extracting CT paths and dates')
     imaging_info, error_log_df = get_ct_paths_and_date(dir, error_log_df)
+    print(len(imaging_info), 'subjects selected based on CT')
+    print('Extracting MRI paths and dates')
     imaging_info, error_log_df = add_MRI_paths_and_date(dir, imaging_info, error_log_df)
-    id = 0
+    print(len(imaging_info), 'subjects selected based on MRI and CT')
+
     for patient_identifier in imaging_info:
-        # use sequential id for anonymisation
-        pid = 'subj' + str(id)
+        # hash id for anonymisation
+        ID = hashlib.sha256(patient_identifier.encode('utf-8')).hexdigest()[:8]
+        pid = 'subj-' + str(ID)
+        print('Copying data for', patient_identifier)
+        patient_output_folder = os.path.join(output_dir, pid)
+        if os.path.exists(patient_output_folder):
+            print(patient_identifier, ': Namespace already taken by', pid)
+            print('Data not copied')
+            error_log_df = error_log_df.append(
+                pd.DataFrame([[patient_identifier, True, True, 'PID already taken']], columns = error_log_columns),
+                ignore_index=True)
+            continue
         move_log_df = move_selected_patient_data(pid, imaging_info[patient_identifier]['pct_path'], imaging_info[patient_identifier]['mri_path'], output_dir, move_log_df)
         anonymisation_df = anonymisation_df.append(
             pd.DataFrame([[patient_identifier, pid,
                 imaging_info[patient_identifier]['pct_path'], imaging_info[patient_identifier]['pct_date'], imaging_info[patient_identifier]['mri_path'], imaging_info[patient_identifier]['mri_date']
                 ]], columns = anonymisation_columns),
             ignore_index=True)
-        id += 1
 
     error_log_df.to_excel(os.path.join(dir, 'reorganisation_error_log.xlsx'))
     move_log_df.to_excel(os.path.join(dir, 'reorganisation_path_log.xlsx'))
