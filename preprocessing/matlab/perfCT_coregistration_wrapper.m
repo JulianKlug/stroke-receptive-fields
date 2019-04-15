@@ -56,7 +56,7 @@ for i = 1: numel ( subjects )
         coreg_sequences = dir(fullfile(base_image_dir, subjects{i}, modality, ...
             strcat('coreg_', sequences{jj}, '_', subjects{i}, '*', '.nii*')));
         try
-            if exist(fullfile(coreg_sequences(1).folder, coreg_sequences(1).name))
+            if exist(fullfile(base_image_dir, subjects{i}, modality, coreg_sequences(1).name))
                 coreg_count = coreg_count + 1;
             end
         catch ME
@@ -69,9 +69,9 @@ for i = 1: numel ( subjects )
 
     base_image_list = dir(fullfile(base_image_dir, subjects{i}, modality, ...
         strcat(base_image_prefix, '_SPC_301mm_Std_', subjects{i}, '*', '.nii*')));
-    base_image = fullfile(base_image_list(1).folder, base_image_list(1).name);
+    base_image = fullfile(base_image_dir, subjects{i}, modality, base_image_list(1).name);
     [filepath,name,ext] = fileparts(base_image);
-    if ext == '.gz' 
+    if strcmp(ext, '.gz') 
         gunzip(base_image);
         base_image = erase(base_image, '.gz');
     end
