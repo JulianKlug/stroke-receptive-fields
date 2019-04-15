@@ -9,8 +9,9 @@ clear all , clc
 addpath(genpath(pwd))
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/temp/anon_dir/';
-spm_path = '/Users/julian/Documents/MATLAB/spm12';
+data_path = 'D:\temp\anon_dir';
+spm_path = 'C:\Users\Julian\Documents\MATLAB\spm12';
+do_not_recalculate = true; 
 addpath(genpath(spm_path));
 
 if ~(exist(data_path))
@@ -45,26 +46,34 @@ base_image_ext = '.nii.gz';
 %% Initialise SPM defaults
 %% Loop to load data from folders and run the job
 for i = 1: numel ( subjects )
+    fprintf('%i/%i (%i%%) \n', i, size(subjects, 1), 100 * i / size(subjects, 1));
     modalities = dir(fullfile(data_path,subjects{i}, 'pCT*'));
     modality = modalities(1).name;
 
 % Verify if coreg was already done
-    for jj = 1: numel(sequences):
+    coreg_count = 0;
+    for jj = 1: numel(sequences)
         coreg_sequences = dir(fullfile(base_image_dir, subjects{i}, modality, ...
-            strcat('coreg_', sequences{jj}, '_', subjects{i}, '*', '.nii')));
-        
-    coreg_CBF = fullfile(base_image_dir, subjects{i}, modality, ...
-        strcat('coreg_CBF_', subjects{i}, '*', '.nii'));
-    coreg_CBV = fullfile(base_image_dir, subjects{i}, modality, ...
-        strcat('coreg_CBV_', subjects{i}, '*', '.nii'));
-    coreg_MTT = fullfile(base_image_dir, subjects{i}, modality, ...
-        strcat('coreg_MTT_', subjects{i}, '*', '.nii'));
+            strcat('coreg_', sequences{jj}, '_', subjects{i}, '*', '.nii*')));
+        try
+            if exist(fullfile(coreg_sequences(1).folder, coreg_sequences(1).name))
+                coreg_count = coreg_count + 1;
+            end
+        catch ME
+        end
+    end
+    if coreg_count == size(sequences, 2) && do_not_recalculate
+        fprintf('Skipping subject "%s" as coregistered files are already present.\n', subjects{i});
+        continue;
+    end
 
-    base_image = fullfile(base_image_dir, subjects{i+1}, modality, ...
-        strcat(base_image_prefix, '_SPC_301mm_Std_', subjects{i+1}, '*', '.nii'));
-    if (~ exist(base_image))
-        zipped_base_image = strcat(base_image, '.gz');
-        gunzip(zipped_base_image);
+    base_image_list = dir(fullfile(base_image_dir, subjects{i}, modality, ...
+        strcat(base_image_prefix, '_SPC_301mm_Std_', subjects{i}, '*', '.nii*')));
+    base_image = fullfile(base_image_list(1).folder, base_image_list(1).name);
+    [filepath,name,ext] = fileparts(base_image);
+    if ext == '.gz' 
+        gunzip(base_image);
+        base_image = erase(base_image, '.gz');
     end
         
     % load realigned data for each sequence without a prompt
