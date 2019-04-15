@@ -9,8 +9,8 @@ clear all , clc
 addpath(genpath(pwd))
 %% Specify paths
 % Experiment folder
-data_path = '/Volumes/stroke_hdd1/stroke_db/2016/temp/extracted_test';
-spm_path = '/Users/julian/Documents/MATLAB/spm12'
+data_path = '/Users/julian/temp/anon_dir/';
+spm_path = '/Users/julian/Documents/MATLAB/spm12';
 addpath(genpath(spm_path));
 
 if ~(exist(data_path))
@@ -48,8 +48,20 @@ for i = 1: numel ( subjects )
     modalities = dir(fullfile(data_path,subjects{i}, 'pCT*'));
     modality = modalities(1).name;
 
-    base_image = fullfile(base_image_dir, subjects{i}, modality, ...
-        strcat(base_image_prefix, '_SPC_301mm_Std_', subjects{i}, '.nii'));
+% Verify if coreg was already done
+    for jj = 1: numel(sequences):
+        coreg_sequences = dir(fullfile(base_image_dir, subjects{i}, modality, ...
+            strcat('coreg_', sequences{jj}, '_', subjects{i}, '*', '.nii')));
+        
+    coreg_CBF = fullfile(base_image_dir, subjects{i}, modality, ...
+        strcat('coreg_CBF_', subjects{i}, '*', '.nii'));
+    coreg_CBV = fullfile(base_image_dir, subjects{i}, modality, ...
+        strcat('coreg_CBV_', subjects{i}, '*', '.nii'));
+    coreg_MTT = fullfile(base_image_dir, subjects{i}, modality, ...
+        strcat('coreg_MTT_', subjects{i}, '*', '.nii'));
+
+    base_image = fullfile(base_image_dir, subjects{i+1}, modality, ...
+        strcat(base_image_prefix, '_SPC_301mm_Std_', subjects{i+1}, '*', '.nii'));
     if (~ exist(base_image))
         zipped_base_image = strcat(base_image, '.gz');
         gunzip(zipped_base_image);
