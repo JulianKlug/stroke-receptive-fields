@@ -66,6 +66,17 @@ for i = 1: numel ( subjects )
         mri_dir = mri_dir.name;
     end
     
+    wcoreg_sequences = dir(fullfile(data_path,subjects{i}, mri_dir, ...
+            strcat('wcoreg_', 't2_tse_tra', '_', subjects{i}, '*', '.nii*')));
+    try
+        if exist(fullfile(data_path, subjects{i}, mri_dir, wcoreg_sequences(1).name))... 
+                && do_not_recalculate
+            fprintf('Skipping subject "%s" as normalised files are already present.\n', subjects{i});
+            continue;
+        end
+    catch ME
+    end
+        
 %   base_image is the native CT (bettet or not betted, depending on prefix)
     original_base_image_list = dir(fullfile(base_image_dir, subjects{i}, ct_dir, ...
         strcat(base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '*', '.nii*')));
