@@ -73,7 +73,7 @@ for i = 1: numel ( subjects )
     [filepath,name,ext] = fileparts(base_image);
     if strcmp(ext, '.gz') 
         gunzip(base_image);
-        base_image = erase(base_image, '.gz');
+        base_image = base_image(1: end - 3);
     end
         
     % load realigned data for each sequence without a prompt

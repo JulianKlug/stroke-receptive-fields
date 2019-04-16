@@ -7,9 +7,13 @@
 
 %% Clear variables and command window
 clear all , clc
+addpath(genpath(pwd))
 %% Specify paths
 % Experiment folder
-data_path = '/Volumes/stroke_hdd1/stroke_db/2016/temp/extracted_test';
+data_path = 'C:\Users\Julian\Documents\temp\anon_dir';
+spm_path = 'C:\Users\Julian\Documents\MATLAB\spm12';
+do_not_recalculate = true; 
+addpath(genpath(spm_path));
 
 if ~(exist(data_path))
     fprintf('Data directory does not exist. Please enter a valid directory.')
@@ -29,7 +33,7 @@ subjects = {d(isub).name}';
 subjects(ismember(subjects,{'.','..'})) = [];
 
 use_stripped_template = false; % normalisation works better with skull
-template_dir = '/Users/julian/master/stroke-predict/preprocessing/matlab/normalisation';
+template_dir = fullfile(pwd, '/normalisation');
 if(use_stripped_template)
     ct_template = fullfile(template_dir, 'scct_stripped.nii');
 else
@@ -55,16 +59,36 @@ addpath(template_dir, data_path)
 %% Initialise SPM defaults
 %% Loop to load data from folders and run the job
 for i = 1: numel ( subjects )
+    fprintf('%i/%i (%i%%) \n', i, size(subjects, 1), 100 * i / size(subjects, 1));
     modalities = dir(fullfile(data_path,subjects{i}, 'pCT*'));
     modality = modalities(1).name;
 
-    base_image = fullfile(base_image_dir, subjects{i}, modality, ...
-        strcat(base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '.nii'));
-    if (~ exist(base_image))
-        zipped_base_image = strcat(base_image, '.gz');
-        gunzip(zipped_base_image);
+% Verify if normalisation was already done
+    wcoreg_count = 0;
+    for jj = 1: numel(sequences)
+        coreg_sequences = dir(fullfile(base_image_dir, subjects{i}, modality, ...
+            strcat('wcoreg_', sequences{jj}, '_', subjects{i}, '*', '.nii*')));
+        try
+            if exist(fullfile(base_image_dir, subjects{i}, modality, coreg_sequences(1).name))
+                wcoreg_count = wcoreg_count + 1;
+            end
+        catch ME
+        end
     end
-        
+    if wcoreg_count == size(sequences, 2) && do_not_recalculate
+        fprintf('Skipping subject "%s" as normalised files are already present.\n', subjects{i});
+        continue;
+    end    
+    
+    base_image_list = dir(fullfile(base_image_dir, subjects{i}, modality, ...
+        strcat(base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '*', '.nii*')));
+    base_image = fullfile(base_image_dir, subjects{i}, modality, base_image_list(1).name);
+    [filepath,name,ext] = fileparts(base_image);
+    if strcmp(ext, '.gz') 
+        gunzip(base_image);
+        base_image = base_image(1: end - 3);
+    end
+
     % load coregistered data for each sequence without a prompt
     input = {};
     for j = 1: numel(sequences)

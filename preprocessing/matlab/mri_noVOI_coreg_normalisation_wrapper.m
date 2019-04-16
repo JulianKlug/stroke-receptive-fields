@@ -9,9 +9,13 @@
 
 %% Clear variables and command window
 clear all , clc
+addpath(genpath(pwd))
 %% Specify paths
 % Experiment folder
-data_path = '/Volumes/stroke_hdd1/stroke_db/2016/temp/extracted_test';
+data_path = 'C:\Users\Julian\Documents\temp\anon_dir';
+spm_path = 'C:\Users\Julian\Documents\MATLAB\spm12';
+do_not_recalculate = true; 
+addpath(genpath(spm_path));
 
 if ~(exist(data_path))
     fprintf('Data directory does not exist. Please enter a valid directory.')
@@ -31,7 +35,7 @@ subjects = {d(isub).name}';
 subjects(ismember(subjects,{'.','..'})) = [];
 
 use_stripped_template = false; % normalisation works better with skull
-template_dir = '/Users/julian/master/stroke-predict/preprocessing/matlab/normalisation';
+template_dir = fullfile(pwd, '/normalisation');
 if(use_stripped_template)
     ct_template = fullfile(template_dir, 'scct_stripped.nii');
 else
@@ -50,7 +54,7 @@ addpath(template_dir, data_path)
 %% Initialise SPM defaults
 %% Loop to load data from folders and run the job
 for i = 1: numel ( subjects )
-
+    fprintf('%i/%i (%i%%) \n', i, size(subjects, 1), 100 * i / size(subjects, 1));
     ct_dir = dir(fullfile(data_path,subjects{i}, 'pCT*'));
     ct_dir = ct_dir.name;
 
@@ -63,13 +67,15 @@ for i = 1: numel ( subjects )
     end
     
 %   base_image is the native CT (bettet or not betted, depending on prefix)
-    original_base_image = fullfile(base_image_dir, subjects{i}, ct_dir, ...
-        strcat(base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '.nii'));
-    if (~ exist(original_base_image))
-        zipped_base_image = strcat(original_base_image, '.gz');
-        gunzip(zipped_base_image);
+    original_base_image_list = dir(fullfile(base_image_dir, subjects{i}, ct_dir, ...
+        strcat(base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '*', '.nii*')));
+    original_base_image = fullfile(base_image_dir, subjects{i}, ct_dir, original_base_image_list(1).name);
+    [filepath,name,ext] = fileparts(original_base_image);
+    if strcmp(ext, '.gz') 
+        gunzip(original_base_image);
+        original_base_image = original_base_image(1: end - 3);
     end
-    
+
     base_image = fullfile(base_image_dir, subjects{i}, mri_dir, ...
         strcat(base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '.nii'));
     copyfile(original_base_image, base_image);
