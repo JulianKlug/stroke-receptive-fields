@@ -7,12 +7,15 @@
 
 %% Clear variables and command window
 clear all , clc
-addpath(genpath(pwd))
 %% Specify paths
 % Experiment folder
 data_path = 'C:\Users\Julian\Documents\temp\anon_dir';
 spm_path = 'C:\Users\Julian\Documents\MATLAB\spm12';
 do_not_recalculate = true; 
+
+script_path = mfilename('fullpath');
+script_folder = script_path(1 : end - size(mfilename, 2));
+addpath(genpath(script_folder));
 addpath(genpath(spm_path));
 
 if ~(exist(data_path))
@@ -33,7 +36,7 @@ subjects = {d(isub).name}';
 subjects(ismember(subjects,{'.','..'})) = [];
 
 use_stripped_template = false; % normalisation works better with skull
-template_dir = fullfile(pwd, '/normalisation');
+template_dir = fullfile(script_folder, '/normalisation');
 if(use_stripped_template)
     ct_template = fullfile(template_dir, 'scct_stripped.nii');
 else

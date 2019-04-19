@@ -1,5 +1,5 @@
 %% MRI Pre-processing wrapper script
-% This script preprocesses T2 MRI images and associated lesion maps 
+% This script preprocesses T2 MRI images and associated lesion maps
 % 1. Coregister T2 to native CT (non betted, with reset origin if needed)
 % 2. Coregister native CT to CT-MNI and apply same transformation  to the coregistered T2 (output from step 1)
 % 3. Normalise coregistered native CT (at step 2)  to CT-MNI and apply same transformation to the twice-coregistered T2 (output from step 2)
@@ -9,12 +9,16 @@
 
 %% Clear variables and command window
 clear all , clc
-addpath(genpath(pwd))
 %% Specify paths
 % Experiment folder
-data_path = 'C:\Users\Julian\Documents\temp\anon_dir';
-spm_path = 'C:\Users\Julian\Documents\MATLAB\spm12';
-do_not_recalculate = true; 
+data_path = '/Users/julian/temp/anon_dir';
+spm_path = '/Users/julian/Documents/MATLAB/spm12';
+do_not_recalculate = true;
+with_VOI = false;
+
+script_path = mfilename('fullpath');
+script_folder = script_path(1 : end - size(mfilename, 2));
+addpath(genpath(script_folder));
 addpath(genpath(spm_path));
 
 if ~(exist(data_path))
@@ -35,7 +39,7 @@ subjects = {d(isub).name}';
 subjects(ismember(subjects,{'.','..'})) = [];
 
 use_stripped_template = false; % normalisation works better with skull
-template_dir = fullfile(pwd, '/normalisation');
+template_dir = fullfile(script_folder, '/normalisation');
 if(use_stripped_template)
     ct_template = fullfile(template_dir, 'scct_stripped.nii');
 else
@@ -55,7 +59,6 @@ addpath(template_dir, data_path)
 %% Loop to load data from folders and run the job
 for i = 1: numel ( subjects )
     fprintf('%i/%i (%i%%) \n', i, size(subjects, 1), 100 * i / size(subjects, 1));
-
     ct_dir = dir(fullfile(data_path,subjects{i}, 'pCT*'));
     ct_dir = ct_dir.name;
 
@@ -66,27 +69,27 @@ for i = 1: numel ( subjects )
         mri_dir = dir(fullfile(data_path,subjects{i}, 'Irm*'))
         mri_dir = mri_dir.name;
     end
-    
+
     wcoreg_sequences = dir(fullfile(data_path, subjects{i}, mri_dir, ...
             strcat('wcoreg_', 't2_tse_tra', '_', subjects{i}, '*', '.nii*')));
     wcoreg_VOI = fullfile(data_path, subjects{i}, mri_dir, ...
                             strcat('wcoreg_','VOI_', subjects{i}, '.nii'));
     try
         if exist(fullfile(data_path,subjects{i}, mri_dir, wcoreg_sequences(1).name))...
-                && exist(wcoreg_VOI) ...
+                && ((with_VOI && exist(wcoreg_VOI)) || ~with_VOI) ...
                 && do_not_recalculate
             fprintf('Skipping subject "%s" as normalised files are already present.\n', subjects{i});
             continue;
         end
     catch ME
     end
-    
+
 %   base_image is the native CT (bettet or not betted, depending on prefix)
     original_base_image_list = dir(fullfile(base_image_dir, subjects{i}, ct_dir, ...
         strcat(base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '*', '.nii*')));
     original_base_image = fullfile(base_image_dir, subjects{i}, ct_dir, original_base_image_list(1).name);
     [filepath,name,ext] = fileparts(original_base_image);
-    if strcmp(ext, '.gz') 
+    if strcmp(ext, '.gz')
         gunzip(original_base_image);
         original_base_image = original_base_image(1: end - 3);
     end
@@ -94,68 +97,79 @@ for i = 1: numel ( subjects )
     base_image = fullfile(base_image_dir, subjects{i}, mri_dir, ...
         strcat(base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '.nii'));
     copyfile(original_base_image, base_image);
-    
+
     % Create a new image that will be recentered with setOrigin() $
     % (but not co-registered)
     center_base_image = fullfile(base_image_dir, subjects{i}, mri_dir, ...
         strcat('c_',base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '.nii'));
     copyfile(original_base_image, center_base_image);
     setOrigin(center_base_image, false, 3);
-        
+
     % load data for each sequence without a prompt
     mri_files =  dir(fullfile(data_path, subjects{i}, mri_dir, strcat('t2_tse_tra_', subjects{i}, '.nii')));
     mri_input = fullfile(data_path, subjects{i}, mri_dir, ...
                  mri_files.name);
+    if with_VOI
+      lesion_map_initial = fullfile(data_path, subjects{i}, ...
+                   strcat('VOI_', subjects{i}, '.nii'));
+      lesion_map = fullfile(data_path, subjects{i}, mri_dir, ...
+                   strcat('VOI_', subjects{i}, '.nii'));
 
-    lesion_map_initial = fullfile(data_path, subjects{i}, ...
-                 strcat('VOI_', subjects{i}, '.nii'));
-    lesion_map = fullfile(data_path, subjects{i}, mri_dir, ...
-                 strcat('VOI_', subjects{i}, '.nii'));     
-         
-    if (exist(lesion_map_initial))
-        movefile(lesion_map_initial, lesion_map);
+      if (exist(lesion_map_initial))
+          movefile(lesion_map_initial, lesion_map);
+      end
+      linked_images = {lesion_map};
+    else
+      linked_images = {};
     end
 
     % display which subject and sequence is being processed
     fprintf('Processing subject "%s" , "%s" \n' ,...
         subjects{i}, mri_files.name);
-    
+
     %% COREGISTRATION to native CT
-    
-    coregistration_to_native = coregister_job(center_base_image, mri_input, {lesion_map});
+
+    coregistration_to_native = coregister_job(center_base_image, mri_input, linked_images);
     log_file = fullfile(data_path, subjects{i}, mri_dir, ...
         'logs',strcat('to_SPC_301mm_Std_', 'coreg.mat'));
     mkdir(fullfile(data_path, subjects{i}, mri_dir, 'logs'));
     save(log_file, 'coregistration_to_native');
     spm('defaults', 'FMRI');
     spm_jobman('run', coregistration_to_native);
-    
+
     %% COREGISTRATION to CT-MNI
     % Co-register native CT (recentered) to CT MNI and apply
     % transformation to MRI and lesion map
-    
+
     coreg_mri_input = fullfile(data_path, subjects{i}, mri_dir, ...
                                    strcat('coreg_', mri_files.name));
     coreg_lesion_map = fullfile(data_path, subjects{i}, mri_dir, ...
                             strcat('coreg_','VOI_', subjects{i}, '.nii'));
-                        
-    % Use coregistration and resetting origin 
+
+    % Use coregistration and resetting origin
     % (ref: rorden lab Clinical toolbox)
-    setOrigin(strvcat(center_base_image, coreg_mri_input, coreg_lesion_map), true, 3);
-                               
+    if with_VOI
+      setOrigin(strvcat(center_base_image, coreg_mri_input, coreg_lesion_map), true, 3);
+    else
+      setOrigin(strvcat(center_base_image, coreg_mri_input), true, 3);
+    end
 
     %% RUN NORMALISATION
     %
-    
+
     if ~exist(ct_template) %file does not exist
         vols = spm_select(inf,'image','Select template to co-register and normalise to');
     end
-    
-    
+
+    if with_VOI
+      images_to_normalize = {coreg_mri_input, coreg_lesion_map};
+    else
+      images_to_normalize = {coreg_mri_input};
+    end
+
     % Normalisation script
     % based on Rorden Lab's clinical toolbox
     % adapted for SPM12 and perfusion CT
-    normalise_to_CT(center_base_image, {coreg_mri_input, coreg_lesion_map}, ct_template);
-        
-end
+    normalise_to_CT(center_base_image, images_to_normalize, ct_template);
 
+end

@@ -6,12 +6,15 @@
 
 %% Clear variables and command window
 clear all , clc
-addpath(genpath(pwd))
 %% Specify paths
 % Experiment folder
-data_path = 'D:\temp\anon_dir';
-spm_path = 'C:\Users\Julian\Documents\MATLAB\spm12';
+data_path = '/Users/julian/temp/';
+spm_path = '/Users/julian/Documents/MATLAB/spm12';
 do_not_recalculate = true; 
+
+script_path = mfilename('fullpath');
+script_folder = script_path(1 : end - size(mfilename, 2));
+addpath(genpath(script_folder));
 addpath(genpath(spm_path));
 
 if ~(exist(data_path))
