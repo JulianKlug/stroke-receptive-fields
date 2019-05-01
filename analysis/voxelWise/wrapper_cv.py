@@ -105,3 +105,14 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, feature
         body = 'RF ' + str(rf_dim) + '\n' + 'Error ' + str(e) + '\n' + str(tb)
         notification_system.send_message(title, body)
         raise
+
+def rf_hyperopt(model_name, Model_Generator, IN, OUT, CLIN, MASKS, feature_scaling,
+                n_repeats, n_folds, main_save_dir, main_output_dir, rf_hp_start, rf_hp_end):
+    print('Running Hyperopt of rf in range:', rf_hp_start, rf_hp_end)
+    for rf in range(rf_hp_start, rf_hp_end):
+        rf_dim = [rf, rf, rf]
+        model_id = model_name + '_rf_' + str(rf)
+        launch_cv(model_id, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, feature_scaling,
+                        n_repeats, n_folds, main_save_dir, main_output_dir)
+
+    print('Hyperopt done.')
