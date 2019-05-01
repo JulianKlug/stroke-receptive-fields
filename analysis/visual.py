@@ -11,7 +11,7 @@ def display(img_data, block = True):
             axes[i].imshow(slice.T, cmap="gray", origin="lower")
 
     n_i, n_j, n_k = img_data.shape
-    center_i = (n_i - 1) // 2  # // for integer division
+    center_i = (n_i - 1) // 2
     center_j = (n_j - 1) // 2
     center_k = (n_k - 1) // 2
     print('Image center: ', center_i, center_j, center_k)

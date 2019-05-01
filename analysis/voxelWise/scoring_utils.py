@@ -16,7 +16,7 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
     roc_auc = auc(fpr, tpr)
     # get optimal cutOff
     threshold = cutoff_youdens_j(fpr, tpr, thresholds)
-    print('Using threshold:', str(threshold))
+    print('Using threshold', str(threshold), 'for evaluation.')
     # threshold = 0.5 # threshold choosen to evaluate f1 and accuracy of model
 
     jaccard = jaccard_similarity_score(y_test, probas_[:] >= threshold)
@@ -69,9 +69,8 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
 
         visual_compare(subj_3D_y_test, subj_3D_probas, n_subjects, subj, n_z, gs)
 
-        hsd, modified_hsd = hausdorff_distance(subj_3D_y_test, subj_3D_probas >= threshold, n_x, n_y, n_z)
+        hsd = hausdorff_distance(subj_3D_y_test, subj_3D_probas >= threshold, n_x, n_y, n_z)
         image_wise_hausdorff.append(hsd)
-        image_wise_modified_hausdorff.append(modified_hsd)
 
     return {
         'fpr': fpr,
@@ -140,9 +139,11 @@ def hausdorff_distance(data1, data2, n_x, n_y, n_z):
 
     coordinates1 = np.array(np.where(data1 > 0)).transpose()
     coordinates2 = np.array(np.where(data2 > 0)).transpose()
+    # modified_hausdorff =  ModHausdorffDist(coordinates1, coordinates2)[0]
 
-    return directed_hausdorff(coordinates1, coordinates2)[0], ModHausdorffDist(coordinates1, coordinates2)[0]
+    return directed_hausdorff(coordinates1, coordinates2)[0]
 
+# Too calculation intensive for now
 def ModHausdorffDist(A,B):
     #This function computes the Modified Hausdorff Distance (MHD) which is
     #proven to function better than the directed HD as per Dubuisson et al.

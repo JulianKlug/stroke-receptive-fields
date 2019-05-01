@@ -65,7 +65,11 @@ class Threshold_Model():
         return self.trained_model, []
 
     def predict(self, data):
-        probas_ = self.trained_model.predict_proba(data)
+        model = self.trained_model
+        if not self.trained_model:
+            print('Model has not been trained. Prediction may be hazardous')
+            model = self.model
+        probas_ = model.predict_proba(data)
         return probas_
 
     def predict_test_data(self):
