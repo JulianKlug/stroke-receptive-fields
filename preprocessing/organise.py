@@ -5,10 +5,11 @@ import pandas as pd
 import image_name_config
 from unidecode import unidecode
 import hashlib
+from utils.naming_verification import verify_name
 
-main_dir = '/Volumes/stroke_hdd1/stroke_db/2017/'
-data_dir = os.path.join(main_dir, 'imaging_data')
-output_dir = os.path.join(main_dir, 'reorganised_data')
+main_dir = '/Volumes/stroke_hdd1/stroke_db/2017/imaging_data/'
+data_dir = os.path.join(main_dir, 'additionnal')
+output_dir = os.path.join(main_dir, 'reorganised_additionnal_data')
 spc_ct_sequences = image_name_config.spc_ct_sequences
 pct_sequences = image_name_config.pct_sequences
 ct_perf_sequence_names = image_name_config.ct_perf_sequence_names
@@ -83,7 +84,7 @@ def get_ct_paths_and_date(dir, error_log_df):
             for study in studies:
                 study_dir = os.path.join(modality_dir, study)
 
-                if study in ct_perf_sequence_names:
+                if verify_name(study, ct_perf_sequence_names):
                     # verify CT is unique
                     if pCT_found == 1:
                         message = 'Two perfusion CTs found'
@@ -104,7 +105,7 @@ def get_ct_paths_and_date(dir, error_log_df):
                         }})
                     pCT_found = 1
                     break
-            # TODO: extract pCT paths
+
     return imaging_info, error_log_df
 
 def choose_correct_MRI(dir, pct_date):
@@ -130,18 +131,16 @@ def choose_correct_MRI(dir, pct_date):
         # don't take into account if MRI was done before the CT
         if modality_date < pct_date:
             continue
-
         for study in studies:
             study_dir = os.path.join(modality_dir, study)
-            if 'T2' in study or 't2' in study:
+            if verify_name(study, mri_sequences):
                 hasT2 = 1
             if 'ADC' in study or 'TRACE' in study or 'adc' in study \
                 or 'trace' in study or 'DWI' in study or 'dwi' in study:
                 hasDWI = 1
             if 'VOI' in study or 'lesion' in study or 'Lesion' in study:
                 lesionDrawn = 1
-                mri_path = modality_dir
-                return mri_path
+                return (True, modality_dir, modality_date, False)
         if hasT2 and hasDWI:
             mri_dates.append(modality_date)
             mri_paths.append(modality_dir)
@@ -211,11 +210,8 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
         ct_study_path = os.path.join(ct_folder_path, ct_study)
 
         # find SPC
-        for possible_sequence_name in spc_ct_sequences:
-            # allow for variations in sequence names with sequence Id at the end
-            spc_ct_name_regex = possible_sequence_name + '(| ([0-9]|[1-9][0-9]|[1-9][0-9][0-9]))$'
-            if re.match(spc_ct_name_regex, ct_study):
-                selected_ct_study_paths.append(ct_study_path)
+        if verify_name(ct_study, spc_ct_sequences):
+            selected_ct_study_paths.append(ct_study_path)
 
         if 'color' in ct_study or not 'RAPID' in ct_study:
             continue
@@ -224,9 +220,8 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
         if len(dcms) < 37:
             continue
 
-        for pct_seq in pct_sequences:
-            if pct_seq in ct_study:
-                selected_ct_study_paths.append(ct_study_path)
+        if verify_name(ct_study, pct_sequences):
+            selected_ct_study_paths.append(ct_study_path)
 
     # select MRI files
     # find T2w sequence that VOI was drawn on
@@ -235,11 +230,9 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
     selected_mri_study_paths = []
     for mri_study in mri_studies:
         mri_study_path = os.path.join(mri_folder_path, mri_study)
-        for possible_sequence_name in mri_sequences:
-            # allow for variations in sequence names with sequence Id at the end
-            mri_sequence_name_regex = possible_sequence_name + '(| ([0-9]|[1-9][0-9]|[1-9][0-9][0-9]))$'
-            if re.match(mri_sequence_name_regex, mri_study):
-                selected_mri_study_paths.append(mri_study_path)
+        if verify_name(mri_study, mri_sequences):
+            selected_mri_study_paths.append(mri_study_path)
+
         if 'VOI' in mri_study or 'lesion' in mri_study or 'Lesion' in mri_study:
             new_file_name = 'VOI_' + patient_identifier + '.nii'
             new_file_path = os.path.join(patient_output_folder, new_file_name)
@@ -253,10 +246,8 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
     if not selected_mri_study_paths: # ie not mri study found yet
         for mri_study in mri_studies:
             mri_study_path = os.path.join(mri_folder_path, mri_study)
-            for possible_sequence_name in alternative_mri_sequences:
-                mri_sequence_name_regex = possible_sequence_name + '(| ([0-9]|[1-9][0-9]|[1-9][0-9][0-9]))$'
-                if re.match(mri_sequence_name_regex, mri_study):
-                    selected_mri_study_paths.append(mri_study_path)
+            if verify_name(mri_study, alternative_mri_sequences):
+                selected_mri_study_paths.append(mri_study_path)
 
     print(selected_mri_study_paths)
     selected_study_paths = selected_mri_study_paths + selected_ct_study_paths
@@ -278,11 +269,8 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
         if 'CBV' in selected_study_name:
             new_study_name = 'CBV' + '_' + patient_identifier
 
-        for possible_sequence_name in spc_ct_sequences:
-            # allow for variations in sequence names with sequence Id at the end
-            spc_ct_name_regex = possible_sequence_name + '(| ([0-9]|[1-9][0-9]|[1-9][0-9][0-9]))$'
-            if re.match(spc_ct_name_regex, selected_study_name):
-                new_study_name = 'SPC_301mm_Std' + '_' + patient_identifier
+        if verify_name(selected_study_name, spc_ct_sequences):
+            new_study_name = 'SPC_301mm_Std' + '_' + patient_identifier
 
         output_modality_dir = os.path.join(patient_output_folder, modality_name)
         if not os.path.exists(output_modality_dir):

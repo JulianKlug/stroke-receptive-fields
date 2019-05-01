@@ -1,9 +1,9 @@
 import os
 import subprocess
 
-main_dir = '/Volumes/stroke_hdd1/stroke_db/2017'
-data_dir = os.path.join(main_dir, 'reorganised_data')
-output_dir = os.path.join(main_dir, 'extracted_data')
+main_dir = '/Volumes/stroke_hdd1/stroke_db/2017/imaging_data/included/'
+data_dir = os.path.join(main_dir, 'ivt_only')
+output_dir = os.path.join(main_dir, 'extracted_ivt_only')
 dcm2niix_path = '/Users/julian/master/dcm2niix/build/bin/dcm2niix'
 
 

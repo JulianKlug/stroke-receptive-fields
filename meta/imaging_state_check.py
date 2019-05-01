@@ -1,10 +1,10 @@
-import os, sys
+import os, sys, re
 sys.path.insert(0, '../')
 import pandas as pd
 import numpy as np
 import preprocessing.image_name_config as image_name_config
 
-data_dir = '/Volumes/stroke_hdd1/stroke_db/2016/part2'
+data_dir = '/Volumes/stroke_hdd1/stroke_db/2017/imaging_data/additionnal/'
 spc_ct_sequences = image_name_config.spc_ct_sequences
 
 subjects = [o for o in os.listdir(data_dir)
@@ -40,8 +40,12 @@ for subject in subjects:
             for study in studies:
                 if study.startswith('VPCT_Perfusion_4D') or 'RAPID' in study:
                     hasPCT = 1
-                if study in spc_ct_sequences:
-                    hasSPC = 1
+                # find SPC
+                for possible_sequence_name in spc_ct_sequences:
+                    # allow for variations in sequence names with sequence Id at the end
+                    spc_ct_name_regex = possible_sequence_name + '(| ([0-9]|[1-9][0-9]|[1-9][0-9][0-9]))$'
+                    if re.match(spc_ct_name_regex, study):
+                        hasSPC = 1
                 if 'T2' in study or 't2' in study:
                     hasT2 = 1
                 if 'ADC' in study or 'TRACE' in study or 'adc' in study \
