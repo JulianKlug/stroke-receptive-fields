@@ -6,7 +6,7 @@ from numpy.core.umath_tests import inner1d
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 
-def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
+def evaluate(probas_, y_test, mask_test, ids_test, n_subjects, n_x, n_y, n_z):
     probas_ = np.squeeze(probas_)
     if probas_.shape != y_test.shape:
         print('PROBAS AND TEST IMAGE DO NOT HAVE THE SAME SHAPE', probas_.shape, y_test.shape)
@@ -45,6 +45,9 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
 
     for subj in range(n_subjects):
         subj_n_vxl = np.sum(mask_test[subj])
+        if ids_test: subj_id = ids_test[subj]
+        else : subj_id = None
+
         subj_image_wise_probas = probas_[vxl_index : vxl_index + subj_n_vxl]
         subj_image_wise_y_test = y_test[vxl_index : vxl_index + subj_n_vxl]
         vxl_index += subj_n_vxl
@@ -67,7 +70,7 @@ def evaluate(probas_, y_test, mask_test, n_subjects, n_x, n_y, n_z):
         subj_3D_y_test = np.full(mask_test[subj].shape, 0)
         subj_3D_y_test[mask_test[subj]] = subj_image_wise_y_test
 
-        visual_compare(subj_3D_y_test, subj_3D_probas, n_subjects, subj, n_z, gs)
+        visual_compare(subj_3D_y_test, subj_3D_probas, n_subjects, subj, n_z, gs, image_id = subj_id)
 
         hsd = hausdorff_distance(subj_3D_y_test, subj_3D_probas >= threshold, n_x, n_y, n_z)
         image_wise_hausdorff.append(hsd)
@@ -186,10 +189,12 @@ def ModHausdorffDist(A,B):
     return(MHD, FHD, RHD)
 
 # draw GT and test image on canvas
-def visual_compare(GT, pred, n_images, i_image, n_z, gs):
+def visual_compare(GT, pred, n_images, i_image, n_z, gs, image_id = None):
+    print('Evaluating', image_id)
     center_z = (n_z - 1) // 2
     # plot GT image
-    ax= plt.subplot(gs[0, i_image])
+    ax = plt.subplot(gs[0, i_image])
+    if image_id: ax.set_title(image_id)
     plt.imshow(-GT[:, :, center_z].T)
     plt.gca().invert_yaxis()
     plt.set_cmap('Greys')
@@ -197,7 +202,7 @@ def visual_compare(GT, pred, n_images, i_image, n_z, gs):
     plt.axis('off')
 
     # plot reconstructed image
-    ax= plt.subplot(gs[1, i_image])
+    ax = plt.subplot(gs[1, i_image])
     plt.imshow(pred[:, :, center_z].T)
     plt.gca().invert_yaxis()
     plt.set_cmap('jet')

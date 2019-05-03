@@ -164,4 +164,4 @@ def load_saved_data(data_dir):
     print('Sequences used:', params)
     print(ids.shape[0] - ct_inputs.shape[0], 'subjects had been excluded.')
 
-    return (clinical_inputs, ct_inputs, lesion_GT, brain_masks)
+    return (clinical_inputs, ct_inputs, lesion_GT, brain_masks, ids)

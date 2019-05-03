@@ -8,8 +8,8 @@ import receptiveField as rf
 from scoring_utils import evaluate
 
 def repeated_kfold_cv(Model_Generator, save_dir, save_function,
-            input_data_array, output_data_array, clinical_input_array = None, mask_array = None, feature_scaling = True,
-            receptive_field_dimensions = [1,1,1], n_repeats = 1, n_folds = 5, messaging = None):
+            input_data_array, output_data_array, clinical_input_array = None, mask_array = None, id_array = None,
+            feature_scaling = True, receptive_field_dimensions = [1,1,1], n_repeats = 1, n_folds = 5, messaging = None):
     """
     Patient wise Repeated KFold Crossvalidation for a given model
     This function creates and evaluates k datafolds of n-iterations for crossvalidation
@@ -151,7 +151,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
             # Evaluate this fold
             print('Evaluating fold ' + str(fold) + ' of ' + str(n_folds - 1) + ' of iteration' + str(iteration) + ' in', str(fold_dir))
             try:
-                fold_result = evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, mask_array, test)
+                fold_result = evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, mask_array, id_array, test)
 
                 results['test_accuracy'].append(fold_result['accuracy'])
                 results['test_f1'].append(fold_result['f1'])
@@ -286,7 +286,7 @@ def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, t
 
         model.add_test_data(subj_X_test, subj_y_test)
 
-def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, mask_array, test):
+def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, mask_array, id_array, test):
     """
     Patient wise Repeated KFold Crossvalidation
     This function evaluates a saved datafold
@@ -302,8 +302,10 @@ def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, mask_array, test):
     probas_ = model.predict_test_data()
     y_test = model.get_test_labels()
     mask_test = mask_array[test]
+    if id_array: ids_test = id_array[test]
+    else: ids_test = None
 
-    results = evaluate(probas_, y_test, mask_test, n_test_subjects, n_x, n_y, n_z)
+    results = evaluate(probas_, y_test, mask_test, ids_test, n_test_subjects, n_x, n_y, n_z)
     print('Model sucessfully tested.')
     results['trained_model'] = trained_model
     results['train_evals'] = evals_result
