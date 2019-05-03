@@ -45,7 +45,7 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects, n_x, n_y, n_z):
 
     for subj in range(n_subjects):
         subj_n_vxl = np.sum(mask_test[subj])
-        if ids_test: subj_id = ids_test[subj]
+        if ids_test is not None: subj_id = ids_test[subj]
         else : subj_id = None
 
         subj_image_wise_probas = probas_[vxl_index : vxl_index + subj_n_vxl]
@@ -194,7 +194,7 @@ def visual_compare(GT, pred, n_images, i_image, n_z, gs, image_id = None):
     center_z = (n_z - 1) // 2
     # plot GT image
     ax = plt.subplot(gs[0, i_image])
-    if image_id: ax.set_title(image_id)
+    if image_id is not None: ax.set_title(image_id)
     plt.imshow(-GT[:, :, center_z].T)
     plt.gca().invert_yaxis()
     plt.set_cmap('Greys')

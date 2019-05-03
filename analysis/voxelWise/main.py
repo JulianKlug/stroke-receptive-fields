@@ -27,8 +27,8 @@ CLIN = None
 
 n_repeats = 10
 n_folds = 5
-n_repeats = 1
-n_folds = 2
+# n_repeats = 1
+# n_folds = 2
 
 # Feature can accelerate some algorithms
 # should not be used if predetermined thresholds are used

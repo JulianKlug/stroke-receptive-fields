@@ -302,7 +302,7 @@ def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, mask_array, id_array, t
     probas_ = model.predict_test_data()
     y_test = model.get_test_labels()
     mask_test = mask_array[test]
-    if id_array: ids_test = id_array[test]
+    if id_array is not None: ids_test = id_array[test]
     else: ids_test = None
 
     results = evaluate(probas_, y_test, mask_test, ids_test, n_test_subjects, n_x, n_y, n_z)
