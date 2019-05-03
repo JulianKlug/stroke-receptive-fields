@@ -190,7 +190,6 @@ def ModHausdorffDist(A,B):
 
 # draw GT and test image on canvas
 def visual_compare(GT, pred, n_images, i_image, n_z, gs, image_id = None):
-    print('Evaluating', image_id)
     center_z = (n_z - 1) // 2
     # plot GT image
     ax = plt.subplot(gs[0, i_image])
