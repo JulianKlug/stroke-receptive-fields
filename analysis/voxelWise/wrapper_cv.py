@@ -78,19 +78,23 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, IDS, fe
         roc_auc = np.median(results['test_roc_auc'])
         f1 = np.median(results['test_f1'])
         dice = np.median([item for sublist in results['test_image_wise_dice'] for item in sublist])
-        mhd = np.median([item for sublist in results['test_image_wise_modified_hausdorff'] for item in sublist])
+        hausdorff_distance = np.median([item for sublist in results['test_image_wise_hausdorff'] for item in sublist])
         params = results['params']
 
         print('Results for', model_name)
         print('Voxel-wise accuracy: ', accuracy)
         print('ROC AUC score: ', roc_auc)
         print('Dice score: ', dice)
+        print('Classic Hausdorff', hausdorff_distance)
         print('F1 score: ', f1)
 
         elapsed = timeit.default_timer() - start
         print('Evaluation done in: ', elapsed)
         title = model_name + ' finished Cross-Validation'
-        body = 'accuracy ' + str(accuracy) + '\n' + 'ROC AUC ' + str(roc_auc) + '\n' + 'Dice ' + str(dice) + '\n' + 'F1 ' + str(f1) + '\n' + 'RF ' + str(rf_dim) + '\n' + 'Time elapsed ' + str(elapsed) + '\n' + str(params)
+        body = 'accuracy ' + str(accuracy) + '\n' + 'ROC AUC ' + str(roc_auc) + '\n' \
+            + 'Dice ' + str(dice) + '\n' + 'Classic Hausdorff ' + str(hausdorff_distance) + '\n' \
+            + 'F1 ' + str(f1) + '\n' + 'RF ' + str(rf_dim) + '\n' \
+            + 'Time elapsed ' + str(elapsed) + '\n' + str(params)
         notification_system.send_message(title, body)
 
         if not save_folds:
