@@ -1,6 +1,6 @@
 %% Perfusion Normalisation wrapper script
-% This script normalises perfusions maps to skull-stripped native MNI-CT 
-% by using the native CT that the perfusion maps must have been coregistered to.
+% This script normalises perfusions maps and CSF-mask to native MNI-CT (better if not skull-stripped) 
+% by using the non-betted native CT that the perfusion maps must have been coregistered to.
 % It follows a particular directory structure which must
 % be adhered to.
 %
@@ -9,9 +9,9 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = 'C:\Users\Julian\Documents\temp\anon_dir';
-spm_path = 'C:\Users\Julian\Documents\MATLAB\spm12';
-do_not_recalculate = true; 
+data_path = '/Users/julian/master/data/maskCSF_test2';
+spm_path = '/Users/julian/Documents/MATLAB/spm12';
+do_not_recalculate = false; 
 
 script_path = mfilename('fullpath');
 script_folder = script_path(1 : end - size(mfilename, 2));
@@ -50,9 +50,13 @@ sequences = {
     'Tmax'
     };
 
+csf_mask_name = 'CSF_mask.nii';
+
 % Base image to co-register to
 base_image_dir = data_path;
+base_image_name = 'SPC_301mm_Std_';
 base_image_prefix = '';
+betted_prefix = 'betted_';
 if(use_stripped_template)
     base_image_prefix = 'betted_';
 end
@@ -71,20 +75,23 @@ for i = 1: numel ( subjects )
     for jj = 1: numel(sequences)
         coreg_sequences = dir(fullfile(base_image_dir, subjects{i}, modality, ...
             strcat('wcoreg_', sequences{jj}, '_', subjects{i}, '*', '.nii*')));
+        csf_mask_names = dir(fullfile(base_image_dir, subjects{i}, modality, ...
+            strcat('wcoreg_', csf_mask_name,'*')));
         try
-            if exist(fullfile(base_image_dir, subjects{i}, modality, coreg_sequences(1).name))
+            if exist(fullfile(base_image_dir, subjects{i}, modality, coreg_sequences(1).name)) | ...
+                exist(fullfile(base_image_dir, subjects{i}, modality, csf_mask_names(1).name))
                 wcoreg_count = wcoreg_count + 1;
             end
         catch ME
         end
     end
-    if wcoreg_count == size(sequences, 2) && do_not_recalculate
+    if wcoreg_count == size(sequences, 2) + 1 && do_not_recalculate
         fprintf('Skipping subject "%s" as normalised files are already present.\n', subjects{i});
         continue;
     end    
     
     base_image_list = dir(fullfile(base_image_dir, subjects{i}, modality, ...
-        strcat(base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '*', '.nii*')));
+        strcat(base_image_prefix, base_image_name, subjects{i}, '*', '.nii*')));
     base_image = fullfile(base_image_dir, subjects{i}, modality, base_image_list(1).name);
     [filepath,name,ext] = fileparts(base_image);
     if strcmp(ext, '.gz') 
@@ -99,16 +106,26 @@ for i = 1: numel ( subjects )
                             strcat('coreg_', sequences{j}, '_' ,subjects{i}, '.nii'));
 
     end
-    
+
+    % Coregister CSF mask of betted image to template as well
+    csf_mask_list = dir(fullfile(base_image_dir, subjects{i}, modality, ...
+        strcat(csf_mask_name, '*')));
+    csf_mask_image = fullfile(base_image_dir, subjects{i}, modality, csf_mask_list(1).name);
+    [filepath,name,ext] = fileparts(csf_mask_image);
+    if strcmp(ext, '.gz') 
+        gunzip(csf_mask_image);
+        csf_mask_image = csf_mask_image(1: end - 3);
+    end
+    input{end + 1} = csf_mask_image;
    
     %% RUN NORMALISATION
     
    % display which subject and sequence is being processed
-    fprintf('Processing subject "%s" , "%s" (%s files )\n' ,...
-        subjects{i}, strjoin(sequences), sprintf('%d',size (input ,2)));
+    fprintf('Processing subject "%s" , "%s" + "%s" (%s files)\n' ,...
+        subjects{i}, strjoin(sequences), csf_mask_name, sprintf('%d',size (input ,2)));
     
     base_image_to_warp = fullfile(base_image_dir, subjects{i}, modality, ...
-    strcat('reor_', base_image_prefix, 'SPC_301mm_Std_', subjects{i}, '.nii'));
+    strcat('reor_', base_image_prefix, base_image_name, subjects{i}, '.nii'));
     copyfile(base_image, base_image_to_warp);
 
 %         Script using modern SPM12 normalise function
