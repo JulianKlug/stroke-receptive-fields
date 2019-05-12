@@ -17,8 +17,8 @@ Pre :
 
 CT :
 
-- skull_strip/skull_strip_wrapper.py : batch skull strip native CTs of multiple patients
-- matlab/perfCT_coregistration_wrapper.m : coregister perfusion CT to native CT
+- skull_strip/skull_strip_wrapper.py : batch skull strip native CTs of multiple patients and segment CSF
+- matlab/perfCT_coregistration_wrapper.m : coregister perfusion CT to betted native CT
 - matlab/perfCT_normalisation_wrapper.m : normalise perfusion CT and native CT to CT_MNI
 
 MRI :

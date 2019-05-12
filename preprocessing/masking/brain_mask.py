@@ -1,10 +1,11 @@
 import sys
 sys.path.insert(0, '../../analysis')
 
-import os
+import os, subprocess
 import nibabel as nib
 import numpy as np
 import skimage.measure as measure
+from scipy.ndimage.morphology import binary_closing, binary_erosion, binary_dilation
 import matplotlib.pyplot as plt
 
 def getMask(path):
@@ -15,8 +16,7 @@ def getMask(path):
     labeled = labeled.astype(int)
     return labeled
 
-
-def createBrainMask(data_dir, ct_sequences, save = True):
+def createBrainMask(data_dir, ct_sequences, csf_image_name, save = True):
     """
     Create a brain mask according to RAPID maps (and save it)
 
@@ -40,7 +40,16 @@ def createBrainMask(data_dir, ct_sequences, save = True):
     combined_labels = -1 * (combined_labels > 3) + 1
 
     labeled = combined_labels.astype(int)
+
+    csf_data = nib.load(os.path.join(data_dir, csf_image_name)).get_data()
+    csf_label = np.zeros(csf_data.shape)
+    csf_label[csf_data > 0.5] = 1
+
+    # substract csf_label to brain label
+    labeled[csf_label == 1] = 0
+
     inverse_labeled = 1 - labeled
+
 
     if (save):
         ref_img = nib.load(channel_paths[0])
@@ -50,11 +59,13 @@ def createBrainMask(data_dir, ct_sequences, save = True):
         nib.save(labeled_img, os.path.join(data_dir,  'brain_mask' + image_extension))
         inverse_labeled_img = nib.Nifti1Image(inverse_labeled, affine=coordinate_space)
         nib.save(inverse_labeled_img, os.path.join(data_dir,  'inverse_brain_mask' + image_extension))
-
-    return labeled
+    return labeled, csf_label
 
 def createBrainMaskWrapper(data_dir):
-    ct_sequences = ['wcoreg_RAPID_Tmax', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV', 'wcoreg_RAPID_rCBF']
+    csf_image_name = 'wCSF_mask.nii'
+    ct_sequences = ['wcoreg_Tmax', 'wcoreg_MTT', 'wcoreg_CBV', 'wcoreg_CBF']
+    # ct_sequences = ['wcoreg_RAPID_Tmax', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV', 'wcoreg_RAPID_rCBF']
+    # ct_sequences = ['wcoreg_RAPID_TMax', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_CBV', 'wcoreg_RAPID_CBF']
 
     subjects = [o for o in os.listdir(data_dir)
                     if os.path.isdir(os.path.join(data_dir,o))]
@@ -67,7 +78,7 @@ def createBrainMaskWrapper(data_dir):
                             if os.path.isdir(os.path.join(subject_dir,o))]
 
             for modality in modalities:
-                if (modality.startswith('Ct')):
+                if modality.startswith('Ct') or modality.startswith('pCT'):
                     modality_dir = os.path.join(subject_dir, modality)
-                    createBrainMask(modality_dir, ct_sequences)
+                    createBrainMask(modality_dir, ct_sequences, csf_image_name)
                     print('Processed subject:', subject)

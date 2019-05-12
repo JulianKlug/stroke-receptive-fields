@@ -8,7 +8,7 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/temp/';
+data_path = '/Users/julian/master/data/maskCSF_test2';
 spm_path = '/Users/julian/Documents/MATLAB/spm12';
 do_not_recalculate = true; 
 
