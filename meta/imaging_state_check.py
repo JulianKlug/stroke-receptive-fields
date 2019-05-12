@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import preprocessing.image_name_config as image_name_config
 
-data_dir = '/Volumes/stroke_hdd1/stroke_db/2017/imaging_data/additionnal/'
+data_dir = '/Volumes/stroke_hdd1/stroke_db/2016/part2'
 spc_ct_sequences = image_name_config.spc_ct_sequences
 
 subjects = [o for o in os.listdir(data_dir)

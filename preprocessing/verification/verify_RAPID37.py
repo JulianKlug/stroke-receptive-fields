@@ -7,7 +7,7 @@ import image_name_config as image_name_config
 pct_sequences = image_name_config.pct_sequences
 ct_perf_sequence_names = image_name_config.ct_perf_sequence_names
 
-main_dir = '/Volumes/stroke_hdd1/stroke_db/2017/imaging_data'
+main_dir = '/Volumes/stroke_hdd1/stroke_db/2016/part1/'
 data_dir = os.path.join(main_dir, '')
 
 def verify_RAPID37(data_dir):
@@ -58,5 +58,6 @@ def verify_RAPID37(data_dir):
                     ignore_index=True)
 
     missing_RAPIDs_df.to_excel(os.path.join(data_dir, 'missing_RAPID_files.xlsx'))
+    return missing_RAPIDs_df
 
 verify_RAPID37(data_dir)
