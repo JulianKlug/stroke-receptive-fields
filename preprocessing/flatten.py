@@ -1,7 +1,7 @@
 import os, shutil
 
-main_dir = '/Volumes/stroke_hdd1/stroke_db/2017'
-data_dir = os.path.join(main_dir, 'extracted_data')
+main_dir = '/Volumes/stroke_hdd1/stroke_db/2016/'
+data_dir = os.path.join(main_dir, 'nifti_extracted_part1-2')
 
 def flatten(data_dir):
     subject_folders = [o for o in os.listdir(data_dir)

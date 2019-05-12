@@ -7,6 +7,7 @@ Extraction Verification
 - verification/find_empty_folders.py : find empty folders in subject directories hinting towards failed exports and save in excel file
 - verification/verify_RAPID37.py : check that all subjects with perfusion CTs have 37 RAPID images (and not 11)
 - utils/extract_unknown_studies_folder.py : extract images saved as an unspecified "study" folder
+- utils/extract_RAPID37_folder.py : extract images saved as an unspecified "RAPID37" folder
 
 Pre :
 

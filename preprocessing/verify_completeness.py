@@ -2,8 +2,8 @@ import os
 import numpy as np
 import pandas as pd
 
-main_dir = '/Users/julian/master/data/maskCSF_test2'
-data_dir = os.path.join(main_dir, '')
+main_dir = '/Volumes/stroke_hdd1/stroke_db/2016/'
+data_dir = os.path.join(main_dir, 'nifti_extracted_part1-2')
 
 def verify_completeness(data_dir):
     subject_folders = [o for o in os.listdir(data_dir)
