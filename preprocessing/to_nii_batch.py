@@ -2,10 +2,9 @@ import os
 import subprocess
 
 main_dir = '/Volumes/stroke_hdd1/stroke_db/2016/'
-data_dir = os.path.join(main_dir, 'extracted_addittionnal')
-output_dir = os.path.join(main_dir, 'nifti_extracted_addittionnal')
-dcm2niix_path = '/Users/julian/master/dcm2niix/build/bin/dcm2niix'
-
+data_dir = os.path.join(main_dir, 'extracted_part1')
+output_dir = os.path.join(main_dir, 'nifti_extracted_part1')
+dcm2niix_path = '/Users/julian/master/dcm2niix_11-Apr-2019_mac/dcm2niix'
 
 def move_lesion_files(search_dir, output_sub_dir):
     nii_files = [f for f in os.listdir(search_dir) if f.endswith(".nii")]
