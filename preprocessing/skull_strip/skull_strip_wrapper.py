@@ -1,7 +1,7 @@
 import os, subprocess
 from csf_segmentation import createCSFMask
 
-main_dir = '/Users/julian/master/data/maskCSF_test2'
+main_dir = '/home/klug/data/original_data/2016/2016_extracted_data'
 data_dir = os.path.join(main_dir, '')
 skull_strip_path = os.path.join(os.getcwd(), 'skull_strip.sh')
 print(skull_strip_path)
@@ -26,4 +26,4 @@ for subject in subjects:
                 print(study)
 
                 subprocess.run([skull_strip_path, '-i', study], cwd = modality_dir)
-                createCSFMask(modality_dir, 'betted_' + study)
+                createCSFMask(modality_dir, 'betted_' + study + '.gz')
