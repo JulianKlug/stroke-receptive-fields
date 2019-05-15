@@ -88,6 +88,8 @@ def load_images(ct_paths, lesion_paths, brain_mask_paths):
 
         lesion_image = nib.load(lesion_paths[subject])
         lesion_data = lesion_image.get_data()
+        # sanitize lesion data to contain only single class
+        lesion_data[lesion_data > 1] = 1
         lesion_outputs[subject, :, :, :] = lesion_data
 
         brain_mask_image = nib.load(brain_mask_paths[subject])
