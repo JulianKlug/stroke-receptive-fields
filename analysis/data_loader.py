@@ -127,7 +127,7 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
     if len(mri_sequences) < 1:
         # Import VOI GT with brain mask applied
         # to avoid False negatives in areas that cannot be predicted (as their are not part of the RAPID perf maps)
-        mri_sequences = ['masked_wcoreg_VOI_lesion']
+        mri_sequences = ['masked_wcoreg_VOI']
 
     print('Sequences used', ct_sequences, mri_sequences)
 
