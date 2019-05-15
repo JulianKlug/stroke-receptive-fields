@@ -58,7 +58,7 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, IDS, fe
             plt.switch_backend('agg')
             for i, figure in enumerate(figures):
                 figure_path = os.path.join(visual_dir, model_name + '_test_predictions_fold_' + str(i))
-                figure.savefig(figure_path)
+                figure.savefig(figure_path, dpi='figure')
                 plt.close(figure)
 
         return save

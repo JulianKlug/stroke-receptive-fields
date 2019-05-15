@@ -17,7 +17,7 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects, n_x, n_y, n_z):
     # get optimal cutOff
     threshold = cutoff_youdens_j(fpr, tpr, thresholds)
     print('Using threshold', str(threshold), 'for evaluation.')
-    # threshold = 0.5 # threshold choosen to evaluate f1 and accuracy of model
+    # threshold = 0.5 # threshold chosen to evaluate f1 and accuracy of model
 
     jaccard = jaccard_similarity_score(y_test, probas_[:] >= threshold)
     accuracy = accuracy_score(y_test, probas_[:] >= threshold)
@@ -34,10 +34,11 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects, n_x, n_y, n_z):
     # figure for visual evaluation
 
     plt.switch_backend('agg')
-    nrow = 2; ncol = n_subjects
+    ncol = 14
+    nrow = 2 * (n_subjects // ncol) + 2
     figure = plt.figure(figsize=(ncol+1, nrow+1))
     gs = gridspec.GridSpec(nrow, ncol,
-             wspace=0.0, hspace=0.0,
+             wspace=0.7, hspace=0.25,
              top=1.-0.5/(nrow+1), bottom=0.5/(nrow+1),
              left=0.5/(ncol+1), right=1-0.5/(ncol+1))
 
@@ -191,9 +192,12 @@ def ModHausdorffDist(A,B):
 # draw GT and test image on canvas
 def visual_compare(GT, pred, n_images, i_image, n_z, gs, image_id = None):
     center_z = (n_z - 1) // 2
+    i_line = 2 * (i_image // gs.get_geometry()[1])
+    i_row = i_image % gs.get_geometry()[1]
+
     # plot GT image
-    ax = plt.subplot(gs[0, i_image])
-    if image_id is not None: ax.set_title(image_id)
+    ax = plt.subplot(gs[i_line, i_row])
+    if image_id is not None: ax.set_title(image_id, fontdict={'fontsize': 10})
     plt.imshow(-GT[:, :, center_z].T)
     plt.gca().invert_yaxis()
     plt.set_cmap('Greys')
@@ -201,7 +205,7 @@ def visual_compare(GT, pred, n_images, i_image, n_z, gs, image_id = None):
     plt.axis('off')
 
     # plot reconstructed image
-    ax = plt.subplot(gs[1, i_image])
+    ax = plt.subplot(gs[i_line + 1, i_row])
     plt.imshow(pred[:, :, center_z].T)
     plt.gca().invert_yaxis()
     plt.set_cmap('jet')
