@@ -8,16 +8,16 @@ import hashlib
 from utils.naming_verification import tight_verify_name, loose_verify_name
 
 main_dir = '/Volumes/stroke_hdd1/stroke_db/2016/'
-data_dir = os.path.join(main_dir, 'part1')
-output_dir = os.path.join(main_dir, 'extracted_part1_space')
+data_dir = os.path.join(main_dir, 'additionnal')
+output_dir = os.path.join(main_dir, 'extracted_additionnal')
 enforce_VOI = True
-copy = False
+copy = True
 spc_ct_sequences = image_name_config.spc_ct_sequences
 pct_sequences = image_name_config.pct_sequences
 ct_perf_sequence_names = image_name_config.ct_perf_sequence_names
 mri_sequences = image_name_config.mri_sequences
 alternative_mri_sequences = image_name_config.alternative_mri_sequences
-subject_name_seperator = ' '
+subject_name_seperator = '_'
 error_log_columns = ['folder', 'error', 'exclusion', 'message']
 move_log_columns = ['folder', 'initial_path', 'new_path']
 

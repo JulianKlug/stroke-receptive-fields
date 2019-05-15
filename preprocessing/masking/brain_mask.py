@@ -5,8 +5,6 @@ import os, subprocess
 import nibabel as nib
 import numpy as np
 import skimage.measure as measure
-from scipy.ndimage.morphology import binary_closing, binary_erosion, binary_dilation
-import matplotlib.pyplot as plt
 
 def getMask(path):
     img = nib.load(path)

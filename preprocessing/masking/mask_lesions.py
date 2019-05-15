@@ -39,11 +39,11 @@ def mask_lesions_wrapper(data_dir):
 
             for study in studies:
                 study_path = os.path.join(modality_dir, study)
-                if modality.startswith('Neuro') & study.startswith('wcoreg_VOI'):
+                if modality.startswith('MRI') & study.startswith('wcoreg_VOI'):
                     lesion_mask_path.append(study_path)
                     lesion_mask.append(study)
                     lesion_dir = modality_dir
-                if modality.startswith('Ct') & study.startswith('brain_mask'):
+                if modality.startswith('pCT') & study.startswith('brain_mask'):
                     brain_mask_path.append(study_path)
 
         if (not (lesion_mask_path) or not (brain_mask_path)):
