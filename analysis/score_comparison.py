@@ -6,7 +6,7 @@ from sklearn.metrics import f1_score, fbeta_score, jaccard_similarity_score, roc
 main_dir = '/Users/julian/master/data'
 data_dir = os.path.join(main_dir, 'analysis_test_LOO')
 
-y_true_path = os.path.join(data_dir, 'LOO/Barlovic_Radojka_19480907/Neuro_Cerebrale_64Ch_20160106/wcoreg_VOI_lesion_Barlovic_Radojka_19480907.nii')
+y_true_path = os.path.join(data_dir, 'LOO/wcoreg_VOI_lesion.nii')
 y_true_img = nib.load(y_true_path)
 y_true = y_true_img.get_data().flatten()
 

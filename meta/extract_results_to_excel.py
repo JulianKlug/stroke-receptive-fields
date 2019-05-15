@@ -46,6 +46,7 @@ for modality in modalites:
                 rf = int(result_files[0].split('_')[-1].split('.')[0])
 
             median_list = [[model_name, rf] + [np.median(flatten(results[i])) if i in results else np.nan for i in columns[2:]]]
+            std_list = [[model_name, rf] + [np.std(flatten(results[i])) if i in results else np.nan for i in columns[2:]]]
 
             # print(np.array([np.array(results[i]) if i in results else np.repeat(np.nan, 50).reshape(1,50) for i in columns[2:-1]]).shape)
             # print(np.repeat(np.nan, 50).reshape(1,50).shape)
@@ -64,6 +65,13 @@ for modality in modalites:
                 all_results_array = np.concatenate((all_results_array,
                                 np.expand_dims(np.array(all_list), axis=0)),
                                 axis = 0)
+            try:
+                std_results_array
+            except NameError:
+                std_results_array = np.array(std_list)
+            else :
+                std_results_array = np.concatenate((std_results_array,
+                                np.array(std_list)))
 
             try:
                 median_results_array
@@ -74,6 +82,7 @@ for modality in modalites:
                                 np.array(median_list)))
 
 median_results_df = pd.DataFrame(median_results_array, columns = columns)
+std_results_df = pd.DataFrame(std_results_array, columns = columns)
 
 # Compare all rfs for the same model
 all_rf_comp_df_columns = ['model','compared_variable', 'p0-1', 'p1-2', 'p2-3', 'p3-4', 'p4-5']
@@ -152,6 +161,8 @@ rf_comp_results_df = pd.DataFrame(comparative_results_array, columns = rf_comp_d
 modality_comp_df_columns = ['model','rf', 'model_result', 'ref_model_result', 'Pval', 'compared_variable', 'reference_rf3_model']
 reference_rf3_model_results = np.squeeze(np.array([k for k in all_results_array if k[1,0] == 3 and 'Tmax0_logRegGLM' in k[0,0]]))
 rf_3_model_results = np.array([k for k in all_results_array if k[1,0] == 3])
+# rf_3_model_results = np.array([k for k in all_results_array])
+
 for rf_3_model_result in rf_3_model_results:
     model_base = '_'.join(rf_3_model_result[0, 0].split('_')[:-1])
 
@@ -181,6 +192,7 @@ modality_comp_results_df = pd.DataFrame(modality_comp_results_array, columns = m
 
 with pd.ExcelWriter(os.path.join(output_dir, 'rf_article_results.xlsx')) as writer:
     median_results_df.to_excel(writer, sheet_name='median_results')
+    std_results_df.to_excel(writer, sheet_name='std_results')
     rf_comp_results_df.to_excel(writer, sheet_name='0-3_rf_comparative_results')
     all_rf_comp_results_df.to_excel(writer, sheet_name='all_rf_comparative_results')
     modality_comp_results_df.to_excel(writer, sheet_name='modality_comparative_results')
