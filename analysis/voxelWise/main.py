@@ -17,9 +17,12 @@ data_dir = os.path.join(main_dir, 'saved_data')
 main_output_dir = os.path.join(main_dir, 'models')
 main_save_dir = os.path.join(main_dir, 'temp_data')
 
-CLIN, IN, OUT, MASKS, IDS = data_loader.load_saved_data(data_dir)
+CLIN, IN, OUT, MASKS, IDS, PARAMS = data_loader.load_saved_data(data_dir)
 # Order: 'wcoreg_RAPID_Tmax', 'wcoreg_RAPID_rCBF', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV'
 
+print(PARAMS)
+
+# Ignore clinical data for now
 CLIN = None
 
 # MASKS = numpy.full(OUT.shape, True) # do not use masks

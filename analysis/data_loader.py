@@ -102,14 +102,14 @@ def load_nifti(main_dir, ct_sequences, mri_sequences):
     return (ids, load_images(ct_paths, lesion_paths, brain_mask_paths))
 
 # Save data as compressed numpy array
-def load_and_save_data(data_dir, main_dir, clinical_dir = None, clinical_name = None, ct_sequences = [], mri_sequences = [], external_memory=False):
+def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = None, ct_sequences = [], mri_sequences = [], external_memory=False):
     """
     Load data
         - Image data (from preprocessed Nifti)
         - Clinical data (from excel)
 
     Args:
-        data_dir : directory to save data_to
+        save_dir : directory to save data_to
         main_dir : directory containing images
         clinical_dir (optional) : directory containing clinical data (excel)
         ct_sequences (optional, array) : array with names of ct sequences
@@ -120,8 +120,9 @@ def load_and_save_data(data_dir, main_dir, clinical_dir = None, clinical_name = 
         'clinical_data': numpy array containing the data for each of the patients [patient, (n_parameters)]
     """
     if len(ct_sequences) < 1:
+        ct_sequences = ['wcoreg_Tmax', 'wcoreg_CBF', 'wcoreg_MTT', 'wcoreg_CBV']
         # ct_sequences = ['wcoreg_RAPID_TMax_[s]', 'wcoreg_RAPID_CBF', 'wcoreg_RAPID_MTT_[s]', 'wcoreg_RAPID_CBV']
-        ct_sequences = ['wcoreg_RAPID_Tmax', 'wcoreg_RAPID_rCBF', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV']
+        # ct_sequences = ['wcoreg_RAPID_Tmax', 'wcoreg_RAPID_rCBF', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV']
         # ct_sequences = ['wcoreg_RAPID_TMax_[s]']
     if len(mri_sequences) < 1:
         # Import VOI GT with brain mask applied
@@ -133,8 +134,8 @@ def load_and_save_data(data_dir, main_dir, clinical_dir = None, clinical_name = 
     included_subjects = np.array([])
     clinical_data = np.array([])
 
-    if not os.path.exists(data_dir):
-        os.makedirs(data_dir)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
     ids, (ct_inputs, lesion_GT, brain_masks) = load_nifti(main_dir, ct_sequences, mri_sequences)
     ids = np.array(ids)
 
@@ -148,7 +149,7 @@ def load_and_save_data(data_dir, main_dir, clinical_dir = None, clinical_name = 
         print('Excluded', ids.shape[0] - ct_inputs.shape[0], 'subjects.')
 
     print('Saving a total of', ct_inputs.shape[0], 'subjects.')
-    np.savez_compressed(os.path.join(data_dir, 'data_set'),
+    np.savez_compressed(os.path.join(save_dir, 'data_set'),
         params = {'ct_sequences': ct_sequences, 'mri_sequences': mri_sequences},
         ids = ids, included_subjects = included_subjects,
         clinical_inputs = clinical_data, ct_inputs = ct_inputs,
@@ -166,4 +167,4 @@ def load_saved_data(data_dir):
     print('Sequences used:', params)
     print(ids.shape[0] - ct_inputs.shape[0], 'subjects had been excluded.')
 
-    return (clinical_inputs, ct_inputs, lesion_GT, brain_masks, ids)
+    return (clinical_inputs, ct_inputs, lesion_GT, brain_masks, ids, params)
