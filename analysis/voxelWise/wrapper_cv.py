@@ -108,7 +108,7 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, IDS, fe
         title = model_name + ' errored upon rf_hyperopt'
         tb = traceback.format_exc()
         body = 'RF ' + str(rf_dim) + '\n' + 'Error ' + str(e) + '\n' + str(tb)
-        notification_system.send_message(title, body)
+        if notification_system: notification_system.send_message(title, body)
         raise
 
 def rf_hyperopt(model_name, Model_Generator, IN, OUT, CLIN, MASKS, IDS, feature_scaling,

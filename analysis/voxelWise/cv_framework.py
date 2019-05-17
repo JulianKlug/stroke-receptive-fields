@@ -224,6 +224,7 @@ def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, t
     """
 
     n_x, n_y, n_z, n_c = imgX[0].shape
+    n_train, n_test = len(train), len(test)
     window_d_x, window_d_y, window_d_z  = 2 * np.array(receptive_field_dimensions) + 1
     receptive_field_size = window_d_x * window_d_y * window_d_z * n_c
     # defines the size of X
@@ -240,9 +241,10 @@ def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, t
     # Balancing chooses only data inside the brain (mask is applied through balancing)
     balancing_selector = get_undersample_selector_array(y_train, mask_train)
 
-    model.initialise_train_data(balancing_selector, input_size)
+    model.initialise_train_data(balancing_selector, input_size, n_train, (n_x, n_y, n_z))
 
     for subject in range(imgX_train.shape[0]):
+        subjects_per_batch = 1
         # reshape to rf expects data with n_subjects in first
         subj_X_train, subj_y_train = np.expand_dims(imgX_train[subject], axis=0), np.expand_dims(y_train[subject], axis=0)
         rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_train, subj_y_train, receptive_field_dimensions)
@@ -258,16 +260,17 @@ def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, t
             all_inputs = rf_inputs
 
         # Balance by using predefined balancing_selector
-        subj_X_train, subj_y_train = all_inputs[balancing_selector[subject].reshape(-1)], rf_outputs[balancing_selector[subject].reshape(-1)]
+        selected_for_training = balancing_selector[subject].reshape(-1)
+        subj_X_train, subj_y_train = all_inputs[selected_for_training], rf_outputs[selected_for_training]
 
-        model.add_train_data(subj_X_train, subj_y_train)
+        model.add_train_data(subj_X_train, subj_y_train, selected_for_training, subjects_per_batch)
 
 
     X_test, y_test, mask_test = imgX[test], y[test], mask_array[test]
     if clinX is not None:
         clinX_test = clinX[test]
 
-    model.initialise_test_data(np.sum(mask_test), input_size)
+    model.initialise_test_data(np.sum(mask_test), input_size, n_test, (n_x, n_y, n_z))
 
     for subject in range(X_test.shape[0]):
         # reshape to rf expects data with n_subjects in first
@@ -282,9 +285,10 @@ def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, t
         else:
             all_inputs = rf_inputs
 
-        subj_X_test, subj_y_test = all_inputs[mask_test[subject].reshape(-1)], rf_outputs[mask_test[subject].reshape(-1)]
+        selected_for_testing = mask_test[subject].reshape(-1)
+        subj_X_test, subj_y_test = all_inputs[selected_for_testing], rf_outputs[selected_for_testing]
 
-        model.add_test_data(subj_X_test, subj_y_test)
+        model.add_test_data(subj_X_test, subj_y_test, selected_for_testing, subjects_per_batch)
 
 def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, mask_array, id_array, test):
     """
