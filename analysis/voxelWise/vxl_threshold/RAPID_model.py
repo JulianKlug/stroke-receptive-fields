@@ -13,7 +13,18 @@ class RAPID_threshold():
         if self.rf != 0:
             raise ValueError('Model only valid for Rf = 0.')
 
-    def normalise_channel(self, all_channel_data, mask, channel):
+    def reconstruct_image(self, data_points, data_positions, n_channels):
+        '''
+        Reconstruct 2D/3D shape of images with available data filled in (may not be whole image because of sampling)
+        :param data_points: data for every available voxel [i, c]
+        :param data_positions: (n, x, y, z) boolean array where True marks a given data_point
+        :return: reconstructed
+        '''
+        reconstructed = np.zeros(data_positions.shape + tuple([n_channels]))
+        reconstructed[data_positions == 1] = data_points
+        return reconstructed
+
+    def normalise_channel_by_Tmax4(self, all_channel_data, data_positions, channel):
         """
         The selected channel is normalised by dividing all its data by the median value
         in healthy tissue. Healthy tissue is defined as the tissue where Tmax < 4s.
@@ -21,20 +32,69 @@ class RAPID_threshold():
         Args:
             all_channel_data : image input data for all subjects in form of an np array [..., c]
                 Data should not be scaled beforehand!
-            mask: boolean array differentiating brain from brackground [...]
+            data_positions: boolean map in original space with 1 as placeholder for data points
+            mask: boolean array differentiating brain from background [...]
             channel to normalise: 0 - Tmax, 1 - CBF, 2 - MTT, 3 - CBV
 
         Returns: normalised_channel
         """
-        channel_to_normalise = all_channel_data[... ,channel]
-        Tmax = all_channel_data[..., 0]
-        normalised_channel = np.empty(channel_to_normalise.shape)
+        # reconstruct to be able to separate individual subjects
+        reconstructed = self.reconstruct_image(all_channel_data, data_positions, all_channel_data.shape[-1])
+        channel_to_normalise = reconstructed[..., channel]
+        Tmax = reconstructed[..., 0]
+        normalised_channel = np.zeros(channel_to_normalise.shape)
+        for subj in range(data_positions.shape[0]):
+            masked_healthy_image_voxels = channel_to_normalise[subj][np.all([data_positions[subj] == 1, Tmax[subj] < 4], axis=0)]
+            # clip to remove extremes that falsify results
+            masked_healthy_image_voxels = np.clip(masked_healthy_image_voxels, np.percentile(masked_healthy_image_voxels, 1), np.percentile(masked_healthy_image_voxels, 99))
+            median_channel_healthy_tissue = np.median(masked_healthy_image_voxels)
+            normalised_channel[subj] = np.divide(channel_to_normalise[subj], median_channel_healthy_tissue)
 
-        masked_healthy_image_voxels = channel_to_normalise[np.all([mask, Tmax < 4], axis = 0)]
-        median_channel_healthy_tissue = np.median(masked_healthy_image_voxels)
-        normalised_channel = np.divide(channel_to_normalise, median_channel_healthy_tissue)
+        image_normalised_channel = normalised_channel
+        flat_normalised_channel = normalised_channel[data_positions == 1].reshape(-1)
+        return image_normalised_channel, flat_normalised_channel
 
-        return normalised_channel
+    def normalise_channel_by_contralateral(self, all_channel_data, data_positions, channel):
+        '''
+        Normalise a channel by dividing every voxel by the median value of contralateral side
+        :param all_channel_data: image input data for all subjects in form of an np array [i, c]
+        :param data_positions: boolean map in original space with 1 as placeholder for data points
+        :param channel: channel to normalise: 0 - Tmax, 1 - CBF, 2 - MTT, 3 - CBV
+        :return: (image_normalised_channel, flat_normalised_channel) - normalised channel in 3D and flat form
+        '''
+        # Recover 3D shape of data
+        reconstructed_data = self.reconstruct_image(all_channel_data, data_positions, all_channel_data.shape[-1])
+        channel_to_normalise_data = reconstructed_data[... ,channel]
+        normalised_channel = np.zeros(channel_to_normalise_data.shape, dtype=np.float64)
+        x_center = channel_to_normalise_data.shape[1] // 2
+
+        for subj in range(channel_to_normalise_data.shape[0]):
+            # normalise left side
+            right_side = channel_to_normalise_data[subj][x_center:][data_positions[subj][x_center:] == 1]
+            clipped_right_side = np.clip(right_side, np.percentile(right_side, 1), np.percentile(right_side, 99))
+            right_side_median = np.nanmedian(clipped_right_side)
+            normalised_channel[subj][:x_center] = np.divide(channel_to_normalise_data[subj][:x_center], right_side_median)
+
+            # normalise right side
+            left_side = channel_to_normalise_data[subj][:x_center][data_positions[subj][:x_center] == 1]
+            clipped_left_side = np.clip(left_side, np.percentile(left_side, 1), np.percentile(left_side, 99))
+            left_side_median = np.nanmedian(clipped_left_side)
+            normalised_channel[subj][x_center:] = np.divide(channel_to_normalise_data[subj][x_center:], left_side_median)
+
+        image_normalised_channel = normalised_channel
+        flat_normalised_channel = normalised_channel[data_positions == 1].reshape(-1)
+        return image_normalised_channel, flat_normalised_channel
+
+    def normalise_channel(self, all_channel_data, data_positions, channel):
+        '''
+        :param all_channel_data: image input data for all subjects in form of an np array [i, c]
+        :param data_positions: boolean map in original space with 1 as placeholder for data points
+        :param channel: channel to normalise: 0 - Tmax, 1 - CBF, 2 - MTT, 3 - CBV
+        :return: normalised channel by Tmax and by contralateral side
+        '''
+        normalised_by_Tmax4 = self.normalise_channel_by_Tmax4(all_channel_data, data_positions, channel)
+        normalised_by_contralateral = self.normalise_channel_by_contralateral(all_channel_data, data_positions, channel)
+        return normalised_by_Tmax4[1], normalised_by_contralateral[1]
 
     def threshold_Tmax6(self, data):
         # Get penumbra mask
@@ -44,26 +104,30 @@ class RAPID_threshold():
         tresholded_voxels[Tmax > 6] = 1
         return np.squeeze(tresholded_voxels)
 
-    def fit(self, X_train, y_train):
+    def fit(self, X_train, y_train, train_batch_positions):
         Tmax = X_train[..., 0]
-        normalised_CBF = self.normalise_channel(X_train, np.ones(Tmax.shape), 1)
-        penumbra_indeces = np.where(Tmax > 6) # define penumbra
-        penumbra_normalised_CBF = normalised_CBF[penumbra_indeces]
-        fpr, tpr, thresholds = roc_curve(y_train[penumbra_indeces], penumbra_normalised_CBF)
+        CBF_normalised_byTmax4, CBF_normalised_byContralateral = self.normalise_channel(X_train, train_batch_positions, 1)
+        penumbra_indices = np.where(Tmax > 6) # define penumbra
+
+        # todo This training is just for show
+        penumbra_normalised_CBF = CBF_normalised_byTmax4[penumbra_indices]
+        fpr, tpr, thresholds = roc_curve(y_train[penumbra_indices], penumbra_normalised_CBF)
         # get optimal cutOff
         self.train_threshold = cutoff_youdens_j(fpr, tpr, thresholds)
         print('Training threshold:', self.train_threshold)
 
         return self
 
-    def predict_proba(self, data):
+    def predict_proba(self, data, data_position_indices):
         Tmax = data[..., 0]
-        normalised_CBF = self.normalise_channel(data, np.ones(Tmax.shape), 1)
+        CBF_normalised_byTmax4, CBF_normalised_byContralateral = self.normalise_channel(data, data_position_indices, 1)
 
-        threshold = self.fixed_threshold
+        threshold: float = self.fixed_threshold
         tresholded_voxels = np.zeros(Tmax.shape)
-        # Parts of penumbra (Tmax > 6) where CBF < 30% of healthy tissue)
-        tresholded_voxels[(normalised_CBF < threshold) & (Tmax > 6)] = 1
+        # Parts of penumbra (Tmax > 6) where CBF < 30% of healthy tissue (controlateral or region where Tmax < 4s)
+        tresholded_voxels[(CBF_normalised_byContralateral < threshold) & (Tmax > 6)] = 1
+        tresholded_voxels[(CBF_normalised_byTmax4 < threshold) & (Tmax > 6)] = 1
+
         return np.squeeze(tresholded_voxels)
 
 def RAPID_Model_Generator(X_shape, feature_scaling):

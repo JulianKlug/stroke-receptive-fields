@@ -87,3 +87,21 @@ def balance(X, y, verbose = False):
         print('Remaining data points after balancing: ', sorted(Counter(y_resampled).items()))
 
     return (X_resampled, y_resampled)
+
+def get_controlateral_side_mask(self, all_data, VOI):
+    '''
+    Get mask of the controlateral side of the space
+    :param all_data: all image data with shape [x, y, z, c]
+    :param VOIs: coordinates of region of which the contralateral side is defined [x, y, z]
+    :return: controlateral_side_mask, mask marking contralateral side of VOI in image as True
+    '''
+    x_center = all_data.shape[0] // 2
+    controlateral_side_mask = np.full(all_data.shape[:4], False)
+    # VOI is on the right
+    if VOI[0] > x_center:
+        # return left side
+        controlateral_side_mask[:x_center, :, :] = True
+    else: # VOI is on the left
+        # return right side
+        controlateral_side_mask[x_center:, :, :] = True
+    return controlateral_side_mask
