@@ -9,7 +9,7 @@ class Tmax6_treshold():
         self.threshold = 6
         self.combinator = linear_model.LogisticRegression(verbose = 0, max_iter = 1000000000, n_jobs = -1)
 
-    def fit(self, X_train, y_train):
+    def fit(self, X_train, y_train, data_positions = None):
         if self.rf != 0:
             tresholded_voxels = np.zeros(X_train.shape)
             tresholded_voxels[X_train > self.threshold] = 1
@@ -17,8 +17,9 @@ class Tmax6_treshold():
         return self
 
 
-    def predict_proba(self, data):
+    def predict_proba(self, data, data_positions = None):
         tresholded_voxels = np.zeros(data.shape)
+        # todo detect cases where data is scaled x10
         tresholded_voxels[data > self.threshold] = 1
         if self.rf == 0:
             # Simple Treshold case

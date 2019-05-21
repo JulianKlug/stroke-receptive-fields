@@ -11,8 +11,8 @@ from vxl_threshold.RAPID_model import RAPID_Model_Generator
 from wrapper_cv import launch_cv, rf_hyperopt
 from channel_normalisation import multi_subj_channel_normalisation
 
-# main_dir = '/Users/julian/master/data/all2016_subset'
-main_dir = '/home/klug/data/working_data/'
+# main_dir = '/Users/julian/master/data/all2016_subset_prepro'
+main_dir = '/home/klug/data/working_data/2016_all'
 data_dir = os.path.join(main_dir, '')
 main_output_dir = os.path.join(main_dir, 'models')
 main_save_dir = os.path.join(main_dir, 'temp_data')
@@ -37,7 +37,7 @@ feature_scaling = False
 
 Model_Generator = RAPID_Model_Generator(IN.shape, feature_scaling)
 
-model_name = 'RAPID_CBV30_ofDuallyNormalised_inPenumbra'
+model_name = 'smoothed_RAPID_CBV40_ofDuallyNormalised_inPenumbra'
 rf_hp_start = 0
 rf_hp_end = 1
 rf_hyperopt(model_name, Model_Generator, IN, OUT, CLIN, MASKS, IDS, feature_scaling,

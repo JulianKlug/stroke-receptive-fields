@@ -6,7 +6,20 @@ from numpy.core.umath_tests import inner1d
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 
-def evaluate(probas_, y_test, mask_test, ids_test, n_subjects, n_x, n_y, n_z):
+
+def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_z):
+    '''
+    Evaluate performance of prediction
+    :param probas_: probability of being of class 1 for every voxel - linear shape of all voxels [i]
+    :param y_test: GT for every voxel [i]
+    :param mask_test: mask of voxels used in original space for every subject - [n, x, y, z]
+    :param ids_test: list of subj-ids [i]
+    :param n_subjects: integer
+    :param n_x: integer
+    :param n_y: integer
+    :param n_z: inger
+    :return:
+    '''
     probas_ = np.squeeze(probas_)
     if probas_.shape != y_test.shape:
         print('PROBAS AND TEST IMAGE DO NOT HAVE THE SAME SHAPE', probas_.shape, y_test.shape)

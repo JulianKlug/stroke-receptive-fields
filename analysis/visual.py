@@ -10,6 +10,7 @@ def display(img_data, block = True):
         for i, slice in enumerate(slices):
             axes[i].imshow(slice.T, cmap="gray", origin="lower")
 
+    if len(img_data.shape) > 3 : img_data = np.squeeze(img_data)
     n_i, n_j, n_k = img_data.shape
     center_i = (n_i - 1) // 2
     center_j = (n_j - 1) // 2
