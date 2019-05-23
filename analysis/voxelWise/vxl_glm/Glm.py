@@ -28,12 +28,12 @@ class Glm():
     def get_settings():
         return {}
 
-    def initialise_train_data(self, n_datapoints, data_dimensions):
+    def initialise_train_data(self, n_datapoints, data_dimensions, n_images = None, image_spatial_dimensions = None):
         self.X_train = np.empty([np.sum(n_datapoints), data_dimensions])
         self.y_train = np.empty(np.sum(n_datapoints))
         self.train_index = 0
 
-    def add_train_data(self, batch_X_train, batch_y_train):
+    def add_train_data(self, batch_X_train, batch_y_train, batch_positional_indices = None, batch_n_images = None):
         """
         Add a batch of training data to the whole training data pool
 
@@ -45,12 +45,12 @@ class Glm():
         self.y_train[self.train_index : self.train_index + batch_y_train.shape[0]] = batch_y_train
         self.train_index += batch_X_train.shape[0]
 
-    def initialise_test_data(self, n_datapoints, data_dimensions):
+    def initialise_test_data(self, n_datapoints, data_dimensions,  n_images = None, image_spatial_dimensions = None):
         self.X_test = np.empty([np.sum(n_datapoints), data_dimensions])
         self.y_test = np.empty(np.sum(n_datapoints))
         self.test_index = 0
 
-    def add_test_data(self, batch_X_test, batch_y_test):
+    def add_test_data(self, batch_X_test, batch_y_test, batch_positional_indices = None, batch_n_images = None):
         """
         Add a batch of testing data to the whole testing data pool
         All testing data is saved in a svmlight file
@@ -63,7 +63,7 @@ class Glm():
         self.trained_model = self.model.fit(self.X_train, self.y_train)
         return self.trained_model, []
 
-    def predict(self, data):
+    def predict(self, data, data_position_indices = None):
         probas_ = self.trained_model.predict_proba(data)
         return probas_[:, 1]
 
