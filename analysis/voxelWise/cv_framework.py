@@ -6,10 +6,12 @@ import numpy as np
 from sampling_utils import get_undersample_selector_array
 import receptiveField as rf
 from scoring_utils import evaluate
+from utils import gaussian_smoothing
 
 def repeated_kfold_cv(Model_Generator, save_dir, save_function,
             input_data_array, output_data_array, clinical_input_array = None, mask_array = None, id_array = None,
-            feature_scaling = True, receptive_field_dimensions = [1,1,1], n_repeats = 1, n_folds = 5, messaging = None):
+            feature_scaling = True, pre_smoothing = False,
+            receptive_field_dimensions = [1,1,1], n_repeats = 1, n_folds = 5, messaging = None):
     """
     Patient wise Repeated KFold Crossvalidation for a given model
     This function creates and evaluates k datafolds of n-iterations for crossvalidation
@@ -21,7 +23,10 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
         clinX (optional): clinical input data to validate for all subjects in form of a list [subject, clinical_data]
         imgX: image input data to validate for all subjects in form of an np array [subject, x, y, z, c]
         y: dependent variables of data in a form of an np array [subject, x, y, z]
-        mask_array: boolean array differentiating brain from brackground
+        mask_array: boolean array differentiating brain from background
+        id_array: array with subj ids
+        feature_scalinng: boolean if data should be normalised
+        pre_smoothing: boolean if gaussian smoothing should be applied on all images slices of z
         receptive_field_dimensions : in the form of a list as  [rf_x, rf_y, rf_z]
         n_repeats (optional, default 1): repeats of kfold CV
         n_folds (optional, default 5): number of folds in kfold (ie. k)
@@ -66,6 +71,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
             'used_clinical': used_clinical,
             'masked_background': used_brain_masking,
             'scaled': feature_scaling,
+            'smoothed_beforehand': pre_smoothing,
             'settings_repeats': n_repeats,
             'settings_folds': n_folds,
             'settings_imgX_shape': imgX.shape,
@@ -110,8 +116,12 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
     start = timeit.default_timer()
 
     # Standardise data (data - mean / std)
-    if feature_scaling == True:
+    if feature_scaling:
         imgX, clinX = standardise(imgX, clinX)
+
+    # Smooth data with a gaussian Kernel before using it for training/testing
+    if pre_smoothing:
+        imgX = gaussian_smoothing(imgX)
 
     # Start iteration of repeated_kfold_cv
     iteration = 0
