@@ -115,6 +115,9 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
         os.makedirs(save_dir)
     start = timeit.default_timer()
 
+    # rescale outliers
+    imgX = rescale_outliers(imgX, MASKS = mask_array)
+
     # Standardise data (data - mean / std)
     if feature_scaling:
         imgX, clinX = standardise(imgX, clinX)
@@ -255,6 +258,7 @@ def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, t
 
     for subject in range(imgX_train.shape[0]):
         subjects_per_batch = 1
+
         # reshape to rf expects data with n_subjects in first
         subj_X_train, subj_y_train = np.expand_dims(imgX_train[subject], axis=0), np.expand_dims(y_train[subject], axis=0)
         rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_train, subj_y_train, receptive_field_dimensions)
@@ -336,3 +340,26 @@ def standardise(imgX, clinX):
     else:
         rescaled_clinX = clinX
     return rescaled_imgX, rescaled_clinX
+
+def rescale_outliers(imgX, MASKS):
+    '''
+    Rescale outliers as some images from RAPID seem to be scaled x10
+    Outliers are detected if their median exceeds 5 times the global median and are rescaled by dividing through 10
+    :param imgX: image data (n, x, y, z, c)
+    :return: rescaled_imgX
+    '''
+    median_c0 = np.median(imgX[..., 0][MASKS])
+    median_c1 = np.median(imgX[..., 1][MASKS])
+    median_c2 = np.median(imgX[..., 2][MASKS])
+    median_c3 = np.median(imgX[..., 3][MASKS])
+    for i in range(imgX.shape[0]):
+        if np.median(imgX[i, ..., 0][MASKS[i]]) > 5 * median_c0:
+            imgX[i, ..., 0] = imgX[i, ..., 0] / 10
+        if np.median(imgX[i, ..., 1][MASKS[1]]) > 5 * median_c1:
+            imgX[i, ..., 1] = imgX[i, ..., 1] / 10
+        if np.median(imgX[i, ..., 2][MASKS[i]]) > 5 * median_c2:
+            imgX[i, ..., 2] = imgX[i, ..., 2] / 10
+        if np.median(imgX[i, ..., 3][MASKS[i]]) > 5 * median_c3:
+            imgX[i, ..., 3] = imgX[i, ..., 3] / 10
+
+    return imgX
