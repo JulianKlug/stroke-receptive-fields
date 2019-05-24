@@ -60,16 +60,16 @@ def plot_auc_roc(rf_dims, roc_auc_scores, model_name = 'model', color = 'C0', di
     if (display_legend):
         if display_points:
             # Plot one additional point to have only one label
-            plt.plot(0, 2, 'k.', lw=1, alpha=0.3, label=r'ROC AUC score')
+            plt.plot(0, 2, 'k.', lw=1, alpha=0.3, label=r'AUC score')
         plt.fill_between(mean_rf_dims, auc_upper_limits, auc_lower_limits, color='grey', alpha=.2,
                          # label=r'$\pm$ 1 std. dev.')
                          label=r'$\pm$ 1 std. err.')
     else:
         plt.fill_between(mean_rf_dims, auc_upper_limits, auc_lower_limits, color='grey', alpha=.2)
 
-    plt.plot(mean_rf_dims, mean_roc_auc_scores, color, label=r'Mean ROC AUC for %s' % (model_name))
+    plt.plot(mean_rf_dims, mean_roc_auc_scores, color, label=r'Mean AUC for %s' % (model_name))
     plt.ylim([-0.05, 1.05])
-    plt.ylabel('AUC ROC')
+    plt.ylabel('AUC')
     plt.xlabel('Receptive field size (rf)')
     plt.title('Area under the ROC curve')
     # plt.legend(loc="lower right")
@@ -116,8 +116,9 @@ def compare(dir1, dir2, dir3, dir4, dir5):
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
     plt.show()
+    # plt.savefig("/Users/julian/master/pilotBatch_2016_results/server_output/selected_for_article1_13022019/test.svg", format="svg")
 
-main_dir = '/Users/julian/master/server_output/selected_for_article1_13022019/'
+main_dir = '/Users/julian/master/pilotBatch_2016_results/server_output/selected_for_article1_13022019'
 multiGLM = os.path.join(main_dir, 'multi_modal_LogRegGLM')
 MTT = os.path.join(main_dir, 'MTT2_logRegGLM')
 Tmax = os.path.join(main_dir, 'Tmax0_logRegGLM')

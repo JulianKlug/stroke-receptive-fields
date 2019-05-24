@@ -86,13 +86,15 @@ def wrapper_plot_auc_roc_boxplot(modality_dirs):
     axes = boxplot_sorted(roc_auc_df, by=["model_tag"], column="roc_auc", hue='rf', ax = ax)
     labels = [l.get_text() for l in axes.get_xticklabels()]
     ax.set_xticklabels(labels, rotation=35, ha='right')
-    ax.set_title("Boxplot of AUC ROC by model")
+    ax.set_title("Boxplots of the area under the ROC curve by model")
     plt.ylabel('Area under the ROC curve')
     plt.xlabel('')
-    # Receptive field size (as voxels from ce
+    # Receptive field size (as voxels from center)q
     fig.tight_layout()
+    plt.show()
+    plt.savefig("/Users/julian/master/pilotBatch_2016_results/server_output/selected_for_article1_13022019/boxplot.svg", format="svg")
 
-main_dir = '/Users/julian/master/server_output/selected_for_article1_13022019/'
+main_dir = '/Users/julian/master/pilotBatch_2016_results/server_output/selected_for_article1_13022019'
 multiGLM = os.path.join(main_dir, 'multi_modal_LogRegGLM')
 MTT = os.path.join(main_dir, 'MTT2_logRegGLM')
 Tmax = os.path.join(main_dir, 'Tmax0_logRegGLM')
