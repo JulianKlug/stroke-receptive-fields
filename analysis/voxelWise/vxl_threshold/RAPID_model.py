@@ -1,10 +1,12 @@
 import numpy as np
 from sklearn.metrics import roc_curve
 from scipy.ndimage.morphology import binary_closing, binary_erosion, binary_dilation
+from skimage.measure import label
 from vxl_threshold.Threshold_Model import Threshold_Model
 from scoring_utils import cutoff_youdens_j
 from dimension_utils import reconstruct_image
 from channel_normalisation import normalise_channel_by_Tmax4, normalise_channel_by_contralateral
+
 
 class RAPID_threshold():
     def __init__(self, rf):
@@ -27,6 +29,21 @@ class RAPID_threshold():
         normalised_by_contralateral = normalise_channel_by_contralateral(all_channel_data, data_positions, channel)
         return normalised_by_Tmax4[1], normalised_by_contralateral[1]
 
+
+    def remove_small_connected_components(self, image):
+        print(np.sum(image))
+        clean_image = np.zeros(image.shape)
+        labels_out = label(image, connectivity=2)
+        segids = np.unique(labels_out)[1:]
+        sizes = [np.sum(labels_out == segid) for segid in segids]
+        min_size = np.mean(sizes)
+        for i in range(len(segids)):
+            if sizes[i] >= min_size:
+                clean_image[labels_out == segids[i]] = 1
+        print(np.sum(clean_image))
+        return clean_image
+
+
     def smooth_prediction(self, prediction, data_positions):
         # Recover 3D shape of data
         reconstructed_pred = reconstruct_image(prediction.reshape(-1, 1), data_positions, 1)
@@ -36,6 +53,7 @@ class RAPID_threshold():
             smooth_pred[subj] = binary_erosion(np.squeeze(reconstructed_pred[subj]), structure)
             smooth_pred[subj] = binary_dilation(smooth_pred[subj], structure)
             smooth_pred[subj] = binary_closing(smooth_pred[subj], np.ones((4, 4, 4), dtype=np.int))
+            smooth_pred[subj] = self.remove_small_connected_components(smooth_pred[subj])
         flat_smooth_pred = smooth_pred[data_positions == 1].reshape(-1)
         return flat_smooth_pred
 
