@@ -1,5 +1,5 @@
 import os, torch, math
-from sklearn.metrics import f1_score, accuracy_score, fbeta_score, jaccard_similarity_score, roc_auc_score, precision_score, roc_curve, auc, accuracy_score
+from sklearn.metrics import f1_score, jaccard_similarity_score, precision_score, roc_curve, auc, accuracy_score
 import numpy as np
 from scipy.spatial.distance import directed_hausdorff
 from numpy.core.umath_tests import inner1d
@@ -23,6 +23,7 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
     probas_ = np.squeeze(probas_)
     if probas_.shape != y_test.shape:
         print('PROBAS AND TEST IMAGE DO NOT HAVE THE SAME SHAPE', probas_.shape, y_test.shape)
+
     # Voxel-wise statistics
     # Compute ROC curve, area under the curve, f1, and accuracy
     fpr, tpr, thresholds = roc_curve(y_test, probas_[:])
@@ -35,6 +36,8 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
     jaccard = jaccard_similarity_score(y_test, probas_[:] >= threshold)
     accuracy = accuracy_score(y_test, probas_[:] >= threshold)
     f1 = f1_score(y_test, probas_[:] >= threshold)
+    # Positive predictive value : tp / (tp + fp)
+    PPV = precision_score(y_test, probas_[:] >= threshold)
 
     # Image-wise statistics
     thresholded_volume_deltas = []
@@ -98,6 +101,7 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
         'jaccard': jaccard,
         'f1': f1,
         'roc_auc': roc_auc,
+        'positive_predictive_value': PPV,
         'thresholded_volume_deltas': thresholded_volume_deltas,
         'unthresholded_volume_deltas': unthresholded_volume_deltas,
         'image_wise_error_ratios': image_wise_error_ratios,

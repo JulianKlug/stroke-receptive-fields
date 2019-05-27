@@ -78,23 +78,31 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, IDS, fe
         accuracy = np.median(results['test_accuracy'])
         roc_auc = np.median(results['test_roc_auc'])
         f1 = np.median(results['test_f1'])
+        positive_predictive_value = np.median(results['test_positive_predictive_value'])
         dice = np.median([item for sublist in results['test_image_wise_dice'] for item in sublist])
         hausdorff_distance = np.median([item for sublist in results['test_image_wise_hausdorff'] for item in sublist])
         params = results['params']
+        if not None in results['test_penumbra_metrics']['predicted_in_penumbra_ratio']:
+            predicted_in_penumbra_ratio = np.median(results['test_penumbra_metrics']['predicted_in_penumbra_ratio'])
+        else:
+            predicted_in_penumbra_ratio = np.NaN
 
         print('Results for', model_name)
         print('Voxel-wise accuracy: ', accuracy)
         print('ROC AUC score: ', roc_auc)
         print('Dice score: ', dice)
         print('Classic Hausdorff', hausdorff_distance)
-        print('F1 score: ', f1)
+        print('Predicted_in_penumbra_ratio: ', predicted_in_penumbra_ratio)
+        print('Positive predictive value:', positive_predictive_value)
 
         elapsed = timeit.default_timer() - start
         print('Evaluation done in: ', elapsed)
         title = model_name + ' finished Cross-Validation'
         body = 'accuracy ' + str(accuracy) + '\n' + 'ROC AUC ' + str(roc_auc) + '\n' \
             + 'Dice ' + str(dice) + '\n' + 'Classic Hausdorff ' + str(hausdorff_distance) + '\n' \
-            + 'F1 ' + str(f1) + '\n' + 'RF ' + str(rf_dim) + '\n' \
+            + 'Positive predictive value' + str(positive_predictive_value) + '\n' \
+            + 'Predicted in penumbra ratio ' + str(predicted_in_penumbra_ratio) + '\n' \
+            + 'RF ' + str(rf_dim) + '\n' \
             + 'Time elapsed ' + str(elapsed) + '\n' + str(params)
         notification_system.send_message(title, body)
 

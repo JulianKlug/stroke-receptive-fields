@@ -5,6 +5,7 @@ from vxl_threshold.Threshold_Model import Threshold_Model
 from scoring_utils import cutoff_youdens_j
 from dimension_utils import reconstruct_image
 from channel_normalisation import normalise_channel_by_Tmax4, normalise_channel_by_contralateral
+from penumbra_evaluation import threshold_Tmax6
 
 class RAPID_threshold():
     def __init__(self, rf):
@@ -39,17 +40,8 @@ class RAPID_threshold():
         flat_smooth_pred = smooth_pred[data_positions == 1].reshape(-1)
         return flat_smooth_pred
 
-
-    def threshold_Tmax6(self, data):
-        # Get penumbra mask
-        Tmax = data[..., 0]
-        tresholded_voxels = np.zeros(Tmax.shape)
-        # penumbra (Tmax > 6) without extremes
-        tresholded_voxels[(Tmax > 6) & (Tmax < np.percentile(Tmax, 99))] = 1 # define penumbra
-        return np.squeeze(tresholded_voxels)
-
     def fit(self, X_train, y_train, train_batch_positions):
-        penumbra_indices = np.where(self.threshold_Tmax6(X_train) == 1)
+        penumbra_indices = np.where(threshold_Tmax6(X_train) == 1)
         CBF_normalised_byTmax4, CBF_normalised_byContralateral = self.normalise_channel(X_train, train_batch_positions, 1)
 
         # todo This training is just for show
@@ -62,7 +54,7 @@ class RAPID_threshold():
         return self
 
     def predict_proba(self, data, data_position_indices):
-        penumbra = self.threshold_Tmax6(data) == 1
+        penumbra = threshold_Tmax6(data) == 1
 
         CBF_normalised_byTmax4, CBF_normalised_byContralateral = self.normalise_channel(data, data_position_indices, 1)
 

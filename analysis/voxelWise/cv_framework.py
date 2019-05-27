@@ -7,6 +7,7 @@ from sampling_utils import get_undersample_selector_array
 import receptiveField as rf
 from scoring_utils import evaluate
 from utils import gaussian_smoothing
+from penumbra_evaluation import penumbra_match
 
 def repeated_kfold_cv(Model_Generator, save_dir, save_function,
             input_data_array, output_data_array, clinical_input_array = None, mask_array = None, id_array = None,
@@ -85,6 +86,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
         'test_jaccard': [],
         'test_TPR': [],
         'test_FPR': [],
+        'test_positive_predictive_value': [],
         'test_thresholded_volume_deltas': [],
         'test_unthresholded_volume_deltas': [],
         'test_image_wise_error_ratios': [],
@@ -92,7 +94,10 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
         'test_image_wise_hausdorff': [],
         'test_image_wise_modified_hausdorff': [],
         'test_image_wise_dice': [],
-        'evaluation_thresholds': []
+        'evaluation_thresholds': [],
+        'test_penumbra_metrics': {
+            'predicted_in_penumbra_ratio': []
+        }
     }
 
     print('Repeated kfold', n_repeats, n_folds)
@@ -164,7 +169,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
             # Evaluate this fold
             print('Evaluating fold ' + str(fold) + ' of ' + str(n_folds - 1) + ' of iteration' + str(iteration) + ' in', str(fold_dir))
             try:
-                fold_result = evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, mask_array, id_array, test)
+                fold_result = evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, imgX, mask_array, id_array, test)
 
                 results['test_accuracy'].append(fold_result['accuracy'])
                 results['test_f1'].append(fold_result['f1'])
@@ -172,6 +177,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
                 results['test_TPR'].append(fold_result['tpr'])
                 results['test_FPR'].append(fold_result['fpr'])
                 results['test_jaccard'].append(fold_result['jaccard'])
+                results['test_positive_predictive_value'].append(fold_result['positive_predictive_value'])
                 results['test_thresholded_volume_deltas'].append(fold_result['thresholded_volume_deltas'])
                 results['test_unthresholded_volume_deltas'].append(fold_result['unthresholded_volume_deltas'])
                 results['test_image_wise_error_ratios'].append(fold_result['image_wise_error_ratios'])
@@ -180,6 +186,8 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
                 results['test_image_wise_modified_hausdorff'].append(fold_result['image_wise_modified_hausdorff'])
                 results['test_image_wise_dice'].append(fold_result['image_wise_dice'])
                 results['train_evals'].append(fold_result['train_evals'])
+                results['test_penumbra_metrics']['predicted_in_penumbra_ratio']\
+                    .append(fold_result['penumbra_metrics']['predicted_in_penumbra_ratio'])
                 results['evaluation_thresholds'].append(fold_result['evaluation_threshold'])
                 trained_models.append(fold_result['trained_model'])
                 figures.append(fold_result['figure'])
@@ -304,7 +312,7 @@ def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, t
 
         model.add_test_data(subj_X_test, subj_y_test, selected_for_testing, subjects_per_batch)
 
-def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, mask_array, id_array, test):
+def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, imgX, mask_array, id_array, test):
     """
     Patient wise Repeated KFold Crossvalidation
     This function evaluates a saved datafold
@@ -320,6 +328,7 @@ def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, mask_array, id_array, t
     probas_ = model.predict_test_data()
     y_test = model.get_test_labels()
     mask_test = mask_array[test]
+    imgX_test = imgX[test][mask_test]
     if id_array is not None: ids_test = id_array[test]
     else: ids_test = None
 
@@ -327,6 +336,15 @@ def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, mask_array, id_array, t
     print('Model sucessfully tested.')
     results['trained_model'] = trained_model
     results['train_evals'] = evals_result
+
+    # evaluation of relation with penumbra
+    if imgX_test.shape[-1] == 4: # evaluation can only be done if all channels are there (Tmax must be present)
+        results['penumbra_metrics'] = {
+            'predicted_in_penumbra_ratio': penumbra_match(probas_, imgX_test)
+        }
+    else:
+        results['penumbra_metrics'] = None
+
 
     return results
 
