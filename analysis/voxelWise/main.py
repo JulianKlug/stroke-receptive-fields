@@ -33,8 +33,8 @@ feature_scaling = False
 # Smoothing before training and testing (applied before thresholding by Campbell et al)
 pre_smoothing = True
 
-# Model_Generator = RAPID_Model_Generator(IN.shape, feature_scaling)
-Model_Generator = Campbell_Model_Generator(IN.shape, feature_scaling, pre_smoothing)
+Model_Generator = RAPID_Model_Generator(IN.shape, feature_scaling, threshold='train', post_smoothing=True)
+# Model_Generator = Campbell_Model_Generator(IN.shape, feature_scaling, pre_smoothing)
 # Model_Generator = LogReg_glm
 
 model_name = 'presmooth_Campbell_CBF_train'

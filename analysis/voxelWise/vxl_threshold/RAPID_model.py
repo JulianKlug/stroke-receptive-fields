@@ -69,9 +69,9 @@ class RAPID_threshold():
         # Parts of penumbra (Tmax > 6) where CBF < 30% of healthy tissue (contralateral or region where Tmax < 4s)
         tresholded_voxels[(CBF_normalised_byContralateral < threshold) & (penumbra)] = 1
         tresholded_voxels[(CBF_normalised_byTmax4 < threshold) & (penumbra)] = 1
-        smoothed_tresholded_voxels = self.smooth_prediction(tresholded_voxels, data_position_indices)
+        if self.smoothing: tresholded_voxels = self.smooth_prediction(tresholded_voxels, data_position_indices)
 
-        return np.squeeze(smoothed_tresholded_voxels)
+        return np.squeeze(tresholded_voxels)
 
 def RAPID_Model_Generator(X_shape, feature_scaling, threshold='train', post_smoothing=True):
     """
