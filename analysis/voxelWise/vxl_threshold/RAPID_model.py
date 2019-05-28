@@ -8,11 +8,13 @@ from channel_normalisation import normalise_channel_by_Tmax4, normalise_channel_
 from penumbra_evaluation import threshold_Tmax6
 
 class RAPID_threshold():
-    def __init__(self, rf, threshold = 'train'):
+    def __init__(self, rf, threshold = 'train', post_smoothing=True):
         self.rf = np.max(rf)
         self.train_threshold = np.nan
         self.fixed_threshold = threshold
         print('Using threshold:', self.fixed_threshold)
+        # if smoothing of prediction should be applied in model
+        self.smoothing = post_smoothing
 
         if self.rf != 0:
             raise ValueError('Model only valid for Rf = 0.')
@@ -71,7 +73,7 @@ class RAPID_threshold():
 
         return np.squeeze(smoothed_tresholded_voxels)
 
-def RAPID_Model_Generator(X_shape, feature_scaling, threshold='train'):
+def RAPID_Model_Generator(X_shape, feature_scaling, threshold='train', post_smoothing=True):
     """
     Model Generator for custom threshold models.
     Verifies if feature_scaling is off, and only 1 metric is used.
@@ -79,6 +81,7 @@ def RAPID_Model_Generator(X_shape, feature_scaling, threshold='train'):
         X_shape: expected to be (n, x, y, z, c)
         feature_scaling: boolean
         threshold: lower threshold to apply on CBF, if none is given, threshold will be derived from training data
+        post_smoothing: if smoothing of prediction should be applied in the model
     Returns: result dictionary
     """
     if (feature_scaling):
@@ -88,9 +91,9 @@ def RAPID_Model_Generator(X_shape, feature_scaling, threshold='train'):
 
     class custom_RAPID_model(Threshold_Model):
         def __init__(self, fold_dir, fold_name, n_channels = 1, n_channels_out = 1, rf = 0):
-            super().__init__(fold_dir, fold_name, model = RAPID_threshold(rf, threshold))
+            super().__init__(fold_dir, fold_name, model = RAPID_threshold(rf, threshold, post_smoothing))
             if (n_channels != 4):
-                raise Exception('RAPID Treshold model only works with all channels.')
+                raise Exception('RAPID Threshold model only works with all channels.')
 
         @staticmethod
         def hello_world():
