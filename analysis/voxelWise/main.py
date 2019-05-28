@@ -31,13 +31,13 @@ n_folds = 5
 feature_scaling = False
 
 # Smoothing before training and testing (applied before thresholding by Campbell et al)
-pre_smoothing = False
+pre_smoothing = True
 
-Model_Generator = RAPID_Model_Generator(IN.shape, feature_scaling)
-# Model_Generator = Campbell_Model_Generator(IN.shape, feature_scaling, pre_smoothing)
+# Model_Generator = RAPID_Model_Generator(IN.shape, feature_scaling)
+Model_Generator = Campbell_Model_Generator(IN.shape, feature_scaling, pre_smoothing)
 # Model_Generator = LogReg_glm
 
-model_name = 'smooth_RAPID_CBF40'
+model_name = 'presmooth_Campbell_CBF_train'
 rf_hp_start = 0
 rf_hp_end = 1
 rf_hyperopt(model_name, Model_Generator, IN, OUT, CLIN, MASKS, IDS, feature_scaling, pre_smoothing,
