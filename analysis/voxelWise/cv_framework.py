@@ -176,6 +176,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
                 results['test_roc_auc'].append(fold_result['roc_auc'])
                 results['test_TPR'].append(fold_result['tpr'])
                 results['test_FPR'].append(fold_result['fpr'])
+                results['test_thresholds'].append(fold_result['thresholds'])
                 results['test_jaccard'].append(fold_result['jaccard'])
                 results['test_positive_predictive_value'].append(fold_result['positive_predictive_value'])
                 results['test_thresholded_volume_deltas'].append(fold_result['thresholded_volume_deltas'])
