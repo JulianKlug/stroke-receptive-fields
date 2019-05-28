@@ -8,11 +8,11 @@ from channel_normalisation import normalise_channel_by_Tmax4, normalise_channel_
 from penumbra_evaluation import threshold_Tmax6
 
 class RAPID_threshold():
-    def __init__(self, rf):
+    def __init__(self, rf, threshold = 'train'):
         self.rf = np.max(rf)
         self.train_threshold = np.nan
-        self.fixed_threshold = 0.40
-        print('Using threshold at', self.fixed_threshold)
+        self.fixed_threshold = threshold
+        print('Using threshold:', self.fixed_threshold)
 
         if self.rf != 0:
             raise ValueError('Model only valid for Rf = 0.')
@@ -44,11 +44,12 @@ class RAPID_threshold():
         penumbra_indices = np.where(threshold_Tmax6(X_train) == 1)
         CBF_normalised_byTmax4, CBF_normalised_byContralateral = self.normalise_channel(X_train, train_batch_positions, 1)
 
-        # todo This training is just for show
-        penumbra_normalised_CBF = CBF_normalised_byTmax4[penumbra_indices]
-        fpr, tpr, thresholds = roc_curve(y_train[penumbra_indices], penumbra_normalised_CBF)
-        # get optimal cutOff
-        self.train_threshold = cutoff_youdens_j(fpr, tpr, thresholds)
+        # As there is an inverse relation between CBF and voxel infarction, inverse CBF before ROC analysis
+        # Only regions of penumbra (Tmax > 6) are used for this definition
+        penumbra_inverse_normalised_CBF = -1 * CBF_normalised_byTmax4[penumbra_indices]
+        fpr, tpr, thresholds = roc_curve(y_train[penumbra_indices], penumbra_inverse_normalised_CBF)
+        # get optimal cutOff (inversed again to get lower cut-off)
+        self.train_threshold = -1 * cutoff_youdens_j(fpr, tpr, thresholds)
         print('Training threshold:', self.train_threshold)
 
         return self
@@ -58,27 +59,26 @@ class RAPID_threshold():
 
         CBF_normalised_byTmax4, CBF_normalised_byContralateral = self.normalise_channel(data, data_position_indices, 1)
 
-        threshold: float = self.fixed_threshold
+        if self.fixed_threshold == 'train':
+            threshold = self.train_threshold
+        else: threshold = self.fixed_threshold
+
         tresholded_voxels = np.zeros(data[..., 0].shape)
-        # Parts of penumbra (Tmax > 6) where CBF < 30% of healthy tissue (controlateral or region where Tmax < 4s)
+        # Parts of penumbra (Tmax > 6) where CBF < 30% of healthy tissue (contralateral or region where Tmax < 4s)
         tresholded_voxels[(CBF_normalised_byContralateral < threshold) & (penumbra)] = 1
         tresholded_voxels[(CBF_normalised_byTmax4 < threshold) & (penumbra)] = 1
         smoothed_tresholded_voxels = self.smooth_prediction(tresholded_voxels, data_position_indices)
 
         return np.squeeze(smoothed_tresholded_voxels)
 
-def RAPID_Model_Generator(X_shape, feature_scaling):
+def RAPID_Model_Generator(X_shape, feature_scaling, threshold='train'):
     """
     Model Generator for custom threshold models.
     Verifies if feature_scaling is off, and only 1 metric is used.
     Args:
         X_shape: expected to be (n, x, y, z, c)
         feature_scaling: boolean
-        fixed_threshold: determine if fixed threshold should be used or if threshold should be determined on training data
-            - if False: threshold will be determined from training data
-            - if number: given number will be used as threshold (if inverse relation this should be negative)
-        inverse_relation: boolean, if True find the threshold UNDER wich to predict true
-
+        threshold: lower threshold to apply on CBF, if none is given, threshold will be derived from training data
     Returns: result dictionary
     """
     if (feature_scaling):
@@ -88,7 +88,7 @@ def RAPID_Model_Generator(X_shape, feature_scaling):
 
     class custom_RAPID_model(Threshold_Model):
         def __init__(self, fold_dir, fold_name, n_channels = 1, n_channels_out = 1, rf = 0):
-            super().__init__(fold_dir, fold_name, model = RAPID_threshold(rf))
+            super().__init__(fold_dir, fold_name, model = RAPID_threshold(rf, threshold))
             if (n_channels != 4):
                 raise Exception('RAPID Treshold model only works with all channels.')
 
