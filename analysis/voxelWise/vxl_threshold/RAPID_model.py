@@ -71,7 +71,7 @@ class RAPID_threshold():
         tresholded_voxels[(CBF_normalised_byTmax4 < threshold) & (penumbra)] = 1
         if self.smoothing: tresholded_voxels = self.smooth_prediction(tresholded_voxels, data_position_indices)
 
-        return np.squeeze(tresholded_voxels)
+        return np.squeeze(-1 * CBF_normalised_byTmax4)
 
 def RAPID_Model_Generator(X_shape, feature_scaling, threshold='train', post_smoothing=True):
     """
