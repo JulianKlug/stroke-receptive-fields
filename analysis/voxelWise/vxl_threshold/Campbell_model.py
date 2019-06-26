@@ -54,7 +54,7 @@ class Campbell_threshold():
         # Regions where CBF < 30% of healthy tissue (controlateral)
         thresholded_voxels[CBF_normalised_byContralateral < threshold] = 1
 
-        return np.squeeze(thresholded_voxels)
+        return np.squeeze(-1 * CBF_normalised_byContralateral)
 
 def Campbell_Model_Generator(X_shape, feature_scaling, pre_smoothing, threshold='train'):
     """
