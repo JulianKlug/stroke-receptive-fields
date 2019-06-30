@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def display(img_data, block = True):
+def display(img_data, block = True, title = None):
     def show_slices(slices):
         """ Function to display row of image slices """
         fig, axes = plt.subplots(1, len(slices))
@@ -26,4 +26,6 @@ def display(img_data, block = True):
     show_slices([slice_0, slice_1, slice_2])
 
     plt.suptitle("Center slices for image")
+    if title:
+        plt.suptitle(title)
     plt.show(block = block)
