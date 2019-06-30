@@ -1,7 +1,7 @@
 # stroke-predict
 This repository hosts scripts for a research project on prediction of ischemic stroke.
 
-## Pipeline
+## Preprocessing Pipeline
 
 Extraction Verification
 - pre_verification/find_empty_folders.py : find empty folders in subject directories hinting towards failed exports and save in excel file
