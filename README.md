@@ -4,14 +4,15 @@ This repository hosts scripts for a research project on prediction of ischemic s
 ## Pipeline
 
 Extraction Verification
-- verification/find_empty_folders.py : find empty folders in subject directories hinting towards failed exports and save in excel file
-- verification/verify_RAPID37.py : check that all subjects with perfusion CTs have 37 RAPID images (and not 11)
+- pre_verification/find_empty_folders.py : find empty folders in subject directories hinting towards failed exports and save in excel file
+- pre_verification/verify_RAPID37.py : check that all subjects with perfusion CTs have 37 RAPID images (and not 11)
 - utils/extract_unknown_studies_folder.py : extract images saved as an unspecified "study" folder
 - utils/extract_RAPID37_folder.py : extract images saved as an unspecified "RAPID37" folder
 
 Pre :
 
-- 1. organise.py : organise into a new working directory, extracting only useful and renaming to something sensible
+- 1. organise.py : organise into a new working directory, extracting only useful and renaming to something sensible + anonymize patient information
+    - Nb.: watch out for patient seperator, patient might be missed if they use a different seperator in their file/folder names
 - 2. to_nii_batch.py : batch convert subject DICOMs to Nifti
 - 3. flatten.py : flatten into an MRI and a CT folder
 - 4. verify_completeness.py : verify that all necessary files are present

@@ -7,9 +7,9 @@ from unidecode import unidecode
 import hashlib
 from utils.naming_verification import tight_verify_name, loose_verify_name
 
-main_dir = '/Volumes/stroke_hdd1/stroke_db/2016/'
-data_dir = os.path.join(main_dir, 'additionnal')
-output_dir = os.path.join(main_dir, 'extracted_additionnal')
+main_dir = '/Volumes/stroke_hdd1/stroke_db/2017/imaging_data/included/'
+data_dir = os.path.join(main_dir, 'add_iat')
+output_dir = os.path.join(main_dir, 'extracted_add_iat')
 enforce_VOI = True
 copy = True
 spc_ct_sequences = image_name_config.spc_ct_sequences
@@ -256,7 +256,7 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
         if tight_verify_name(mri_study, mri_sequences):
             selected_mri_study_paths.append(mri_study_path)
 
-        if 'VOI' in mri_study or 'lesion' in mri_study or 'Lesion' in mri_study:
+        if ('VOI' in mri_study or 'lesion' in mri_study or 'Lesion' in mri_study) and os.path.isfile(mri_study_path):
             new_file_name = 'VOI_' + patient_identifier + '.nii'
             new_file_path = os.path.join(patient_output_folder, new_file_name)
             if not os.path.exists(new_file_path):
