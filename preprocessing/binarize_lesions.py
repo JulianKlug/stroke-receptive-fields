@@ -15,6 +15,10 @@ def binarize_lesion(masked_lesion_name, lesion_dir):
     lesion_data = lesion_img.get_data()
     coordinate_space = lesion_img.affine
 
+    if np.array_equal(lesion_data, lesion_data.astype(bool)):
+        print('Already binary. Skipping.')
+        return
+
     threshold = 0.8 * np.max(lesion_data)
     binary_data = np.zeros(lesion_data.shape)
     binary_data[lesion_data > threshold] = 1
@@ -31,6 +35,7 @@ def binarize_lesions_wrapper(data_dir):
                     if os.path.isdir(os.path.join(data_dir,o))]
 
     for subject in subjects:
+        print('Processing', subject)
         subject_dir = os.path.join(data_dir, subject)
         modalities = [o for o in os.listdir(subject_dir)
                         if os.path.isdir(os.path.join(subject_dir,o))]
