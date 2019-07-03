@@ -17,6 +17,9 @@ Pre :
 3. flatten.py : flatten into an MRI and a CT folder
 4. verify_completeness.py : verify that all necessary files are present
 
+Verify clinical exclusion criteria:
+- Time between CT and MRI (reported in anonymisation_key from organise.py)
+
 CT :
 
 0. utils/resolve_RAPID_4D_maps: resolve RAPID maps with 4 dimensions
