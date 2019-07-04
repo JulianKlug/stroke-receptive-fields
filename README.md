@@ -19,6 +19,8 @@ Pre :
 
 Verify clinical exclusion criteria:
 - Time between CT and MRI (reported in anonymisation_key from organise.py)
+- other exclusion criteria: IAT before CT, no treatment received
+    - extract_patient_characteristics.py: extract relevant patient characteristics from main excel database
 
 CT :
 

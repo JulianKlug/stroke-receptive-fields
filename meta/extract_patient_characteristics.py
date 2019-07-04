@@ -44,8 +44,8 @@ def extract_patient_characteristics(patient_id_path, patient_info_path, id_sheet
     output_df = output_df.drop_duplicates(subset='combined_id')
 
     print('Sex:\n', output_df['sex'].value_counts())
-    print('Median age', np.median(output_df['age']), 'std', np.std(output_df['age']), 'min/max',
-          np.min(output_df['age']), np.max(output_df['age']))
+    print('Median age', np.median(output_df['age'].astype(float)), 'std', np.std(output_df['age'].astype(float)), 'min/max',
+          np.min(output_df['age'].astype(float)), np.max(output_df['age'].astype(float)))
     print('Median time to CT', np.median(output_df['time_to_ct']).astype('timedelta64[m]'),
           'min/max', np.min(output_df['time_to_ct']).seconds / 60.0, np.max(output_df['time_to_ct']).seconds / 60.0)
     print('Median time to MRI', np.median(output_df['time_to_mri']).astype('timedelta64[h]'),
@@ -65,5 +65,5 @@ def extract_patient_characteristics(patient_id_path, patient_info_path, id_sheet
     output_df.to_excel(os.path.join(os.path.dirname(patient_info_path), 'output_df.xlsx'))
 
 extract_patient_characteristics(
-    '/Users/julian/OneDrive - unige.ch/master project/clinical_data/2016/all_13052019/anonymisation_key_underscore.xlsx',
+    '/Users/julian/temp/anon_key_2017.xlsx',
     '/Users/julian/temp/190419_Données 2015-16-17.xlsx', id_sheet = 'Sheet1', info_sheet = 'Sheet1 (2)')
