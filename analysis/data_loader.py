@@ -61,7 +61,7 @@ def get_paths_and_ids(data_dir, ct_sequences, mri_sequences):
 # - lesion_paths : list of paths of lesions maps
 # - brain_mask_paths : list of paths of ct brain masks
 # - return three lists containing image data for cts (as 4D array), brain masks and lesion_maps
-def load_images(ct_paths, lesion_paths, brain_mask_paths):
+def load_images(ct_paths, lesion_paths, brain_mask_paths, ids):
     if len(ct_paths) != len(lesion_paths):
         raise ValueError('Number of CT and number of lesions maps should be the same.', len(ct_paths), len(lesion_paths))
 
@@ -85,7 +85,7 @@ def load_images(ct_paths, lesion_paths, brain_mask_paths):
                 raise ValueError('Image does not have correct dimensions.', ct_channels[c])
 
             if np.isnan(image_data).any():
-                print('CT images of', subject, 'contains NaN. Converting to 0.')
+                print('CT images of', ids[subject], 'contains NaN. Converting to 0.')
                 image_data = np.nan_to_num(image_data)
 
             ct_inputs[subject, :, :, :, c] = image_data
@@ -95,14 +95,14 @@ def load_images(ct_paths, lesion_paths, brain_mask_paths):
         # sanitize lesion data to contain only single class
         lesion_data[lesion_data > 1] = 1
         if np.isnan(lesion_data).any():
-            print('Lesion label of', subject, 'contains NaN. Converting to 0.')
+            print('Lesion label of', ids[subject], 'contains NaN. Converting to 0.')
             lesion_data = np.nan_to_num(lesion_data)
         lesion_outputs[subject, :, :, :] = lesion_data
 
         brain_mask_image = nib.load(brain_mask_paths[subject])
         brain_mask_data = brain_mask_image.get_data()
         if np.isnan(brain_mask_data).any():
-            print('Brain mask of', subject, 'contains NaN. Converting to 0.')
+            print('Brain mask of', ids[subject], 'contains NaN. Converting to 0.')
             brain_mask_data = np.nan_to_num(brain_mask_data)
         brain_masks[subject, :, :, :] = brain_mask_data
 
@@ -111,7 +111,7 @@ def load_images(ct_paths, lesion_paths, brain_mask_paths):
 
 def load_nifti(main_dir, ct_sequences, mri_sequences):
     ids, ct_paths, lesion_paths, brain_mask_paths = get_paths_and_ids(main_dir, ct_sequences, mri_sequences)
-    return (ids, load_images(ct_paths, lesion_paths, brain_mask_paths))
+    return (ids, load_images(ct_paths, lesion_paths, brain_mask_paths, ids))
 
 # Save data as compressed numpy array
 def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = None, ct_sequences = [], mri_sequences = [], external_memory=False):
