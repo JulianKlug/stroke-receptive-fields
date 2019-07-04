@@ -84,19 +84,29 @@ def load_images(ct_paths, lesion_paths, brain_mask_paths):
             if first_image_data.shape != image_data.shape:
                 raise ValueError('Image does not have correct dimensions.', ct_channels[c])
 
+            if np.isnan(image_data).any():
+                print('CT images of', subject, 'contains NaN. Converting to 0.')
+                image_data = np.nan_to_num(image_data)
+
             ct_inputs[subject, :, :, :, c] = image_data
 
         lesion_image = nib.load(lesion_paths[subject])
         lesion_data = lesion_image.get_data()
         # sanitize lesion data to contain only single class
         lesion_data[lesion_data > 1] = 1
+        if np.isnan(lesion_data).any():
+            print('Lesion label of', subject, 'contains NaN. Converting to 0.')
+            lesion_data = np.nan_to_num(lesion_data)
         lesion_outputs[subject, :, :, :] = lesion_data
 
         brain_mask_image = nib.load(brain_mask_paths[subject])
         brain_mask_data = brain_mask_image.get_data()
+        if np.isnan(brain_mask_data).any():
+            print('Brain mask of', subject, 'contains NaN. Converting to 0.')
+            brain_mask_data = np.nan_to_num(brain_mask_data)
         brain_masks[subject, :, :, :] = brain_mask_data
 
-    return (ct_inputs, lesion_outputs, brain_masks)
+    return ct_inputs, lesion_outputs, brain_masks
 
 
 def load_nifti(main_dir, ct_sequences, mri_sequences):
