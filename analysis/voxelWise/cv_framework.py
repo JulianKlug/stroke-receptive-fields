@@ -188,8 +188,9 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
                 results['test_image_wise_modified_hausdorff'].append(fold_result['image_wise_modified_hausdorff'])
                 results['test_image_wise_dice'].append(fold_result['image_wise_dice'])
                 results['train_evals'].append(fold_result['train_evals'])
-                results['test_penumbra_metrics']['predicted_in_penumbra_ratio']\
-                    .append(fold_result['penumbra_metrics']['predicted_in_penumbra_ratio'])
+                if not (fold_result['penumbra_metrics'] is None):
+                    results['test_penumbra_metrics']['predicted_in_penumbra_ratio']\
+                        .append(fold_result['penumbra_metrics']['predicted_in_penumbra_ratio'])
                 results['evaluation_thresholds'].append(fold_result['evaluation_threshold'])
                 trained_models.append(fold_result['trained_model'])
                 figures.append(fold_result['figure'])
