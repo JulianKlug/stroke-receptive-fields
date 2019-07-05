@@ -11,7 +11,7 @@ class custom_threshold():
         self.fixed_threshold = fixed_threshold
         self.inverse_relation = inverse_relation
 
-    def fit(self, X_train, y_train):
+    def fit(self, X_train, y_train, train_batch_positions):
         if self.rf != 0:
             raise ValueError('Model only valid for Rf = 0.')
         if self.inverse_relation:
@@ -23,11 +23,11 @@ class custom_threshold():
 
         return self
 
-    def predict_proba(self, data):
+    def predict_proba(self, data, data_position_indices):
         if not self.rf == 0:
             raise ValueError('Model only valid for Rf = 0.')
         if self.inverse_relation:
-            data =  -1 * data
+            data = -1 * data
         # Simple Treshold case
         if self.fixed_threshold: threshold = self.fixed_threshold
         else: threshold = self.train_threshold
