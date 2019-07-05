@@ -368,18 +368,11 @@ def rescale_outliers(imgX, MASKS):
     :param imgX: image data (n, x, y, z, c)
     :return: rescaled_imgX
     '''
-    median_c0 = np.median(imgX[..., 0][MASKS])
-    median_c1 = np.median(imgX[..., 1][MASKS])
-    median_c2 = np.median(imgX[..., 2][MASKS])
-    median_c3 = np.median(imgX[..., 3][MASKS])
+
     for i in range(imgX.shape[0]):
-        if np.median(imgX[i, ..., 0][MASKS[i]]) > 5 * median_c0:
-            imgX[i, ..., 0] = imgX[i, ..., 0] / 10
-        if np.median(imgX[i, ..., 1][MASKS[1]]) > 5 * median_c1:
-            imgX[i, ..., 1] = imgX[i, ..., 1] / 10
-        if np.median(imgX[i, ..., 2][MASKS[i]]) > 5 * median_c2:
-            imgX[i, ..., 2] = imgX[i, ..., 2] / 10
-        if np.median(imgX[i, ..., 3][MASKS[i]]) > 5 * median_c3:
-            imgX[i, ..., 3] = imgX[i, ..., 3] / 10
+        for channel in range(imgX.shape[-1]):
+            median_channel = np.median(imgX[..., channel][MASKS])
+            if np.median(imgX[i, ..., 0][MASKS[i]]) > 5 * median_channel:
+                imgX[i, ..., 0] = imgX[i, ..., channel] / 10
 
     return imgX
