@@ -9,8 +9,6 @@
 
 function matlabbatch = coregister_job(reference, main_image, images_to_co_coregister)
 % 
-% matlabbatch{1}.spm.spatial.coreg.estwrite.ref = {'E:\MASTER\betted_data\Barlovic_Radojka_19480907\betted.nii,1'};
-% matlabbatch{1}.spm.spatial.coreg.estwrite.source = {'E:\MASTER\realigned_data\Barlovic_Radojka_19480907\RAPID_CBF\rRAPID_CBF_Perfusion_20160103102300_431.nii,1'};
 matlabbatch{1}.spm.spatial.coreg.estwrite.ref = {reference};
 matlabbatch{1}.spm.spatial.coreg.estwrite.source = {main_image};
 

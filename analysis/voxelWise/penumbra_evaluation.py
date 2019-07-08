@@ -23,7 +23,7 @@ def penumbra_match(probas_, data):
     threshold = 0.5
 
     # Positive predictive value : tp / (tp + fp)
-    # ie ration of prediction that is in penumbra
+    # ie ratio of prediction that is in penumbra
     ratio_in_penumbra = precision_score(penumbra, probas_[:] >= threshold)
 
     return ratio_in_penumbra
