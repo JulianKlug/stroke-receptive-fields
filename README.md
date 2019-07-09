@@ -110,7 +110,7 @@ At the same time the CSF_mask is integrated into the non-brain mask.
 #### MRI Pre-processing
 
 1. Align position and orientation of the native non-betted CT to the CT-MNI template (derived from Clinical toolbox for SPM: clinical_setorigin) [matlab/mri_coreg_normalisation_wrapper.m]
-2. Co-register T2-MRI sequences to skull-stripped native CT sequences (as implemented by SPM12) and apply this transformation to the lesion labels [matlab/mri_coreg_normalisation_wrapper.m]
+2. Co-register T2-MRI sequences to non skull-stripped native CT sequences (as implemented by SPM12) and apply this transformation to the lesion labels [matlab/mri_coreg_normalisation_wrapper.m]
     - cost function: normalized mutual information
 3. Align and co-register the native non-betted CT to the CT-MNI template and apply to the co-registered T2-MRI and lesion label obtained from above (derived from Clinical toolbox for SPM: clinical_setorigin) 
 4. Normalize non-betted native CT to the CT-MNI template and apply this transformation to the T2-MRI and lesion label obtained from the prior step. [matlab/mri_coreg_normalisation_wrapper.m]   
