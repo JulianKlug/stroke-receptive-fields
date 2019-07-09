@@ -11,15 +11,16 @@ from ext_mem_utils import save_to_svmlight
 def reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions, include_only = np.NaN, verbose = False) :
     # Dimensions of the receptive field defined as distance to center point in every direction
     rf_x, rf_y, rf_z = receptive_field_dimensions
-    window_d_x, window_d_y, window_d_z  = 2 * np.array(receptive_field_dimensions) + 1
+    window_d_x, window_d_y, window_d_z = 2 * np.array(receptive_field_dimensions) + 1
+    n_x, n_y, n_z, n_c = input_data_array[0].shape
 
     if verbose:
         print('Receptive field window dimensions are: ', window_d_x, window_d_y, window_d_z )
 
     n_subjects = input_data_array.shape[0]
     n_receptive_fields = input_data_array[0, :, :, :, 0].size * n_subjects  # ie voxels per image times number of images
-    receptive_field_size = window_d_x * window_d_y * window_d_z * input_data_array[0,0,0,0,:].size
-    n_x, n_y, n_z, n_c = input_data_array[0].shape
+    # a receptive field is a 3D patch with n_c channels (then flattened)
+    receptive_field_size = window_d_x * window_d_y * window_d_z * n_c
     n_voxels_per_subject = n_x * n_y * n_z
 
     # pad all images to allow for an receptive field even at the borders
@@ -28,6 +29,7 @@ def reshape_to_receptive_field(input_data_array, output_data_array, receptive_fi
 
     input_fields = rolling_window(padded_data, (0, window_d_x, window_d_y, window_d_z, 0))
 
+    # for every voxel for each subject a receptive field is defined as the flat array of a 3D area with n_c channels
     inputs = input_fields.reshape((n_subjects * n_voxels_per_subject, receptive_field_size))
 
     outputs = np.stack(output_data_array).reshape(n_subjects * n_voxels_per_subject)
