@@ -77,7 +77,7 @@ At the same time the CSF_mask is integrated into the non-brain mask.
     - No treatment received
     - Intra-arterial treatment before CT
     - MRI imaging before CT
-    - Major anatomic deformations visualised on MRI: massive edema with herniation, craniectomie, massive hemorrhagic transformation 
+    - Major anatomic deformations visualised on MRI: massive edema with herniation, craniectomy, massive hemorrhagic transformation 
 
 ### II. Pre-processing
 #### CT Pre-processing
@@ -99,7 +99,8 @@ At the same time the CSF_mask is integrated into the non-brain mask.
 4. Normalize non-betted native CT to the CT-MNI template as published by Rorden et al [^3] and apply this transformation to the pCT sequences obtained from the prior step. [matlab/perfCT_normalisation_wrapper.m]   
     - Align position and orientation to CT-MNI template (Clinical toolbox for SPM: clinical_setorigin)
     - Apply normalisation (as implemented by SPM12) with parameters derived from the Clinical toolbox for SPM
-    
+
+![CT preprocessing pipeline](illustrations/CT_preprocessing.png?raw=true "CT preprocessing pipeline")
 
 [^1]: Muschelli J, Ullman NL, Mould WA, Vespa P, Hanley DF, Crainiceanu CM. Validated automatic brain extraction of head CT images. Neuroimage. 2015 Jul 1;114:379–85.
 
@@ -115,6 +116,8 @@ At the same time the CSF_mask is integrated into the non-brain mask.
 3. Align and co-register the native non-betted CT to the CT-MNI template and apply to the co-registered T2-MRI and lesion label obtained from above (derived from Clinical toolbox for SPM: clinical_setorigin) 
 4. Normalize non-betted native CT to the CT-MNI template and apply this transformation to the T2-MRI and lesion label obtained from the prior step. [matlab/mri_coreg_normalisation_wrapper.m]   
     - Apply normalisation (as implemented by SPM12) with parameters derived from the Clinical toolbox for SPM
+
+![MRI preprocessing pipeline](illustrations/MRI_preprocessing.png?raw=true "MRI preprocessing pipeline")
 
 #### Lesion label sanitization
 
