@@ -167,7 +167,7 @@ The obtained brain mask is applied to the train and test sets throughout the cro
             - A brain mask is applied to use only the data where pCT data is available
         - Testing data:
             - Receptive field creation
-            - A brain mask is applied to test only on the data where pCT data is available
+            - A brain mask is applied to test only on the data where pCT data is available            
     - Fold evaluation
         - Scores [analysis/voxelwise/scoring_utils.py]
             - ROC curve is determined from labels and the output of a model (probability of infarction)
@@ -178,6 +178,8 @@ The obtained brain mask is applied to the train and test sets throughout the cro
                 - hausdorff distance (as implemented by scipy)
                 - and others
         - Penumbra match: ratio of prediction that is in penumbra [analysis/voxelwise/penumbra_evaluation.py]
+        
+![Receptive field illustration](illustrations/Receptive_field.png?raw=true "Receptive field")
     
 - Helper functions handle output of the evaluation [analysis/voxelwise/wrapper_cv]
     - save function: Define modalities of saving evaluation results
