@@ -17,7 +17,7 @@ from figures.plot_ROC import plot_roc
 
 notification_system = NotificationSystem()
 
-def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, IDS, feature_scaling, pre_smoothing,
+def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, IDS, feature_scaling, pre_smoothing, channels_to_normalise,
                 n_repeats, n_folds, main_save_dir, main_output_dir):
 
     if not os.path.exists(main_output_dir):
@@ -71,7 +71,7 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, IDS, fe
 
         results, trained_models = repeated_kfold_cv(Model_Generator, save_dir, save_function = save_function,
             input_data_array = IN, output_data_array = OUT, clinical_input_array = CLIN, mask_array = MASKS, id_array = IDS,
-            feature_scaling = feature_scaling, pre_smoothing = pre_smoothing,
+            feature_scaling = feature_scaling, pre_smoothing = pre_smoothing, channels_to_normalise = channels_to_normalise,
             receptive_field_dimensions = rf_dim, n_repeats = n_repeats, n_folds = n_folds,
             messaging = notification_system)
 
@@ -120,13 +120,13 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, IDS, fe
         if notification_system: notification_system.send_message(title, body)
         raise
 
-def rf_hyperopt(model_name, Model_Generator, IN, OUT, CLIN, MASKS, IDS, feature_scaling, pre_smoothing,
+def rf_hyperopt(model_name, Model_Generator, IN, OUT, CLIN, MASKS, IDS, feature_scaling, pre_smoothing, channels_to_normalise,
                 n_repeats, n_folds, main_save_dir, main_output_dir, rf_hp_start, rf_hp_end):
     print('Running Hyperopt of rf in range:', rf_hp_start, rf_hp_end)
     for rf in range(rf_hp_start, rf_hp_end):
         rf_dim = [rf, rf, rf]
         model_id = model_name + '_rf_' + str(rf)
-        launch_cv(model_id, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, IDS, feature_scaling, pre_smoothing,
+        launch_cv(model_id, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, IDS, feature_scaling, pre_smoothing, channels_to_normalise,
                         n_repeats, n_folds, main_save_dir, main_output_dir)
 
     print('Hyperopt done.')

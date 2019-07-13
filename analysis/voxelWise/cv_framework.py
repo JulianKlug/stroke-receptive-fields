@@ -8,10 +8,11 @@ import receptiveField as rf
 from scoring_utils import evaluate
 from utils import gaussian_smoothing
 from penumbra_evaluation import penumbra_match
+from channel_normalisation import normalise_channel_by_contralateral
 
 def repeated_kfold_cv(Model_Generator, save_dir, save_function,
             input_data_array, output_data_array, clinical_input_array = None, mask_array = None, id_array = None,
-            feature_scaling = True, pre_smoothing = False,
+            feature_scaling = True, pre_smoothing = False, channels_to_normalise = False,
             receptive_field_dimensions = [1,1,1], n_repeats = 1, n_folds = 5, messaging = None):
     """
     Patient wise Repeated KFold Crossvalidation for a given model
@@ -28,6 +29,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
         id_array: array with subj ids
         feature_scalinng: boolean if data should be normalised
         pre_smoothing: boolean if gaussian smoothing should be applied on all images slices of z
+        channel_normalisation: False or array of channels to normalise
         receptive_field_dimensions : in the form of a list as  [rf_x, rf_y, rf_z]
         n_repeats (optional, default 1): repeats of kfold CV
         n_folds (optional, default 5): number of folds in kfold (ie. k)
@@ -131,6 +133,12 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
     # Smooth data with a gaussian Kernel before using it for training/testing
     if pre_smoothing:
         imgX = gaussian_smoothing(imgX)
+
+    # Normalise channels by contralateral side before using them for training / testing
+    if channels_to_normalise:
+        for c in channels_to_normalise:
+            image_normalised_channel, flat_normalised_channel = normalise_channel_by_contralateral(imgX[mask_array], mask_array, c)
+            imgX[..., c] = image_normalised_channel
 
     # Start iteration of repeated_kfold_cv
     iteration = 0

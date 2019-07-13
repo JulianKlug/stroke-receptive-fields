@@ -52,13 +52,13 @@ def normalise_channel_by_contralateral(all_channel_data, data_positions, channel
         # normalise left side
         right_side = channel_to_normalise_data[subj][x_center:][data_positions[subj][x_center:] == 1]
         clipped_right_side = np.clip(right_side, np.percentile(right_side, 1), np.percentile(right_side, 99))
-        right_side_median = np.nanmedian(clipped_right_side)
+        right_side_median = np.nanmean(clipped_right_side)
         normalised_channel[subj][:x_center] = np.divide(channel_to_normalise_data[subj][:x_center], right_side_median)
 
         # normalise right side
         left_side = channel_to_normalise_data[subj][:x_center][data_positions[subj][:x_center] == 1]
         clipped_left_side = np.clip(left_side, np.percentile(left_side, 1), np.percentile(left_side, 99))
-        left_side_median = np.nanmedian(clipped_left_side)
+        left_side_median = np.nanmean(clipped_left_side)
         normalised_channel[subj][x_center:] = np.divide(channel_to_normalise_data[subj][x_center:], left_side_median)
 
     image_normalised_channel = normalised_channel
