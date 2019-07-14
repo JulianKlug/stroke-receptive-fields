@@ -14,6 +14,7 @@ class Tmax6_treshold():
             tresholded_voxels = np.zeros(X_train.shape)
             tresholded_voxels[X_train > self.threshold] = 1
             self.combinator.fit(tresholded_voxels, y_train)
+            self.train_threshold = self.threshold
         return self
 
 

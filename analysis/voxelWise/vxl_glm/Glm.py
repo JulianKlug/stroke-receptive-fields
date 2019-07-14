@@ -1,5 +1,5 @@
-import os
 import numpy as np
+
 
 class Glm():
     """
@@ -60,8 +60,19 @@ class Glm():
         self.test_index += batch_X_test.shape[0]
 
     def train(self):
+        """
+        Train the model on the training data that is available
+        :return: trained_model
+        :return: trained_threshold - threshold to use on predicted probabilities
+        :return: evals - array of train evaluation metrics
+        """
         self.trained_model = self.model.fit(self.X_train, self.y_train)
-        return self.trained_model, []
+
+        # default threshold for logistic regression is 0.5, determining it through analysis of test data exacerbates overfitting
+        # https://stackoverflow.com/questions/31417487/sklearn-logisticregression-and-changing-the-default-threshold-for-classification?rq=1
+        self.trained_threshold = 0.5
+
+        return self.trained_model, self.trained_threshold, []
 
     def predict(self, data, data_position_indices = None):
         probas_ = self.trained_model.predict_proba(data)
