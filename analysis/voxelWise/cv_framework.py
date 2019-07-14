@@ -88,7 +88,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
         'test_jaccard': [],
         'test_TPR': [],
         'test_FPR': [],
-        'test_thresholds': [],
+        'test_roc_thresholds': [],
         'test_positive_predictive_value': [],
         'test_thresholded_volume_deltas': [],
         'test_unthresholded_volume_deltas': [],
@@ -98,6 +98,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
         'test_image_wise_modified_hausdorff': [],
         'test_image_wise_dice': [],
         'evaluation_thresholds': [],
+        'optimal_thresholds_on_test_data': [],
         'test_penumbra_metrics': {
             'predicted_in_penumbra_ratio': []
         }
@@ -185,7 +186,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
                 results['test_roc_auc'].append(fold_result['roc_auc'])
                 results['test_TPR'].append(fold_result['tpr'])
                 results['test_FPR'].append(fold_result['fpr'])
-                results['test_thresholds'].append(fold_result['thresholds'])
+                results['test_roc_thresholds'].append(fold_result['roc_thresholds'])
                 results['test_jaccard'].append(fold_result['jaccard'])
                 results['test_positive_predictive_value'].append(fold_result['positive_predictive_value'])
                 results['test_thresholded_volume_deltas'].append(fold_result['thresholded_volume_deltas'])
@@ -200,6 +201,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
                     results['test_penumbra_metrics']['predicted_in_penumbra_ratio']\
                         .append(fold_result['penumbra_metrics']['predicted_in_penumbra_ratio'])
                 results['evaluation_thresholds'].append(fold_result['evaluation_threshold'])
+                results['optimal_thresholds_on_test_data'].append(fold_result['optimal_threshold_on_test_data'])
                 trained_models.append(fold_result['trained_model'])
                 figures.append(fold_result['figure'])
                 pass
@@ -334,8 +336,8 @@ def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, imgX, mask_array, id_ar
     Returns: result dictionary
     """
 
-    trained_model, evals_result = model.train()
-    print('Model sucessfully trained.')
+    trained_model, model_threshold, evals_result = model.train()
+    print('Model successfully trained. Threshold at:', str(model_threshold))
     probas_ = model.predict_test_data()
     y_test = model.get_test_labels()
     mask_test = mask_array[test]
@@ -343,8 +345,8 @@ def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, imgX, mask_array, id_ar
     if id_array is not None: ids_test = id_array[test]
     else: ids_test = None
 
-    results = evaluate(probas_, y_test, mask_test, ids_test, n_test_subjects, n_x, n_y, n_z)
-    print('Model sucessfully tested.')
+    results = evaluate(probas_, y_test, mask_test, ids_test, n_test_subjects, n_x, n_y, n_z, model_threshold)
+    print('Model successfully tested.')
     results['trained_model'] = trained_model
     results['train_evals'] = evals_result
 
