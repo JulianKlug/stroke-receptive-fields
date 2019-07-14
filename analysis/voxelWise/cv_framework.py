@@ -12,7 +12,7 @@ from channel_normalisation import normalise_channel_by_contralateral
 
 def repeated_kfold_cv(Model_Generator, save_dir, save_function,
             input_data_array, output_data_array, clinical_input_array = None, mask_array = None, id_array = None,
-            feature_scaling = True, pre_smoothing = False, channels_to_normalise = False,
+            feature_scaling = True, pre_smoothing = False, channels_to_normalise = False, undef_normalisation = True,
             receptive_field_dimensions = [1,1,1], n_repeats = 1, n_folds = 5, messaging = None):
     """
     Patient wise Repeated KFold Crossvalidation for a given model
@@ -164,7 +164,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
             # Create this fold
             try:
                 print('Creating fold : ' + str(fold))
-                create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, test, clinX = clinX)
+                create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, test, clinX = clinX, undef_normalisation = undef_normalisation)
             except Exception as e:
                 tb = traceback.format_exc()
                 print('Creation of fold failed.')
@@ -238,7 +238,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
 
     return (results, trained_models)
 
-def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, test, clinX = None):
+def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, test, clinX = None, undef_normalisation = True):
     """
     Create a fold given the data and the test / train distribution
     External Memory: saves the folds as libsvm files
@@ -261,6 +261,11 @@ def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, t
     receptive_field_size = window_d_x * window_d_y * window_d_z * n_c
     # defines the size of X
     input_size = receptive_field_size
+
+    # If a normalisation term for undefined brain areas should be added, the input size will be
+    # receptive_field_size + 1 for a normalisation term
+    if np.max(receptive_field_dimensions) > 0 and undef_normalisation:
+        input_size += 1
 
     if clinX is not None:
         input_size += clinX[0].size
@@ -292,6 +297,13 @@ def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, t
         else:
             all_inputs = rf_inputs
 
+
+        # Add a normalization term to account for the number of voxels outside the defined brain in a receptive field
+        if np.max(receptive_field_dimensions) > 0 and undef_normalisation:
+            undef_normalisation_terms = rf.cardinal_undef_in_receptive_field(
+                np.expand_dims(mask_array[subject], axis=0), receptive_field_dimensions)
+            all_inputs = np.concatenate((all_inputs, undef_normalisation_terms.reshape(-1, 1)), axis=1)
+
         # Balance by using predefined balancing_selector
         selected_for_training = balancing_selector[subject].reshape(-1)
         subj_X_train, subj_y_train = all_inputs[selected_for_training], rf_outputs[selected_for_training]
@@ -302,6 +314,7 @@ def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, t
     X_test, y_test, mask_test = imgX[test], y[test], mask_array[test]
     if clinX is not None:
         clinX_test = clinX[test]
+
 
     model.initialise_test_data(np.sum(mask_test), input_size, n_test, (n_x, n_y, n_z))
 
@@ -317,6 +330,12 @@ def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, t
             all_inputs = subj_mixed_inputs
         else:
             all_inputs = rf_inputs
+
+        # Add a normalization term to account for the number of voxels outside the defined brain in a receptive field
+        if np.max(receptive_field_dimensions) > 0 and undef_normalisation:
+            undef_normalisation_terms = rf.cardinal_undef_in_receptive_field(
+                np.expand_dims(mask_array[subject], axis=0), receptive_field_dimensions)
+            all_inputs = np.concatenate((all_inputs, undef_normalisation_terms.reshape(-1, 1)), axis=1)
 
         selected_for_testing = mask_test[subject].reshape(-1)
         subj_X_test, subj_y_test = all_inputs[selected_for_testing], rf_outputs[selected_for_testing]

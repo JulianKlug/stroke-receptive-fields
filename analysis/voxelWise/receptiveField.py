@@ -47,6 +47,27 @@ def reshape_to_receptive_field(input_data_array, output_data_array, receptive_fi
 
     return inputs, outputs
 
+def cardinal_undef_in_receptive_field(mask_array, receptive_field_dimensions):
+    """
+    Count the number of voxels that are not inside the defined area (defined by the mask) in every receptive field
+    :param mask_array: mask defining the areas of the brain where perfusion maps are clearly defined (i, x, y, z)
+    :param receptive_field_dimensions: dimensions of the receptive field in steps from the center along x, y, z
+    :return: cardinal_undef
+    """
+    n_i, n_x, n_y, n_z = mask_array.shape
+    rf_x, rf_y, rf_z = receptive_field_dimensions
+    window_d_x, window_d_y, window_d_z = 2 * np.array(receptive_field_dimensions) + 1
+
+    padding = max([rf_x, rf_y, rf_z])
+    padded_data = np.pad(mask_array, ((0, 0), (padding, padding), (padding, padding), (padding, padding)),
+                         mode='constant', constant_values=0)
+
+    input_fields_masks = rolling_window(padded_data, (0, window_d_x, window_d_y, window_d_z)).reshape(n_i, n_x, n_y, n_z, window_d_x * window_d_y * window_d_z)
+    cardinal_undef = np.count_nonzero(input_fields_masks == 0, axis=-1)
+
+    return cardinal_undef
+
+
 def xgb_predict(input_data, test_data_path, model, receptive_field_dimensions, verbose = False, external_memory = False):
     # Dimensions of the receptive field defined as distance to center point in every direction
     rf_x, rf_y, rf_z = receptive_field_dimensions
