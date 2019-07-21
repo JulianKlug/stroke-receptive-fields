@@ -4,7 +4,7 @@ from sklearn.metrics import f1_score, accuracy_score, fbeta_score, jaccard_simil
 import numpy as np
 import scipy.stats as stats
 
-def plot_roc(tprs, fprs, model_dir = None, model_name = None, save_plot = False):
+def plot_roc(tprs, fprs, model_dir = None, model_name = None, save_plot = False, line_color = None, std_intensity = .2):
     """
     Plot ROC curves
 
@@ -37,14 +37,16 @@ def plot_roc(tprs, fprs, model_dir = None, model_name = None, save_plot = False)
     mean_tpr[-1] = 1.0
     mean_auc = auc(mean_fpr, mean_tpr)
     std_auc = np.std(aucs)
-    plt.plot(mean_fpr, mean_tpr, color='b',
+    color = 'b'
+    if line_color is not None: color = line_color
+    plt.plot(mean_fpr, mean_tpr, color=color,
              label=r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
              lw=1.2, alpha=.8)
 
     std_tpr = np.std(tprs_interp, axis=0)
     tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
     tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-    plt.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
+    plt.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=std_intensity,
                      label=r'$\pm$ 1 std. dev.')
 
     plt.xlim([-0.05, 1.05])
