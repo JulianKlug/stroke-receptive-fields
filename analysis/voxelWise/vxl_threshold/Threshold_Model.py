@@ -83,8 +83,15 @@ class Threshold_Model():
 
 
     def train(self):
+        """
+        Train the model on the training data that is available
+        :return: trained_model
+        :return: trained_threshold - threshold to use on predicted probabilities
+        :return: evals - array of train evaluation metrics
+        """
         self.trained_model = self.model.fit(self.X_train, self.y_train, self.position_indices_train)
-        return self.trained_model, []
+        self.trained_threshold = self.model.train_threshold
+        return self.trained_model, self.trained_threshold, []
 
     def predict(self, data, data_position_indices):
         model = self.trained_model

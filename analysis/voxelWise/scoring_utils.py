@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 
 
-def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_z):
+def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_z, model_threshold = 0.5):
     '''
     Evaluate performance of prediction
     :param probas_: probability of being of class 1 for every voxel - linear shape of all voxels [i]
@@ -17,7 +17,8 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
     :param n_subjects: integer
     :param n_x: integer
     :param n_y: integer
-    :param n_z: inger
+    :param n_z: integer
+    :param model_threshold : trained threshold used to binarize the probability
     :return:
     '''
     probas_ = np.squeeze(probas_)
@@ -26,12 +27,15 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
 
     # Voxel-wise statistics
     # Compute ROC curve, area under the curve, f1, and accuracy
-    fpr, tpr, thresholds = roc_curve(y_test, probas_[:])
+    fpr, tpr, roc_thresholds = roc_curve(y_test, probas_[:])
     roc_auc = auc(fpr, tpr)
-    # get optimal cutOff
-    threshold = cutoff_youdens_j(fpr, tpr, thresholds)
+
+    # threshold chosen to evaluate binary metrics of model
+    threshold = model_threshold
     print('Using threshold', str(threshold), 'for evaluation.')
-    # threshold = 0.5 # threshold chosen to evaluate f1 and accuracy of model
+    # get optimal cutOff on test data
+    test_threshold = cutoff_youdens_j(fpr, tpr, roc_thresholds)
+    print('Optimal threshold based on train data:', str(test_threshold))
 
     jaccard = jaccard_similarity_score(y_test, probas_[:] >= threshold)
     accuracy = accuracy_score(y_test, probas_[:] >= threshold)
@@ -40,6 +44,7 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
     PPV = precision_score(y_test, probas_[:] >= threshold)
 
     # Image-wise statistics
+    thresholded_predicted_volume_vox = []
     thresholded_volume_deltas = []
     unthresholded_volume_deltas = []
     image_wise_error_ratios = []
@@ -69,6 +74,9 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
         subj_image_wise_y_test = y_test[vxl_index : vxl_index + subj_n_vxl]
         vxl_index += subj_n_vxl
 
+        # Record predicted volume (GT volume can be derived from predicted volume and delta)
+        thresholded_predicted_volume_vox.append(np.sum(subj_image_wise_probas >= threshold))
+
         # Volume delta is defined as GT - predicted volume
         thresholded_volume_deltas.append(np.sum(subj_image_wise_y_test) - np.sum(subj_image_wise_probas >= threshold))
         unthresholded_volume_deltas.append(np.sum(subj_image_wise_y_test) - np.sum(subj_image_wise_probas))
@@ -95,13 +103,15 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
     return {
         'fpr': fpr,
         'tpr': tpr,
-        'thresholds': thresholds,
+        'roc_thresholds': roc_thresholds,
         'evaluation_threshold': threshold,
+        'optimal_threshold_on_test_data': test_threshold,
         'accuracy': accuracy,
         'jaccard': jaccard,
         'f1': f1,
         'roc_auc': roc_auc,
         'positive_predictive_value': PPV,
+        'thresholded_predicted_volume_vox': thresholded_predicted_volume_vox,
         'thresholded_volume_deltas': thresholded_volume_deltas,
         'unthresholded_volume_deltas': unthresholded_volume_deltas,
         'image_wise_error_ratios': image_wise_error_ratios,
