@@ -90,6 +90,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
         'test_FPR': [],
         'test_roc_thresholds': [],
         'test_positive_predictive_value': [],
+        'test_thresholded_predicted_volume_vox': [],
         'test_thresholded_volume_deltas': [],
         'test_unthresholded_volume_deltas': [],
         'test_image_wise_error_ratios': [],
@@ -189,6 +190,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
                 results['test_roc_thresholds'].append(fold_result['roc_thresholds'])
                 results['test_jaccard'].append(fold_result['jaccard'])
                 results['test_positive_predictive_value'].append(fold_result['positive_predictive_value'])
+                results['test_thresholded_predicted_volume_vox'].append(fold_result['thresholded_predicted_volume_vox'])
                 results['test_thresholded_volume_deltas'].append(fold_result['thresholded_volume_deltas'])
                 results['test_unthresholded_volume_deltas'].append(fold_result['unthresholded_volume_deltas'])
                 results['test_image_wise_error_ratios'].append(fold_result['image_wise_error_ratios'])
