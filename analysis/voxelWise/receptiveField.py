@@ -9,6 +9,17 @@ from ext_mem_utils import save_to_svmlight
 
 
 def reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions, mask_array = None, include_only = np.NaN, verbose = False) :
+    '''
+    Transform a given input image into a set of receptive fields
+    :param input_data_array: input data
+    :param output_data_array:
+    :param receptive_field_dimensions: dimensions of the receptive fields in rf (steps from center voxel)
+    :param mask_array: boolean array defining brain areas vs. non brain areas
+    :param include_only: percentage of data to use
+    :param verbose:
+    :return:
+    '''
+
     # Dimensions of the receptive field defined as distance to center point in every direction
     rf_x, rf_y, rf_z = receptive_field_dimensions
     window_d_x, window_d_y, window_d_z = 2 * np.array(receptive_field_dimensions) + 1

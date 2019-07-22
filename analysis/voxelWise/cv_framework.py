@@ -290,10 +290,8 @@ def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, t
         # reshape to rf expects data with n_subjects in first dimension (here 1)
         subj_X_train, subj_y_train = np.expand_dims(imgX_train[subject], axis=0), np.expand_dims(y_train[subject], axis=0)
 
-        if np.max(receptive_field_dimensions) > 0 and undef_normalisation and False:
-            rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_train, subj_y_train, receptive_field_dimensions, mask_array = mask_train[subject])
-        else:
-            rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_train, subj_y_train, receptive_field_dimensions)
+
+        rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_train, subj_y_train, receptive_field_dimensions)
 
 
         if clinX is not None:
@@ -331,10 +329,7 @@ def create_fold(model, imgX, y, mask_array, receptive_field_dimensions, train, t
         # reshape to rf expects data with n_subjects in first
         subj_X_test, subj_y_test = np.expand_dims(X_test[subject], axis=0), np.expand_dims(y_test[subject], axis=0)
 
-        if np.max(receptive_field_dimensions) > 0 and undef_normalisation and False:
-            rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_test, subj_y_test, receptive_field_dimensions, mask_array = mask_test[subject])
-        else:
-            rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_test, subj_y_test, receptive_field_dimensions)
+        rf_inputs, rf_outputs = rf.reshape_to_receptive_field(subj_X_test, subj_y_test, receptive_field_dimensions)
 
         if clinX is not None:
             # Add clinical data to every voxel
