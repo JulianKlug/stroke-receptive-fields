@@ -44,6 +44,7 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
     PPV = precision_score(y_test, probas_[:] >= threshold)
 
     # Image-wise statistics
+    thresholded_predicted_volume_vox = []
     thresholded_volume_deltas = []
     unthresholded_volume_deltas = []
     image_wise_error_ratios = []
@@ -72,6 +73,9 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
         subj_image_wise_probas = probas_[vxl_index : vxl_index + subj_n_vxl]
         subj_image_wise_y_test = y_test[vxl_index : vxl_index + subj_n_vxl]
         vxl_index += subj_n_vxl
+
+        # Record predicted volume (GT volume can be derived from predicted volume and delta)
+        thresholded_predicted_volume_vox.append(np.sum(subj_image_wise_probas >= threshold))
 
         # Volume delta is defined as GT - predicted volume
         thresholded_volume_deltas.append(np.sum(subj_image_wise_y_test) - np.sum(subj_image_wise_probas >= threshold))
@@ -107,6 +111,7 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
         'f1': f1,
         'roc_auc': roc_auc,
         'positive_predictive_value': PPV,
+        'thresholded_predicted_volume_vox': thresholded_predicted_volume_vox,
         'thresholded_volume_deltas': thresholded_volume_deltas,
         'unthresholded_volume_deltas': unthresholded_volume_deltas,
         'image_wise_error_ratios': image_wise_error_ratios,
