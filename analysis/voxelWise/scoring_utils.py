@@ -35,7 +35,7 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
     print('Using threshold', str(threshold), 'for evaluation.')
     # get optimal cutOff on test data
     test_threshold = cutoff_youdens_j(fpr, tpr, roc_thresholds)
-    print('Optimal threshold based on train data:', str(test_threshold))
+    print('Optimal threshold based on test data:', str(test_threshold))
 
     jaccard = jaccard_similarity_score(y_test, probas_[:] >= threshold)
     accuracy = accuracy_score(y_test, probas_[:] >= threshold)
