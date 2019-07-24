@@ -5,7 +5,7 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 from sampling_utils import get_undersample_selector_array
 import receptiveField as rf
-from scoring_utils import evaluate
+from scoring_utils import evaluate_voxelwise
 from utils import gaussian_smoothing
 from penumbra_evaluation import penumbra_match
 from channel_normalisation import normalise_channel_by_contralateral
@@ -347,7 +347,7 @@ def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, imgX, mask_array, id_ar
     if id_array is not None: ids_test = id_array[test]
     else: ids_test = None
 
-    results = evaluate(probas_, y_test, mask_test, ids_test, n_test_subjects, n_x, n_y, n_z, model_threshold)
+    results = evaluate_voxelwise(probas_, y_test, mask_test, ids_test, n_test_subjects, n_x, n_y, n_z, model_threshold)
     print('Model successfully tested.')
     results['trained_model'] = trained_model
     results['train_evals'] = evals_result

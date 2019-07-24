@@ -1,4 +1,3 @@
-import os, torch, math
 from sklearn.metrics import f1_score, jaccard_similarity_score, precision_score, roc_curve, auc, accuracy_score
 import numpy as np
 from scipy.spatial.distance import directed_hausdorff
@@ -7,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 
 
-def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_z, model_threshold = 0.5):
+def evaluate_voxelwise(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_z, model_threshold = 0.5):
     '''
     Evaluate performance of prediction
     :param probas_: probability of being of class 1 for every voxel - linear shape of all voxels [i]
@@ -121,6 +120,65 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
         'image_wise_dice': image_wise_dice,
         'figure': figure
         }
+
+def evaluate_imagewise(probas_, y_test, mask_test, ids_test, model_threshold = 0.5):
+    n_subjects = probas_.shape[0]
+    fprs = []; tprs = []; roc_thresholds = [];
+    roc_auc = []
+    thresholded_predicted_volume_vox = []
+    gt_volume_vox = []
+    dice_coefficient = []
+    hausdorff = []
+
+    plt.switch_backend('agg')
+    ncol = 14
+    nrow = 2 * (n_subjects // ncol) + 2
+    figure = plt.figure(figsize=(ncol + 1, nrow + 1))
+    gs = gridspec.GridSpec(nrow, ncol,
+                           wspace=0.7, hspace=0.25,
+                           top=1. - 0.5 / (nrow + 1), bottom=0.5 / (nrow + 1),
+                           left=0.5 / (ncol + 1), right=1 - 0.5 / (ncol + 1))
+
+    # todo record overall roc as well
+
+    for subj in range(n_subjects):
+        subj_prediction = probas_[subj] >= model_threshold
+        subj_gt = y_test[subj]
+        n_x, n_y, n_z = subj_prediction.shape
+
+        # Voxel-wise statistics
+        # Compute ROC curve, area under the curve
+        fpr, tpr, roc_threshold = roc_curve(subj_gt.reshape(-1), probas_[subj].reshape(-1))
+        roc_auc.append(auc(fpr, tpr))
+
+        fprs.append(fpr); tprs.append(tpr), roc_thresholds.append(roc_threshold);
+
+
+        # Record predicted and GT volume
+        thresholded_predicted_volume_vox.append(np.sum(subj_prediction))
+        gt_volume_vox.append(np.sum(subj_gt))
+
+        # Dice coeff
+        dice_coefficient.append(dice(subj_gt, subj_prediction))
+
+        # hausdorff distance
+        hausdorff.append(hausdorff_distance(subj_gt, subj_prediction, n_x, n_y, n_z))
+
+        # record visual output of tests
+        visual_compare(subj_gt, probas_[subj], n_subjects, subj, n_z, gs, image_id=ids_test[subj])
+
+    return {
+        'subj_ids': ids_test,
+        'fprs': fprs,
+        'tprs': tprs,
+        'roc_thresholds': roc_thresholds,
+        'roc_auc': roc_auc,
+        'predicted_volume': thresholded_predicted_volume_vox,
+        'gt_volume': gt_volume_vox,
+        'dice_coefficient': dice_coefficient,
+        'hausdorff_distance': hausdorff
+    }, figure
+
 
 def cutoff_youdens_j(fpr, tpr, thresholds):
     j_scores = tpr-fpr # J = sensivity + specificity - 1
