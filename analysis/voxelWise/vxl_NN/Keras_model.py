@@ -122,3 +122,30 @@ class TwoLayerNetwork(Keras_model):
     @staticmethod
     def get_settings():
         return "TwoLayerNetwork"
+
+
+# todo : to be completed and tested
+class Kasabeh_Model:
+
+    def __init__(self, fold_dir, fold_name, n_channels=4, n_channels_out=1, rf=1):
+        self.model_name = 'Kasabeh_Model'
+
+        # NN should go over the input only once, taken the whole image patch as input
+        image_width = 2 * np.max(rf) + 1
+        img_shape = (image_width, image_width, image_width, n_channels)
+        kernel_size = (image_width, image_width, image_width)
+
+        self.evaluation_threshold = 0.5
+
+        self.model = Sequential()
+        self.model.add(Flatten())
+        self.model.add(Dense(1, activation='tanh'))
+        self.model.add(Dense(1, activation='tanh'))
+        self.model.add(Dense(1, activation='tanh'))
+        self.model.add(Dense(1, activation='sigmoid'))
+
+    def hello_world(self):
+        print(self.model_name)
+
+    def get_settings(self):
+        return self.model_name
