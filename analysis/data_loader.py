@@ -168,12 +168,12 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
         lesion_GT = lesion_GT, brain_masks = brain_masks)
 
 def load_saved_data(data_dir):
-    params = np.load(os.path.join(data_dir, 'data_set.npz'))['params']
-    ids = np.load(os.path.join(data_dir, 'data_set.npz'))['ids']
-    clinical_inputs = np.load(os.path.join(data_dir, 'data_set.npz'))['clinical_inputs']
-    ct_inputs = np.load(os.path.join(data_dir, 'data_set.npz'))['ct_inputs']
-    lesion_GT = np.load(os.path.join(data_dir, 'data_set.npz'))['lesion_GT']
-    brain_masks = np.load(os.path.join(data_dir, 'data_set.npz'))['brain_masks']
+    params = np.load(os.path.join(data_dir, 'data_set.npz'), allow_pickle=True)['params']
+    ids = np.load(os.path.join(data_dir, 'data_set.npz'), allow_pickle=True)['ids']
+    clinical_inputs = np.load(os.path.join(data_dir, 'data_set.npz'), allow_pickle=True)['clinical_inputs']
+    ct_inputs = np.load(os.path.join(data_dir, 'data_set.npz'), allow_pickle=True)['ct_inputs']
+    lesion_GT = np.load(os.path.join(data_dir, 'data_set.npz'), allow_pickle=True)['lesion_GT']
+    brain_masks = np.load(os.path.join(data_dir, 'data_set.npz'), allow_pickle=True)['brain_masks']
 
     print('Loading a total of', ct_inputs.shape[0], 'subjects.')
     print('Sequences used:', params)
