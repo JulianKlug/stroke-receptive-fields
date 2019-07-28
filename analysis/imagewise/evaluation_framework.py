@@ -32,7 +32,9 @@ def train_test_evaluation(experiment_prefix, model, input_data, gt_data, mask_da
     # train / test split
     x_train, x_test, y_train, y_test, mask_train, mask_test, ids_train, ids_test = model_selection.train_test_split(input_data, gt_data, mask_data, subject_ids, test_size=0.3, random_state=42)
 
-    model, evals = model.train(x_train, y_train, mask_train, os.path.join(save_folder, 'logs'))
+    log_dir = os.path.join(save_folder, 'logs')
+    print('Logging to:', log_dir)
+    model, evals = model.train(x_train, y_train, mask_train, log_dir)
     model_threshold = model.get_threshold()
     test_proba_predictions = model.predict(x_test, mask_test)
     results, figure = evaluate_imagewise(test_proba_predictions, y_test, mask_test, ids_test, model_threshold)
