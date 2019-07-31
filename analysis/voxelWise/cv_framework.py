@@ -173,7 +173,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
                 print(e)
                 print(tb)
                 if (messaging):
-                    title = 'Minor error upon fold creation rf_hyperopt at ' + str(receptive_field_dimensions)
+                    title = 'Minor error upon fold creation rf_hyperopt at ' + str(receptive_field_dimensions) + ' in ' + str(save_dir)
                     body = 'RF ' + str(receptive_field_dimensions) + '\n' + 'fold ' + str(fold) + '\n' +'iteration ' + str(iteration) + '\n' + 'Error ' + str(e) + '\n' + str(tb)
                     messaging.send_message(title, body)
 
@@ -215,7 +215,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
                 print(tb)
 
                 if (messaging):
-                    title = 'Minor error upon fold evaluation rf_hyperopt at ' + str(receptive_field_dimensions)
+                    title = 'Minor error upon fold evaluation rf_hyperopt at ' + str(receptive_field_dimensions) + ' in ' + str(save_dir)
                     body = 'RF ' + str(receptive_field_dimensions) + '\n' + 'fold ' + str(fold) + '\n' +'iteration ' + str(iteration) + '\n' + 'Error ' + str(e) + '\n' + str(tb)
                     messaging.send_message(title, body)
 
