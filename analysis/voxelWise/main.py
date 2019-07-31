@@ -36,6 +36,7 @@ pre_smoothing = False
 # Normalise channel by mean of contralateral side: can be used to obtain rCBF [1] and rCBV [3]
 channels_to_normalise = False
 
+# Add a normalization term to account for the number of voxels outside the defined brain in a receptive field
 undef_normalisation = True
 
 # Model_Generator = RAPID_Model_Generator(IN.shape, feature_scaling, threshold='train', post_smoothing=True)
