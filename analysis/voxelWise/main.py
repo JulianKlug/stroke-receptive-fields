@@ -31,17 +31,21 @@ n_folds = 2
 feature_scaling = False
 
 # Smoothing before training and testing (applied before thresholding by Campbell et al)
-pre_smoothing = True
+pre_smoothing = False
 
 # Normalise channel by mean of contralateral side: can be used to obtain rCBF [1] and rCBV [3]
 channels_to_normalise = False
+
+# Add a normalization term to account for the number of voxels outside the defined brain in a receptive field
+undef_normalisation = True
 
 # Model_Generator = RAPID_Model_Generator(IN.shape, feature_scaling, threshold='train', post_smoothing=True)
 # Model_Generator = Campbell_Model_Generator(IN.shape, feature_scaling, pre_smoothing)
 Model_Generator = LogReg_glm
 
-model_name = 'ch_norm_test'
-rf_hp_start = 0
-rf_hp_end = 1
-rf_hyperopt(model_name, Model_Generator, IN, OUT, CLIN, MASKS, IDS, feature_scaling, pre_smoothing, channels_to_normalise,
+model_name = 'undef_norm_test'
+rf_hp_start = 1
+rf_hp_end = 2
+rf_hyperopt(model_name, Model_Generator, IN, OUT, CLIN, MASKS, IDS,
+            feature_scaling, pre_smoothing, channels_to_normalise, undef_normalisation,
                 n_repeats, n_folds, main_save_dir, main_output_dir, rf_hp_start, rf_hp_end)
