@@ -1,6 +1,6 @@
 import numpy as np
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import UpSampling3D, Conv3D, Dropout, BatchNormalization, MaxPooling3D, ZeroPadding3D
+from tensorflow.keras.layers import UpSampling3D, Conv3D, Dropout, BatchNormalization, MaxPooling3D, ZeroPadding3D, Cropping3D
 from tensorflow.keras.callbacks import TensorBoard
 from .metrics import weighted_dice_coefficient, dice_coefficient, tversky_coeff
 
@@ -80,7 +80,7 @@ class SegNet:
 def segnetwork(img_shape, kernel_size, Dropout_rate):
     model = Sequential()
 
-    model.add(ZeroPadding3D(padding=(1, 1, 1), input_shape=img_shape))
+    model.add(ZeroPadding3D(padding=((0, 1), (0, 1), (0, 1)), input_shape=img_shape))
 
     # Encoder Layers
     model.add(Conv3D(32, kernel_size, activation='relu', padding='same'))
@@ -115,13 +115,13 @@ def segnetwork(img_shape, kernel_size, Dropout_rate):
     model.add(MaxPooling3D((2, 2, 2), padding='same'))
     model.add(Dropout(Dropout_rate))
 
-    model.add(Conv3D(256, kernel_size, activation='relu', padding='same'))
-    model.add(BatchNormalization())
-    model.add(Conv3D(256, kernel_size, activation='relu', padding='same'))
-    model.add(BatchNormalization())
-    model.add(Conv3D(256, kernel_size, activation='relu', padding='same'))
-    model.add(MaxPooling3D((2, 2, 2), padding='same'))
-    model.add(Dropout(Dropout_rate))
+    # model.add(Conv3D(256, kernel_size, activation='relu', padding='same'))
+    # model.add(BatchNormalization())
+    # model.add(Conv3D(256, kernel_size, activation='relu', padding='same'))
+    # model.add(BatchNormalization())
+    # model.add(Conv3D(256, kernel_size, activation='relu', padding='same'))
+    # model.add(MaxPooling3D((2, 2, 2), padding='same'))
+    # model.add(Dropout(Dropout_rate))
 
     # Decoder Layers
     model.add(Conv3D(128, kernel_size, activation='relu', padding='same'))
@@ -158,12 +158,14 @@ def segnetwork(img_shape, kernel_size, Dropout_rate):
     model.add(UpSampling3D((2, 2, 2)))
     model.add(Dropout(Dropout_rate))
 
-    model.add(Conv3D(32, kernel_size, activation='relu', padding='same'))
-    model.add(BatchNormalization())
-    model.add(Conv3D(32, kernel_size, activation='relu', padding='same'))
-    model.add(BatchNormalization())
-    model.add(UpSampling3D((2, 2, 2)))
-    model.add(Dropout(Dropout_rate))
+    # model.add(Conv3D(32, kernel_size, activation='relu', padding='same'))
+    # model.add(BatchNormalization())
+    # model.add(Conv3D(32, kernel_size, activation='relu', padding='same'))
+    # model.add(BatchNormalization())
+    # model.add(UpSampling3D((2, 2, 2)))
+    # model.add(Dropout(Dropout_rate))
+
+    model.add(Cropping3D(cropping=((0, 1), (0, 1), (0, 1))))
 
     model.add(Conv3D(2,1, activation='relu', padding='same'))  #try this
     model.add(Conv3D(1, 1, activation='sigmoid', padding='same'))
