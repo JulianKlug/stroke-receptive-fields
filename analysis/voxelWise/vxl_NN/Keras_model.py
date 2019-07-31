@@ -126,7 +126,7 @@ class TwoLayerNetwork(Keras_model):
 
 # todo : to be completed and tested
 class Kasabeh_Model:
-
+    # https://www.ahajournals.org/doi/10.1161/STROKEAHA.118.022649
     def __init__(self, fold_dir, fold_name, n_channels=4, n_channels_out=1, rf=1):
         self.model_name = 'Kasabeh_Model'
 

@@ -8,7 +8,7 @@ def display(img_data, block = True, title = None):
         """ Function to display row of image slices """
         fig, axes = plt.subplots(1, len(slices))
         for i, slice in enumerate(slices):
-            axes[i].imshow(slice.T, cmap="gray", origin="lower")
+            axes[i].imshow(slice.T, cmap="gray", origin="lower", vmin=0, vmax=1)
 
     if len(img_data.shape) > 3 : img_data = np.squeeze(img_data)
     n_i, n_j, n_k = img_data.shape
