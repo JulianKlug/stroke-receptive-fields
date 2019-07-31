@@ -13,7 +13,7 @@ class SegNet:
         self.optimizer = 'adam'
         self.loss = 'binary_crossentropy'
         self.kernel_size = 3
-        self.n_epochs = 10
+        self.n_epochs = 1
         self.batch_size = 32
         self.dropout_rate = 0.5
 

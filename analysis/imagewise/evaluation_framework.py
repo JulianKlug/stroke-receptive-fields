@@ -38,7 +38,7 @@ def train_test_evaluation(experiment_prefix, model, input_data, gt_data, mask_da
     model_threshold = model.get_threshold()
     test_proba_predictions = model.predict(x_test, mask_test)
     results, figure = evaluate_imagewise(test_proba_predictions, y_test, mask_test, ids_test, model_threshold)
-    print(results)
+    print(results_report(results))
 
     params = {
         'model_name': model.model_name,
@@ -90,3 +90,9 @@ def standardise(imgX):
     scaler = StandardScaler(copy = False)
     rescaled_imgX = scaler.fit_transform(imgX).reshape(original_shape)
     return rescaled_imgX
+
+def results_report(results):
+    report = f'Total ROC AUC: {results["total_roc_auc"]} \n' \
+             f'Dice: {np.median(results["dice_coefficient"])} \n' \
+             f'Hausdorff: {np.median(results["hausdorff_distance"])}'
+    return report

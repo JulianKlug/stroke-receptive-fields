@@ -125,10 +125,14 @@ def evaluate_imagewise(probas_, y_test, mask_test, ids_test, model_threshold = 0
     n_subjects = probas_.shape[0]
     fprs = []; tprs = []; roc_thresholds = [];
     roc_auc = []
+    total_roc_auc = []
     thresholded_predicted_volume_vox = []
     gt_volume_vox = []
     dice_coefficient = []
     hausdorff = []
+
+    fpr, tpr, roc_threshold = roc_curve(y_test.reshape(-1), probas_.reshape(-1))
+    total_roc_auc.append(auc(fpr, tpr))
 
     plt.switch_backend('agg')
     ncol = 14
@@ -173,6 +177,7 @@ def evaluate_imagewise(probas_, y_test, mask_test, ids_test, model_threshold = 0
         'tprs': tprs,
         'roc_thresholds': roc_thresholds,
         'roc_auc': roc_auc,
+        'total_roc_auc': total_roc_auc,
         'predicted_volume': thresholded_predicted_volume_vox,
         'gt_volume': gt_volume_vox,
         'dice_coefficient': dice_coefficient,
