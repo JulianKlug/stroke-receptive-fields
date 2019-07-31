@@ -1,5 +1,5 @@
 import numpy as np
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import UpSampling3D, Conv3D, Dropout, BatchNormalization, MaxPooling3D, ZeroPadding3D, Cropping3D
 from tensorflow.keras.callbacks import TensorBoard
 from .metrics import weighted_dice_coefficient, dice_coefficient, tversky_coeff
@@ -7,7 +7,7 @@ from .metrics import weighted_dice_coefficient, dice_coefficient, tversky_coeff
 
 class SegNet:
 
-    def __init__(self, input_shape):
+    def __init__(self, input_shape, model=None):
         self.model_name = 'SegNet'
 
         self.optimizer = 'adam'
@@ -19,17 +19,21 @@ class SegNet:
 
         self.evaluation_threshold = 0.5
 
-        self.model = segnetwork(input_shape, self.kernel_size, self.dropout_rate)
+        if model is None:
+            self.model = segnetwork(input_shape, self.kernel_size, self.dropout_rate)
+
+            self.model.compile(loss=self.loss,
+                          optimizer=self.optimizer,
+                          metrics=[
+                          weighted_dice_coefficient,
+                          dice_coefficient,
+                          tversky_coeff,
+                          'acc',
+                          'mse',])
+        else:
+            self.model = model
 
         self.model.summary()
-        self.model.compile(loss=self.loss,
-                      optimizer=self.optimizer,
-                      metrics=[
-                      weighted_dice_coefficient,
-                      dice_coefficient,
-                      tversky_coeff,
-                      'acc',
-                      'mse',])
 
         self.settings = {
             'model_name': self.model_name,
@@ -56,11 +60,14 @@ class SegNet:
     def get_threshold(self):
         return self.evaluation_threshold
 
-    def train(self, x_train, y_train, mask_train, log_dir):
+    def train(self, x_train, y_train, mask_train, log_dir, epochs=None):
         y_train = np.expand_dims(y_train, axis=-1)
         tensorboard_callback = TensorBoard(log_dir = log_dir)
+        if epochs is None: epochs = self.n_epochs
+        if epochs is 0:
+            return self, {}
         history = self.model.fit(x_train, y_train, validation_split=0.15,
-                                 batch_size = self.batch_size, epochs = self.n_epochs,
+                                 batch_size = self.batch_size, epochs = epochs,
                                  verbose=1, callbacks = [tensorboard_callback])
         train_eval = {
             'train': { 'loss': history.history['loss'], 'acc': history.history['acc'] },
@@ -75,6 +82,19 @@ class SegNet:
 
     def save(self, save_path):
         self.model.save(save_path)
+
+    @staticmethod
+    def load_model(input_shape, model_path):
+        dependencies = {
+            'weighted_dice_coefficient': weighted_dice_coefficient,
+            'dice_coefficient': dice_coefficient,
+            'tversky_coeff': tversky_coeff
+        }
+
+        trained_model = load_model(model_path, custom_objects=dependencies)
+        model = SegNet(input_shape, model=trained_model)
+        return model
+
 
 
 def segnetwork(img_shape, kernel_size, Dropout_rate):

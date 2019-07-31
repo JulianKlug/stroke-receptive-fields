@@ -34,7 +34,12 @@ def train_test_evaluation(experiment_prefix, model, input_data, gt_data, mask_da
 
     log_dir = os.path.join(save_folder, 'logs')
     print('Logging to:', log_dir)
-    model, evals = model.train(x_train, y_train, mask_train, log_dir)
+
+    if config['epochs_to_train']:
+        model, evals = model.train(x_train, y_train, mask_train, log_dir, epochs=config['epochs_to_train'])
+    else:
+        model, evals = model.train(x_train, y_train, mask_train, log_dir)
+
     model_threshold = model.get_threshold()
     test_proba_predictions = model.predict(x_test, mask_test)
     results, figure = evaluate_imagewise(test_proba_predictions, y_test, mask_test, ids_test, model_threshold)
@@ -56,7 +61,6 @@ def save_results(save_dir, experiment_name, trained_model, results, params, figu
     torch.save(results, os.path.join(save_dir, 'scores_' + experiment_name + '.npy'))
 
     trained_model.save(os.path.join(save_dir, 'trained_model_' + experiment_name + '.h5'))
-    # torch.save(trained_model, os.path.join(save_dir, 'trained_models_' + experiment_name + '.npy'))
 
     with open(os.path.join(save_dir, 'params_' + experiment_name + '.json'), 'w') as fp:
         json.dump(params, fp, sort_keys=False, indent=4)
