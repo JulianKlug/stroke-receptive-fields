@@ -4,7 +4,6 @@ import data_loader
 from evaluation_framework import train_test_evaluation
 from models.TwoLayerNetwork import TwoLayerNetwork
 from models.SegNet import SegNet
-from tensorflow.keras import models
 
 data_dir = '/Users/julian/stroke_research/data/all2016_subset_prepro'
 save_dir = os.path.join(data_dir, 'imagewise_models')

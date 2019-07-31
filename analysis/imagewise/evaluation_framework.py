@@ -32,10 +32,11 @@ def train_test_evaluation(experiment_prefix, model, input_data, gt_data, mask_da
     # train / test split
     x_train, x_test, y_train, y_test, mask_train, mask_test, ids_train, ids_test = model_selection.train_test_split(input_data, gt_data, mask_data, subject_ids, test_size=0.3, random_state=42)
 
+
     log_dir = os.path.join(save_folder, 'logs')
     print('Logging to:', log_dir)
 
-    if config['epochs_to_train']:
+    if config['epochs_to_train'] or config['epochs_to_train'] == 0:
         model, evals = model.train(x_train, y_train, mask_train, log_dir, epochs=config['epochs_to_train'])
     else:
         model, evals = model.train(x_train, y_train, mask_train, log_dir)
