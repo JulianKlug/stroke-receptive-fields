@@ -64,7 +64,8 @@ def get_paths_and_ids(data_dir, ct_sequences, ct_label_sequences, mri_sequences,
                 and len(mri_sequences) == len(mri_channels) and len(mri_label_sequences) == len(mri_lesion_map) \
                 and len(brain_mask) == 1:
             ct_lesion_paths.append(ct_lesion_map[0])
-            mri_lesion_paths.append(mri_lesion_map[0])
+            if len(mri_lesion_map) > 0:
+                mri_lesion_paths.append(mri_lesion_map[0])
             brain_mask_paths.append(brain_mask[0])
             ct_paths.append(ct_channels)
             mri_paths.append(mri_channels)
@@ -96,14 +97,15 @@ def load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_ma
     brain_masks = np.empty((len(ct_lesion_paths), n_x, n_y, n_z), dtype = bool)
 
     # get MRI dimensions by extracting first image
-    mri_first_image = nib.load(mri_paths[0][0])
-    mri_first_image_data = first_image.get_data()
-    mri_n_x, mri_n_y, mri_n_z = mri_first_image.shape
-    mri_n_c = len(mri_paths[0])
-    print(mri_n_c, 'MRI channels found.')
+    if mri_paths[0]:
+        mri_first_image = nib.load(mri_paths[0][0])
+        mri_first_image_data = mri_first_image.get_data()
+        mri_n_x, mri_n_y, mri_n_z = mri_first_image_data.shape
+        mri_n_c = len(mri_paths[0])
+        print(mri_n_c, 'MRI channels found.')
 
-    mri_inputs = np.empty((len(mri_paths), mri_n_x, mri_n_y, mri_n_z, mri_n_c))
-    mri_lesion_outputs = np.empty((len(mri_lesion_paths), mri_n_x, mri_n_y, mri_n_z))
+        mri_inputs = np.empty((len(mri_paths), mri_n_x, mri_n_y, mri_n_z, mri_n_c))
+        mri_lesion_outputs = np.empty((len(mri_lesion_paths), mri_n_x, mri_n_y, mri_n_z))
 
 
     for subject in range(len(ct_paths)):
@@ -121,26 +123,28 @@ def load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_ma
             ct_inputs[subject, :, :, :, c] = image_data
 
         # load mri channels
-        mri_channels = mri_paths[subject]
-        for k in range(mri_n_c):
-            image = nib.load(mri_channels[k])
-            image_data = image.get_data()
-            if mri_first_image.shape != image_data.shape:
-                raise ValueError('Image does not have correct dimensions.', mri_channels[k])
+        if mri_paths[0]:
+            mri_channels = mri_paths[subject]
+            for k in range(mri_n_c):
+                image = nib.load(mri_channels[k])
+                image_data = image.get_data()
+                if mri_first_image_data.shape != image_data.shape:
+                    raise ValueError('Image does not have correct dimensions.', mri_channels[k])
 
-            if np.isnan(image_data).any():
-                print('MRI images of', ids[subject], 'contains NaN. Converting to 0.')
-                image_data = np.nan_to_num(image_data)
+                if np.isnan(image_data).any():
+                    print('MRI images of', ids[subject], 'contains NaN. Converting to 0.')
+                    image_data = np.nan_to_num(image_data)
 
-            mri_inputs[subject, :, :, :, k] = image_data
+                mri_inputs[subject, :, :, :, k] = image_data
 
         # load ct labels
         ct_lesion_image = nib.load(ct_lesion_paths[subject])
         ct_lesion_data = ct_lesion_image.get_data()
 
         # load MRI labels
-        mri_lesion_image = nib.load(mri_lesion_paths[subject])
-        mri_lesion_data = mri_lesion_image.get_data()
+        if mri_lesion_paths:
+            mri_lesion_image = nib.load(mri_lesion_paths[subject])
+            mri_lesion_data = mri_lesion_image.get_data()
 
         # sanitize lesion data to contain only single class
         def sanitize(lesion_data):
@@ -151,7 +155,8 @@ def load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_ma
             return lesion_data
 
         ct_lesion_outputs[subject, :, :, :] = sanitize(ct_lesion_data)
-        mri_lesion_outputs[subject, :, :, :] = sanitize(mri_lesion_data)
+        if mri_lesion_paths:
+            mri_lesion_outputs[subject, :, :, :] = sanitize(mri_lesion_data)
 
         brain_mask_image = nib.load(brain_mask_paths[subject])
         brain_mask_data = brain_mask_image.get_data()
@@ -159,6 +164,10 @@ def load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_ma
             print('Brain mask of', ids[subject], 'contains NaN. Converting to 0.')
             brain_mask_data = np.nan_to_num(brain_mask_data)
         brain_masks[subject, :, :, :] = brain_mask_data
+
+    if not mri_paths[0]:
+        mri_inputs = []
+        mri_lesion_outputs = []
 
     return ct_inputs, ct_lesion_outputs, mri_inputs, mri_lesion_outputs, brain_masks
 
