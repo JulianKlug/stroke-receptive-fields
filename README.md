@@ -44,6 +44,14 @@ At the same time the CSF_mask is integrated into the non-brain mask.
 - masking/mask_lesions.py : apply brain masks to lesions
 - binarize_lesions.py : binarize all lesions by applying a 0.8 threshold from the maximum value (this is necessary as sometimes drawn lesions are 0-1 or 0-255 and during the normalisation values can be slightly altered)
 
+### Additionnal steps for using HD images 
+
+HD images are not warped to CT-MNI space, and can thus conserve the initial voxel space.
+
+- skull_strip_wrapper: with high_resolution = True
+- brain_mask: with high_resolution = True
+- mask_lesions: with high_resolution = True  
+
 #### Requirements
 
 - matlab

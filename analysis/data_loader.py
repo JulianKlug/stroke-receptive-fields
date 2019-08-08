@@ -2,9 +2,10 @@ import os
 import nibabel as nib
 import numpy as np
 from clinical_data.clinical_data_loader import load_clinical_data
+from utils import find_max_shape
 
 # provided a given directory return list of paths to ct_sequences and lesion_maps
-def get_paths_and_ids(data_dir, ct_sequences, ct_label_sequences, mri_sequences, mri_label_sequences):
+def get_paths_and_ids(data_dir, ct_sequences, ct_label_sequences, mri_sequences, mri_label_sequences, brain_mask_name):
 
     subjects = [o for o in os.listdir(data_dir)
                     if os.path.isdir(os.path.join(data_dir,o))]
@@ -38,13 +39,13 @@ def get_paths_and_ids(data_dir, ct_sequences, ct_label_sequences, mri_sequences,
                         ct_lesion_map.append(os.path.join(modality_dir, study))
                     if study.startswith(tuple(mri_label_sequences)):
                         mri_lesion_map.append(os.path.join(modality_dir, study))
-                    if study == 'brain_mask.nii':
+                    if study == brain_mask_name:
                         brain_mask.append(os.path.join(modality_dir, study))
                         print('Found mask for', subject)
 
                 # Force order specified in ct_sequences
                 for channel in ct_sequences:
-                    indices = [i for i, s in enumerate(studies) if channel in s]
+                    indices = [i for i, s in enumerate(studies) if s.startswith(channel)]
                     if len(indices) > 1:
                         raise ValueError('Multiple images found for', channel, 'in', studies)
                     if len(indices) == 1:
@@ -52,7 +53,7 @@ def get_paths_and_ids(data_dir, ct_sequences, ct_label_sequences, mri_sequences,
                         ct_channels.append(os.path.join(modality_dir, study))
 
                 for sequence in mri_sequences:
-                    indices = [i for i, s in enumerate(studies) if sequence in s]
+                    indices = [i for i, s in enumerate(studies) if s.startswith(sequence)]
                     if len(indices) > 1:
                         raise ValueError('Multiple images found for', sequence, 'in', studies)
                     if len(indices) == 1:
@@ -81,7 +82,7 @@ def get_paths_and_ids(data_dir, ct_sequences, ct_label_sequences, mri_sequences,
 # - lesion_paths : list of paths of lesions maps
 # - brain_mask_paths : list of paths of ct brain masks
 # - return three lists containing image data for cts (as 4D array), brain masks and lesion_maps
-def load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_mask_paths, ids):
+def load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_mask_paths, ids, high_resolution = False):
     if len(ct_paths) != len(ct_lesion_paths):
         raise ValueError('Number of CT and number of lesions maps should be the same.', len(ct_paths), len(ct_lesion_paths))
 
@@ -107,13 +108,33 @@ def load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_ma
         mri_inputs = np.empty((len(mri_paths), mri_n_x, mri_n_y, mri_n_z, mri_n_c))
         mri_lesion_outputs = np.empty((len(mri_lesion_paths), mri_n_x, mri_n_y, mri_n_z))
 
+    # for high res images not all images have the same shape
+    if high_resolution:
+        data_dir = '/'.join(ct_paths[0][0].split('/')[:-3])
+        max_shape_x, max_shape_y, max_shape_z = find_max_shape(data_dir, 'coreg_Tmax')
+        ct_inputs = np.empty((len(ct_paths), max_shape_x, max_shape_y, max_shape_z, ct_n_c))
+        ct_lesion_outputs = np.empty((len(ct_lesion_paths), max_shape_x, max_shape_y, max_shape_z))
+        brain_masks = np.empty((len(ct_lesion_paths), max_shape_x, max_shape_y, max_shape_z), dtype=bool)
+
+        if mri_paths[0]:
+            mri_inputs = np.empty((len(mri_paths), max_shape_x, max_shape_y, max_shape_z))
+            mri_lesion_outputs = np.empty((len(mri_lesion_paths), max_shape_x, max_shape_y, max_shape_z, mri_n_c))
+
+    def rectify_shape(image_data):
+        # high resolution data has to be padded to have constant dimensions
+        if high_resolution and image_data.shape[2] < max_shape_z:
+            n_missing_layers = max_shape_z - image_data.shape[2]
+            image_data = np.pad(image_data, ((0, 0), (0, 0), (n_missing_layers, 0)), 'constant', constant_values=0)
+        return image_data
 
     for subject in range(len(ct_paths)):
         ct_channels = ct_paths[subject]
         for c in range(ct_n_c):
             image = nib.load(ct_channels[c])
             image_data = image.get_data()
-            if first_image_data.shape != image_data.shape:
+            image_data = rectify_shape(image_data)
+
+            if ct_inputs[subject, :, :, :, c].shape != image_data.shape:
                 raise ValueError('Image does not have correct dimensions.', ct_channels[c])
 
             if np.isnan(image_data).any():
@@ -128,7 +149,9 @@ def load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_ma
             for k in range(mri_n_c):
                 image = nib.load(mri_channels[k])
                 image_data = image.get_data()
-                if mri_first_image_data.shape != image_data.shape:
+                image_data = rectify_shape(image_data)
+
+                if mri_inputs[subject, :, :, :, k].shape != image_data.shape:
                     raise ValueError('Image does not have correct dimensions.', mri_channels[k])
 
                 if np.isnan(image_data).any():
@@ -140,11 +163,13 @@ def load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_ma
         # load ct labels
         ct_lesion_image = nib.load(ct_lesion_paths[subject])
         ct_lesion_data = ct_lesion_image.get_data()
+        ct_lesion_data = rectify_shape(ct_lesion_data)
 
         # load MRI labels
         if mri_lesion_paths:
             mri_lesion_image = nib.load(mri_lesion_paths[subject])
             mri_lesion_data = mri_lesion_image.get_data()
+            mri_lesion_data = rectify_shape(mri_lesion_data)
 
         # sanitize lesion data to contain only single class
         def sanitize(lesion_data):
@@ -160,6 +185,8 @@ def load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_ma
 
         brain_mask_image = nib.load(brain_mask_paths[subject])
         brain_mask_data = brain_mask_image.get_data()
+        brain_mask_data = rectify_shape(brain_mask_data)
+
         if np.isnan(brain_mask_data).any():
             print('Brain mask of', ids[subject], 'contains NaN. Converting to 0.')
             brain_mask_data = np.nan_to_num(brain_mask_data)
@@ -172,16 +199,17 @@ def load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_ma
     return ct_inputs, ct_lesion_outputs, mri_inputs, mri_lesion_outputs, brain_masks
 
 
-def load_nifti(main_dir, ct_sequences, label_sequences, mri_sequences, mri_label_sequences):
+def load_nifti(main_dir, ct_sequences, label_sequences, mri_sequences, mri_label_sequences, brain_mask_name, high_resolution = False):
     ids, ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_mask_paths = get_paths_and_ids(
         main_dir, ct_sequences, label_sequences,
-        mri_sequences, mri_label_sequences)
-    return (ids, load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_mask_paths, ids))
+        mri_sequences, mri_label_sequences,
+        brain_mask_name)
+    return (ids, load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_mask_paths, ids, high_resolution))
 
 # Save data as compressed numpy array
 def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = None,
                        ct_sequences = [], label_sequences = [], mri_sequences = False,
-                       external_memory=False):
+                       external_memory=False, high_resolution = False):
     """
     Load data
         - Image data (from preprocessed Nifti)
@@ -195,6 +223,7 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
         label_sequences (optional, array) : array with names of VOI sequences
         mri_sequences (optional, boolean) : boolean determining if mri sequences should be included
         external_memory (optional, default False): on external memory usage, NaNs need to be converted to -1
+        high_resolution (optional, default False): use non normalized images (patient space instead of MNI space)
 
     Returns:
         'clinical_data': numpy array containing the data for each of the patients [patient, (n_parameters)]
@@ -204,19 +233,33 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
         # ct_sequences = ['wcoreg_RAPID_TMax_[s]', 'wcoreg_RAPID_CBF', 'wcoreg_RAPID_MTT_[s]', 'wcoreg_RAPID_CBV']
         # ct_sequences = ['wcoreg_RAPID_Tmax', 'wcoreg_RAPID_rCBF', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV']
         # ct_sequences = ['wcoreg_RAPID_TMax_[s]']
+        if high_resolution:
+            ct_sequences = ['coreg_Tmax', 'coreg_CBF', 'coreg_MTT', 'coreg_CBV']
+
     if len(label_sequences) < 1:
         # Import VOI GT with brain mask applied
         # to avoid False negatives in areas that cannot be predicted (as their are not part of the RAPID perf maps)
         label_sequences = ['masked_wcoreg_VOI']
 
+        if high_resolution:
+            label_sequences = ['masked_coreg_VOI']
+
     if mri_sequences:
         mri_sequences = ['wcoreg_t2_tse_tra']
         # for MRI labeling, the mask should not be applied
         mri_label_sequences = ['wcoreg_VOI']
+
+        if high_resolution:
+            mri_sequences = ['coreg_t2_tse_tra']
+            # for MRI labeling, the mask should not be applied
+            mri_label_sequences = ['coreg_VOI']
     else:
         mri_sequences = []
         mri_label_sequences = []
 
+    brain_mask_name = 'brain_mask.nii'
+    if high_resolution:
+        brain_mask_name = 'hd_brain_mask.nii'
 
     print('Sequences used for CT', ct_sequences, label_sequences)
     print('Sequences used for MRI', mri_sequences, mri_label_sequences)
@@ -228,7 +271,8 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
         os.makedirs(save_dir)
     ids, (ct_inputs, ct_lesion_GT, mri_inputs, mri_lesion_GT, brain_masks) = load_nifti(main_dir, ct_sequences,
                                                                                         label_sequences, mri_sequences,
-                                                                                        mri_label_sequences)
+                                                                                        mri_label_sequences, brain_mask_name,
+                                                                                        high_resolution)
     ids = np.array(ids)
 
     if clinical_dir is not None:
