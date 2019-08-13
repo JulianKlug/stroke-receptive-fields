@@ -2,4 +2,6 @@ spc_ct_sequences = ['SPC_301mm_Std', 'SPC 3.0-1mm Std', 'DE_SPC 3.0 Std F_0.5', 
 pct_sequences = ['TMax', 'Tmax', 'MTT', 'CBV', 'CBF']
 ct_perf_sequence_names = ['VPCT_Perfusion_4D_50_Hr36', 'VPCT Perfusion 4D 5.0 Hr36', 'VPCT_Perfusion_4D_5.0_Hr36']
 mri_sequences = ['t2_tse_tra', 'T2W_TSE_tra', 'T2W_TSE tra', 'T2 TSE AX', 'T2W_TSE tra', 'T2_TSE_AX']
+adc_mri_channel = ['ADC', 'dDWI']
+trace_mri_channel = ['TRACE', 'DWI_tra', 'DWI_HR', 'DWI tra', 'DWI HR']
 alternative_mri_sequences = ['t2_fl2d_tra_hemo_n', 'T2 HEMOSIDERINE TRA']

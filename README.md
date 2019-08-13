@@ -35,7 +35,8 @@ CT :
 
 MRI :
 
-- matlab/mri_coreg_normalisation_wrapper.m : recenter subject CT, co-register T2 to subject CT, co-register T2 to CT-MNI and normalise to CT-MNI
+(0. matlab/dwi_mri_coregistration_wrapper.m : if DWI is used, it has to be coregistered to T2 first) 
+1. matlab/mri_coreg_normalisation_wrapper.m : recenter subject CT, co-register T2 to subject CT, co-register T2 to CT-MNI and normalise to CT-MNI
 
 Post:
 As RAPID performs excessive skull-stripping, same crop has to be applied to lesion maps to remove lesions without underlying input data. 
@@ -44,7 +45,7 @@ At the same time the CSF_mask is integrated into the non-brain mask.
 - masking/mask_lesions.py : apply brain masks to lesions
 - binarize_lesions.py : binarize all lesions by applying a 0.8 threshold from the maximum value (this is necessary as sometimes drawn lesions are 0-1 or 0-255 and during the normalisation values can be slightly altered)
 
-### Additionnal steps for using HD images 
+### Additional steps for using HD images 
 
 HD images are not warped to CT-MNI space, and can thus conserve the initial voxel space.
 
