@@ -3,13 +3,14 @@ import nibabel as nib
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from naming_verification import loose_verify_name
+import numpy as np
 
 
 def visual_verification(data_dir):
     subjects = [o for o in os.listdir(data_dir)
                 if os.path.isdir(os.path.join(data_dir, o))]
 
-    sequences = ['wcoreg_SPC', 'wcoreg_CBF', 'wcoreg_t2', 'wcoreg_VOI']
+    sequences = ['wreor_SPC', 'wcoreg_CBF', 'wcoreg_t2', 'wcoreg_VOI']
 
     plt.switch_backend('agg')
     ncol = 10
@@ -25,7 +26,9 @@ def visual_verification(data_dir):
         subject_dir = os.path.join(data_dir, subject)
         modalities = [o for o in os.listdir(subject_dir)
                       if os.path.isdir(os.path.join(subject_dir, o))]
-        i_image = 0
+
+        visual_add(np.empty((3,3,3)), i_subj, 0, gs, subject)
+        i_image = 1
 
         for modality in modalities:
             modality_dir = os.path.join(subject_dir, modality)
@@ -34,7 +37,7 @@ def visual_verification(data_dir):
 
             for study in studies:
                 study_path = os.path.join(modality_dir, study)
-                
+
                 if loose_verify_name(study, sequences):
                     img = nib.load(study_path)
                     data = img.get_data()
