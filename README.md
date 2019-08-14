@@ -29,6 +29,7 @@ CT :
 0. utils/resolve_RAPID_4D_maps: resolve RAPID maps with 4 dimensions
     - get_RAPID_4D_list: find subjects with 4D RAPID maps
     - resolve_RAPID_4D_maps : reduce dimensions to 3D of given subjects (subjects may need to be downloaded from the server first as this function requires an Xserver for graphical feedback)
+--> Add this point data can be uploaded to a remote server
 1. skull_strip/skull_strip_wrapper.py : batch skull strip native CTs of multiple patients and segment CSF
 2. matlab/perfCT_coregistration_wrapper.m : coregister perfusion CT to betted native CT
 3. matlab/perfCT_normalisation_wrapper.m : normalise perfusion CT and native CT to CT_MNI
