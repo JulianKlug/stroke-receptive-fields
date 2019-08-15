@@ -60,8 +60,10 @@ def get_paths_and_ids(data_dir, ct_sequences, ct_label_sequences, mri_sequences,
                         study = studies[indices[0]]
                         mri_channels.append(os.path.join(modality_dir, study))
                         continue
-                    if len(indices) == 2 and 'TRACE' in sequence:
-                        trace_studies = sorted([studies[indices[0]], studies[indices[1]]], key=str.lower)
+                    if 'TRACE' in sequence:
+                        trace_studies = [studies[i] for i in indices]
+                        trace_studies = sorted(trace_studies, key=str.lower)
+                        # only choose the first 2 TRACE channels
                         mri_channels.append(os.path.join(modality_dir, trace_studies[0]))
                         mri_channels.append(os.path.join(modality_dir, trace_studies[1]))
                         continue
