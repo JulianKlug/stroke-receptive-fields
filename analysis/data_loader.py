@@ -52,17 +52,27 @@ def get_paths_and_ids(data_dir, ct_sequences, ct_label_sequences, mri_sequences,
                         study = studies[indices[0]]
                         ct_channels.append(os.path.join(modality_dir, study))
 
+                # force order specified in mri_sequences
                 for sequence in mri_sequences:
                     indices = [i for i, s in enumerate(studies) if s.startswith(sequence)]
-                    if len(indices) > 1:
-                        raise ValueError('Multiple images found for', sequence, 'in', studies)
+                    if len(indices) == 0: continue
                     if len(indices) == 1:
                         study = studies[indices[0]]
                         mri_channels.append(os.path.join(modality_dir, study))
+                        continue
+                    if len(indices) == 2 and 'TRACE' in sequence:
+                        trace_studies = sorted([studies[indices[0]], studies[indices[1]]], key=str.lower)
+                        mri_channels.append(os.path.join(modality_dir, trace_studies[0]))
+                        mri_channels.append(os.path.join(modality_dir, trace_studies[1]))
+                        continue
+                    raise ValueError('Multiple images found for', sequence, 'in', studies, [studies[i] for i in indices])
 
+        # as there are 2 TRACE sequences
+        n_mri_sequences = len(mri_sequences)
+        if np.any(['TRACE' in sequence for sequence in mri_sequences]): n_mri_sequences += 1
 
         if len(ct_sequences) == len(ct_channels) and len(ct_label_sequences) == len(ct_lesion_map) \
-                and len(mri_sequences) == len(mri_channels) and len(mri_label_sequences) == len(mri_lesion_map) \
+                and n_mri_sequences == len(mri_channels) and len(mri_label_sequences) == len(mri_lesion_map) \
                 and len(brain_mask) == 1:
             ct_lesion_paths.append(ct_lesion_map[0])
             if len(mri_lesion_map) > 0:
@@ -245,12 +255,12 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
             label_sequences = ['masked_coreg_VOI']
 
     if mri_sequences:
-        mri_sequences = ['wcoreg_t2_tse_tra']
+        mri_sequences = ['wcoreg_t2_tse_tra', 'wcoreg_t2_TRACE', 'wcoreg_t2_ADC']
         # for MRI labeling, the mask should not be applied
         mri_label_sequences = ['wcoreg_VOI']
 
         if high_resolution:
-            mri_sequences = ['coreg_t2_tse_tra']
+            mri_sequences = ['coreg_t2_tse_tra', 'coreg_t2_TRACE', 'coreg_t2_ADC']
             # for MRI labeling, the mask should not be applied
             mri_label_sequences = ['coreg_VOI']
     else:
