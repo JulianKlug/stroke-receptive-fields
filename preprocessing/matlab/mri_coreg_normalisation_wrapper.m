@@ -212,7 +212,8 @@ for i = 1: numel ( subjects )
       
       fprintf('Splitting TRACE %sn',fn);
       for ctr=1:sz(4)
-          tvol.fname = sprintf('%s%s%s_%.3d%s',dn,filesep,fn,ctr,ext);
+          tvol.fname = fullfile(data_path, subjects{i}, mri_dir, ...
+                            strcat('coreg_','t2_TRACE_', ctr, '_', subjects{i}, '.nii'));
           spm_write_vol(tvol,img(:,:,:,ctr));
           images_to_normalize{end+1} = tvol.fname;
       end

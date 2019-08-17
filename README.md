@@ -45,6 +45,7 @@ At the same time the CSF_mask is integrated into the non-brain mask.
 - masking/brain_mask.py : create brain masks based on RAPID perfusion maps
 - masking/mask_lesions.py : apply brain masks to lesions
 - binarize_lesions.py : binarize all lesions by applying a 0.8 threshold from the maximum value (this is necessary as sometimes drawn lesions are 0-1 or 0-255 and during the normalisation values can be slightly altered)
+- utils/preprocessing_verification : visual verification of preprocessing
 
 ### Additional steps for using HD images 
 
