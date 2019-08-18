@@ -306,6 +306,33 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
         clinical_inputs = clinical_data, ct_inputs = ct_inputs, ct_lesion_GT = ct_lesion_GT,
         mri_inputs = mri_inputs, mri_lesion_GT = mri_lesion_GT, brain_masks = brain_masks)
 
+def standardize_data(data_dir, filename = 'data_set.npz'):
+    (clinical_inputs, ct_inputs, ct_lesion_GT, mri_inputs, mri_lesion_GT, brain_masks, ids, params) = load_saved_data(data_dir, filename)
+
+    standardize = lambda x: (x - np.mean(x)) / np.std(x)
+
+    standardized_ct_inputs = np.empty(ct_inputs.shape)
+    for c in range(ct_inputs.shape[-1]):
+        standardized_ct_inputs[..., c] = standardize(ct_inputs[..., c])
+        print('CT channel', c, np.mean(standardized_ct_inputs[..., c]), np.std(standardized_ct_inputs[..., c]))
+
+    if len(mri_inputs) != 0:
+        standardized_mri_inputs = np.empty(mri_inputs.shape)
+        for c in range(mri_inputs.shape[-1]):
+            standardized_mri_inputs[..., c] = standardize(mri_inputs[..., c])
+            print('MRI channel', c, np.mean(standardized_mri_inputs[..., c]), np.std(standardized_mri_inputs[..., c]))
+    else:
+        standardized_mri_inputs = mri_inputs
+
+    np.savez_compressed(os.path.join(data_dir, 'standardized_data_set'),
+                        params=params,
+                        ids=ids,
+                        clinical_inputs=clinical_inputs, ct_inputs=standardized_ct_inputs, ct_lesion_GT=ct_lesion_GT,
+                        mri_inputs=standardized_mri_inputs, mri_lesion_GT=mri_lesion_GT, brain_masks=brain_masks)
+
+
+
+
 def load_saved_data(data_dir, filename = 'data_set.npz'):
     params = np.load(os.path.join(data_dir, filename), allow_pickle=True)['params']
     ids = np.load(os.path.join(data_dir, filename), allow_pickle=True)['ids']
