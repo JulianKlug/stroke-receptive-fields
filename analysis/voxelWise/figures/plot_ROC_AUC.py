@@ -116,10 +116,10 @@ def compare(dir1, dir2, dir3, dir4, dir5):
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
     plt.show()
-    fn = "/Users/julian/stroke_research/all_2016_2017_results/test.svg"
+    fn = "/Users/julian/stroke_research/all_2016_2017_results/ROC_AUC.svg"
     plt.savefig(fn, format="svg")
 
-main_dir = '/Users/julian/stroke_research/all_2016_2017_results'
+main_dir = '/Users/julian/stroke_research/all_2016_2017_results/selected_models'
 multiGLM = os.path.join(main_dir, 'all_pCT_logReg')
 MTT = os.path.join(main_dir, 'MTT2_logReg')
 Tmax = os.path.join(main_dir, 'Tmax0_logReg')

@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 from scipy.stats import wilcoxon
 
-main_dir = '/Users/julian/master/server_output/selected_for_article1_13022019'
-output_dir = '/Users/julian/master/saved_results'
+main_dir = '/Users/julian/stroke_research/all_2016_2017_results/selected_models'
+output_dir = '/Users/julian/stroke_research/all_2016_2017_results/selected_models'
 
 columns = ['model','rf', 'test_roc_auc', 'test_image_wise_dice', 'test_image_wise_hausdorff',
 'test_accuracy', 'test_f1', 'test_jaccard', 'test_thresholded_volume_deltas', 'test_unthresholded_volume_deltas', 'test_image_wise_error_ratios', 'evaluation_thresholds']
@@ -17,7 +17,7 @@ def flatten(l):
     return [item for sublist in l for item in sublist]
 
 
-for modality in modalites:
+for modality in modalites[0:]:
     modality_dir = os.path.join(main_dir, modality)
     if os.path.isdir(modality_dir):
         rf_evaluations = [o for o in os.listdir(modality_dir)
@@ -51,11 +51,19 @@ for modality in modalites:
             # print(np.array([np.array(results[i]) if i in results else np.repeat(np.nan, 50).reshape(1,50) for i in columns[2:-1]]).shape)
             # print(np.repeat(np.nan, 50).reshape(1,50).shape)
             # print(np.array([np.array(results[i]) if i in results else np.repeat(np.nan, 50).reshape(1,50) for i in columns[2:]]).shape)
-            all_list = np.concatenate((
-                np.repeat(model_name, 50).reshape(1, 50),
-                np.repeat(rf, 50).reshape(1,50),
-                [np.array(results[i]) if i in results else np.repeat(np.nan, 50) for i in columns[2:]]
+            n_runs = len(results[columns[2]])
+            current_all_list = np.concatenate((
+                np.repeat(model_name, n_runs).reshape(1, n_runs),
+                np.repeat(rf, n_runs).reshape(1, n_runs),
+                [np.array(results[i]) if i in results else np.repeat(np.nan, n_runs) for i in columns[2:]]
                 ))
+
+            # make sure all result lists have the same size by filling up with nan
+            max_runs = 50
+            all_list = np.empty((len(columns), max_runs), dtype=object)
+            all_list[:] = np.nan
+            all_list[:, : n_runs] = current_all_list
+
 
             try:
                 all_results_array
@@ -149,9 +157,9 @@ for rf_3_model_result in rf_3_model_results:
 t, p = wilcoxon(flatten(all_rf0), flatten(all_rf3))
 comparative_results_array = np.concatenate((comparative_results_array,
                 np.array([[
-                'mean_model',
-                np.mean(flatten(all_rf0)),
-                np.mean(flatten(all_rf3)),
+                'median_model',
+                np.median(flatten(all_rf0)),
+                np.median(flatten(all_rf3)),
                 p,
                 columns[compared_variable_index]
                 ]])))
@@ -159,7 +167,7 @@ rf_comp_results_df = pd.DataFrame(comparative_results_array, columns = rf_comp_d
 
 # Compare modalities to best (Tmax0_logRegGLM at rf3)
 modality_comp_df_columns = ['model','rf', 'model_result', 'ref_model_result', 'Pval', 'compared_variable', 'reference_rf3_model']
-reference_rf3_model_results = np.squeeze(np.array([k for k in all_results_array if k[1,0] == 3 and 'Tmax0_logRegGLM' in k[0,0]]))
+reference_rf3_model_results = np.squeeze(np.array([k for k in all_results_array if k[1,0] == 3 and 'Tmax0_logReg' in k[0,0]]))
 rf_3_model_results = np.array([k for k in all_results_array if k[1,0] == 3])
 # rf_3_model_results = np.array([k for k in all_results_array])
 
@@ -190,7 +198,7 @@ modality_comp_results_df = pd.DataFrame(modality_comp_results_array, columns = m
 
 
 
-with pd.ExcelWriter(os.path.join(output_dir, 'rf_article_results.xlsx')) as writer:
+with pd.ExcelWriter(os.path.join(output_dir, 'rf_median_article_results.xlsx')) as writer:
     median_results_df.to_excel(writer, sheet_name='median_results')
     std_results_df.to_excel(writer, sheet_name='std_results')
     rf_comp_results_df.to_excel(writer, sheet_name='0-3_rf_comparative_results')
