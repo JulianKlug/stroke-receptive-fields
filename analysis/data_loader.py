@@ -2,7 +2,7 @@ import os
 import nibabel as nib
 import numpy as np
 from clinical_data.clinical_data_loader import load_clinical_data
-from utils import find_max_shape
+from utils import find_max_shape, rescale_outliers
 
 # provided a given directory return list of paths to ct_sequences and lesion_maps
 def get_paths_and_ids(data_dir, ct_sequences, ct_label_sequences, mri_sequences, mri_label_sequences, brain_mask_name):
@@ -311,8 +311,15 @@ def standardize_data(data_dir, filename = 'data_set.npz'):
 
     standardize = lambda x: (x - np.mean(x)) / np.std(x)
 
+    print('Before outlier scaling', np.mean(ct_inputs[..., 0]), np.std(ct_inputs[..., 0]))
+    # correct for outliers that are scaled x10
+    ct_inputs = rescale_outliers(ct_inputs, brain_masks)
+    print('After outlier scaling', np.mean(ct_inputs[..., 0]), np.std(ct_inputs[..., 0]))
+
+
     standardized_ct_inputs = np.empty(ct_inputs.shape)
     for c in range(ct_inputs.shape[-1]):
+
         standardized_ct_inputs[..., c] = standardize(ct_inputs[..., c])
         print('CT channel', c, np.mean(standardized_ct_inputs[..., c]), np.std(standardized_ct_inputs[..., c]))
 
@@ -329,8 +336,6 @@ def standardize_data(data_dir, filename = 'data_set.npz'):
                         ids=ids,
                         clinical_inputs=clinical_inputs, ct_inputs=standardized_ct_inputs, ct_lesion_GT=ct_lesion_GT,
                         mri_inputs=standardized_mri_inputs, mri_lesion_GT=mri_lesion_GT, brain_masks=brain_masks)
-
-
 
 
 def load_saved_data(data_dir, filename = 'data_set.npz'):

@@ -55,3 +55,20 @@ def find_max_shape(data_dir, file_name):
                     if data.shape[2] > max_z: max_z = data.shape[2]
 
     return (max_x, max_y, max_z)
+
+
+def rescale_outliers(imgX, MASKS):
+    '''
+    Rescale outliers as some images from RAPID seem to be scaled x10
+    Outliers are detected if their median exceeds 5 times the global median and are rescaled by dividing through 10
+    :param imgX: image data (n, x, y, z, c)
+    :return: rescaled_imgX
+    '''
+
+    for i in range(imgX.shape[0]):
+        for channel in range(imgX.shape[-1]):
+            median_channel = np.median(imgX[..., channel][MASKS])
+            if np.median(imgX[i, ..., 0][MASKS[i]]) > 5 * median_channel:
+                imgX[i, ..., 0] = imgX[i, ..., channel] / 10
+
+    return imgX

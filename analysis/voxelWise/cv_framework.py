@@ -6,7 +6,7 @@ import numpy as np
 from sampling_utils import get_undersample_selector_array
 import receptiveField as rf
 from scoring_utils import evaluate
-from utils import gaussian_smoothing
+from utils import gaussian_smoothing, rescale_outliers
 from penumbra_evaluation import penumbra_match
 from channel_normalisation import normalise_channel_by_contralateral
 
@@ -398,18 +398,3 @@ def standardise(imgX, clinX):
         rescaled_clinX = clinX
     return rescaled_imgX, rescaled_clinX
 
-def rescale_outliers(imgX, MASKS):
-    '''
-    Rescale outliers as some images from RAPID seem to be scaled x10
-    Outliers are detected if their median exceeds 5 times the global median and are rescaled by dividing through 10
-    :param imgX: image data (n, x, y, z, c)
-    :return: rescaled_imgX
-    '''
-
-    for i in range(imgX.shape[0]):
-        for channel in range(imgX.shape[-1]):
-            median_channel = np.median(imgX[..., channel][MASKS])
-            if np.median(imgX[i, ..., 0][MASKS[i]]) > 5 * median_channel:
-                imgX[i, ..., 0] = imgX[i, ..., channel] / 10
-
-    return imgX
