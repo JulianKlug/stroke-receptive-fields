@@ -32,7 +32,8 @@ def plot_auc_roc(rf_dims, roc_auc_scores, model_name = 'model', color = 'C0', di
     rf_dims.sort()
 
     for i in range(len(rf_dims)):
-        if i > 5: continue
+        if i > 4\
+                : continue
         if len(roc_auc_scores[i]) != 0:
             median_roc_auc_score = np.median(roc_auc_scores[i])
             mean_roc_auc = sum(roc_auc_scores[i]) / float(len(roc_auc_scores[i]))

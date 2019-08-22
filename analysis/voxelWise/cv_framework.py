@@ -375,6 +375,7 @@ def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, imgX, mask_array, id_ar
     print('Model successfully tested.')
     results['trained_model'] = trained_model
     results['train_evals'] = evals_result
+    results['trained_threshold'] = model_threshold
 
     # evaluation of relation with penumbra
     if imgX_test.shape[-1] == 4: # evaluation can only be done if all channels are there (Tmax must be present)

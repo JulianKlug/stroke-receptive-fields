@@ -74,7 +74,7 @@ def wrapper_plot_auc_roc_boxplot(modality_dirs):
                 if 'MTT' in model_name:
                     model_class = 'glm(MTT)'
                 if 'Campbell' in model_name and 'trained' in model_name:
-                    model_class = 'nCBF < t'
+                    model_class = 'relCBF < t'
                 if 'Campbell' in model_name and not 'trained' in model_name:
                     model_class = 'nCBF'
 
