@@ -13,6 +13,7 @@ output_dir = os.path.join(main_dir, 'extracted_dwi_ivt_only')
 enforce_VOI = True
 copy = True
 include_DWI = True
+enforce_RAPID = False
 spc_ct_sequences = image_name_config.spc_ct_sequences
 pct_sequences = image_name_config.pct_sequences
 ct_perf_sequence_names = image_name_config.ct_perf_sequence_names
@@ -39,13 +40,19 @@ def get_subject_info(dir):
     modality_0 = [o for o in os.listdir(dir)
                     if os.path.isdir(os.path.join(dir,o))][0]
     modality_0_path = os.path.join(dir, modality_0)
-    studies = [o for o in os.listdir(modality_0_path)
-                    if os.path.isdir(os.path.join(modality_0_path,o))]
+    studies = [o for o in os.listdir(modality_0_path)]
+
     for study in studies:
         study_0_path = os.path.join(modality_0_path, study)
-        dcms = [f for f in os.listdir(study_0_path) if f.endswith(".dcm")]
-        if not dcms: continue
-        dcm = pydicom.dcmread(os.path.join(study_0_path, dcms[0]))
+
+        if study.endswith('.dcm'):
+            dcm_path = study_0_path
+        else:
+            if not os.path.isdir(study_0_path): continue
+            dcms = [f for f in os.listdir(study_0_path) if f.endswith(".dcm")]
+            dcm_path = os.path.join(study_0_path, dcms[0])
+            if not dcms: continue
+        dcm = pydicom.dcmread(dcm_path)
 
         full_name = '_'.join(re.split(r'[/^ ]', unidecode(str(dcm.PatientName).upper())))
         last_name = unidecode(str(dcm.PatientName).split('^')[0].upper())
@@ -99,10 +106,13 @@ def get_ct_paths_and_date(dir, error_log_df):
             for study in studies:
                 study_dir = os.path.join(modality_dir, study)
 
-                if loose_verify_name(study, pct_sequences):
+                if loose_verify_name(study, pct_sequences) and enforce_RAPID:
                     dcms = [f for f in os.listdir(study_dir) if f.endswith(".dcm") and not f.startswith('.')]
                     if not 'color' in study and 'RAPID' in study and len(dcms) >= 37:
                         hasPCT_maps = 1
+                if not enforce_RAPID and loose_verify_name(study, ct_perf_sequence_names):
+                    hasPCT_maps = 1
+
 
                 if loose_verify_name(study, spc_ct_sequences): hasSPC = 1
 
@@ -182,7 +192,8 @@ def add_MRI_paths_and_date(dir, imaging_info, error_log_df):
                     if os.path.isdir(os.path.join(dir,o))]
     for folder in folders:
         folder_dir = os.path.join(dir, folder)
-        (last_name, first_name, patient_birth_date) = get_subject_info(folder_dir)
+        subject_info = get_subject_info(folder_dir)
+        (last_name, first_name, patient_birth_date) = subject_info
         subject_key = last_name + '^' + first_name + '^' + patient_birth_date
         # Skip patients with no perfusion CT
         if not subject_key in imaging_info:
@@ -375,6 +386,7 @@ def main(dir, output_dir):
         # hash id for anonymisation
         ID = hashlib.sha256(patient_identifier.encode('utf-8')).hexdigest()[:8]
         pid = 'subj-' + str(ID)
+
         print('Copying data for', patient_identifier)
         patient_output_folder = os.path.join(output_dir, pid)
         if os.path.exists(patient_output_folder):
