@@ -28,7 +28,7 @@ def plot_glm_spatial_weight_distribution(models_file):
     display(median_weights.reshape(7,7,7))
 
 
-def glm_parameter_weight_distribution(models_file_path):
+def glm_parameter_weight_distribution(models_file_path, name):
     models = torch.load(models_file_path)
     weights = np.array([m.coef_.reshape(4, -1) for m in models])
     print(weights.shape)
@@ -42,20 +42,24 @@ def glm_parameter_weight_distribution(models_file_path):
     print(wilcoxon(parameter_weights[0], parameter_weights[2]))
     print(wilcoxon(parameter_weights[0], parameter_weights[3]))
 
-    # plot_parameters(['Tmax', 'CBF', 'MTT', 'CBV'], np.abs(median_parameter_weights))
+    norm_median_parameters_weights = np.abs(median_parameter_weights) / np.sum(np.abs(median_parameter_weights))
+
+    plot_parameters(['Tmax', 'CBF', 'MTT', 'CBV'], norm_median_parameters_weights, name)
     return median_parameter_weights, std_weights
 
-def plot_parameters(score_names, scores):
+def plot_parameters(score_names, scores, name):
     plt.figure()
     sns.barplot(x = score_names, y = scores, palette=sns.cubehelix_palette(4, start=0.7, rot=-.75))
     # axes formatting
     # plt.ylim(120, 160)
     sns.set()
 
-    plt.title('Parameter Weights')
-    plt.ylabel('Relative gain')
+    plt.title(name)
+    plt.ylabel('Relative Parameter Weight')
     # plt.legend(loc="upper right")
     plt.show()
+    fn = "parameter_weights_" + name
+    plt.savefig(fn, format="svg")
 
 def plot_weight_progression(Tmax, CBF, MTT, CBV):
     print(Tmax)
@@ -81,16 +85,17 @@ def wrapper_comparative_model_weights(modality_dir):
         files = os.listdir(os.path.join(modality_dir, eval_dir))
         rf = None; mean_weights = None;
         for file in files:
-            if (file.startswith('trained_models_') and file.endswith('.npy')):
-                models_path = os.path.join(modality_dir, eval_dir, file)
-                mean_weights, std_weights = glm_parameter_weight_distribution(models_path)
-                mean_weights = np.abs(mean_weights)
-                mean_weights = mean_weights / np.sum(mean_weights)
-                std_weights = mean_weights / np.sum(mean_weights)
             if (file.startswith('params_') and file.endswith('.npy')):
                 params_path = os.path.join(modality_dir, eval_dir, file)
                 param_obj = torch.load(params_path)
                 rf = np.mean(param_obj['rf'])
+        for file in files:
+            if (file.startswith('trained_models_') and file.endswith('.npy')):
+                models_path = os.path.join(modality_dir, eval_dir, file)
+                mean_weights, std_weights = glm_parameter_weight_distribution(models_path, 'rf = ' + str(rf))
+                mean_weights = np.abs(mean_weights)
+                mean_weights = mean_weights / np.sum(mean_weights)
+                std_weights = mean_weights / np.sum(mean_weights)
 
         if (rf is not None) and (mean_weights is not None):
             Tmax = Tmax.append(pd.DataFrame([[rf, mean_weights[0], std_weights[0]]], columns=columns), ignore_index=True)
