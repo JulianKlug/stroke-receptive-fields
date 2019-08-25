@@ -41,11 +41,11 @@ for modality in modalites[0:]:
             if 'params' in results:
                 params = results['params']
             try:
-                rf = int(np.median(params['rf']))
+                rf = int(np.mean(params['rf']))
             except (KeyError, TypeError):
                 rf = int(result_files[0].split('_')[-1].split('.')[0])
 
-            median_list = [[model_name, rf] + [np.median(flatten(results[i])) if i in results else np.nan for i in columns[2:]]]
+            mean_list = [[model_name, rf] + [np.mean(flatten(results[i])) if i in results else np.nan for i in columns[2:]]]
             std_list = [[model_name, rf] + [np.std(flatten(results[i])) if i in results else np.nan for i in columns[2:]]]
 
             # print(np.array([np.array(results[i]) if i in results else np.repeat(np.nan, 50).reshape(1,50) for i in columns[2:-1]]).shape)
@@ -82,14 +82,14 @@ for modality in modalites[0:]:
                                 np.array(std_list)))
 
             try:
-                median_results_array
+                mean_results_array
             except NameError:
-                median_results_array = np.array(median_list)
+                mean_results_array = np.array(mean_list)
             else :
-                median_results_array = np.concatenate((median_results_array,
-                                np.array(median_list)))
+                mean_results_array = np.concatenate((mean_results_array,
+                                np.array(mean_list)))
 
-median_results_df = pd.DataFrame(median_results_array, columns = columns)
+mean_results_df = pd.DataFrame(mean_results_array, columns = columns)
 std_results_df = pd.DataFrame(std_results_array, columns = columns)
 
 # Compare all rfs for the same model
@@ -127,7 +127,7 @@ all_rf_comp_results_df = pd.DataFrame(all_rf_comp_array, columns = all_rf_comp_d
 # Compare rf3 to rf0 for the same model
 # compare roc auc
 compared_variable_index = 2
-rf_comp_df_columns = ['model','median_rf0', 'median_rf3', 'Pval', 'compared_variable']
+rf_comp_df_columns = ['model','mean_rf0', 'mean_rf3', 'Pval', 'compared_variable']
 rf_3_model_results = np.array([k for k in all_results_array if k[1,0] == 3])
 all_rf0 = []
 all_rf3 = []
@@ -140,8 +140,8 @@ for rf_3_model_result in rf_3_model_results:
     all_rf3.append(flatten(rf_3_model_result[compared_variable_index]))
     all_rf0.append(flatten(corres_rf0_model[compared_variable_index]))
     comparative_list = [[model_base,
-        np.median(flatten(corres_rf0_model[compared_variable_index])),
-        np.median(flatten(rf_3_model_result[compared_variable_index])),
+        np.mean(flatten(corres_rf0_model[compared_variable_index])),
+        np.mean(flatten(rf_3_model_result[compared_variable_index])),
         p,
         columns[compared_variable_index]
         ]]
@@ -157,9 +157,9 @@ for rf_3_model_result in rf_3_model_results:
 t, p = wilcoxon(flatten(all_rf0), flatten(all_rf3))
 comparative_results_array = np.concatenate((comparative_results_array,
                 np.array([[
-                'median_model',
-                np.median(flatten(all_rf0)),
-                np.median(flatten(all_rf3)),
+                'mean_model',
+                np.mean(flatten(all_rf0)),
+                np.mean(flatten(all_rf3)),
                 p,
                 columns[compared_variable_index]
                 ]])))
@@ -180,8 +180,8 @@ for rf_3_model_result in rf_3_model_results:
     t, p = wilcoxon(flatten(rf_3_model_result[compared_variable_index]), flatten(reference_rf3_model_results[compared_variable_index]))
     modality_comp_list = [[model_base,
         rf_3_model_result[1,0],
-        np.median(flatten(rf_3_model_result[compared_variable_index])),
-        np.median(flatten(reference_rf3_model_results[compared_variable_index])),
+        np.mean(flatten(rf_3_model_result[compared_variable_index])),
+        np.mean(flatten(reference_rf3_model_results[compared_variable_index])),
         p,
         columns[compared_variable_index],
         reference_rf3_model_results[0,0]
@@ -198,8 +198,8 @@ modality_comp_results_df = pd.DataFrame(modality_comp_results_array, columns = m
 
 
 
-with pd.ExcelWriter(os.path.join(output_dir, 'rf_median_article_results.xlsx')) as writer:
-    median_results_df.to_excel(writer, sheet_name='median_results')
+with pd.ExcelWriter(os.path.join(output_dir, 'rf_mean_article_results.xlsx')) as writer:
+    mean_results_df.to_excel(writer, sheet_name='mean_results')
     std_results_df.to_excel(writer, sheet_name='std_results')
     rf_comp_results_df.to_excel(writer, sheet_name='0-3_rf_comparative_results')
     all_rf_comp_results_df.to_excel(writer, sheet_name='all_rf_comparative_results')

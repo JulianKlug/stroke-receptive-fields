@@ -32,13 +32,12 @@ def plot_auc_roc(rf_dims, roc_auc_scores, model_name = 'model', color = 'C0', di
     rf_dims.sort()
 
     for i in range(len(rf_dims)):
-        if i > 4\
-                : continue
+        if i > 4 : continue
         if len(roc_auc_scores[i]) != 0:
             median_roc_auc_score = np.median(roc_auc_scores[i])
             mean_roc_auc = sum(roc_auc_scores[i]) / float(len(roc_auc_scores[i]))
             mean_roc_auc_scores.append(mean_roc_auc)
-            mean_rf_dims.append(rf_dims[i])
+            mean_rf_dims.append(int(rf_dims[i]))
 
             std_auc = np.std(roc_auc_scores[i], axis=0)
             margin_of_error = z_critical * (std_auc/math.sqrt(len(roc_auc_scores[i])))
@@ -69,6 +68,7 @@ def plot_auc_roc(rf_dims, roc_auc_scores, model_name = 'model', color = 'C0', di
         plt.fill_between(mean_rf_dims, auc_upper_limits, auc_lower_limits, color='grey', alpha=.2)
 
     plt.plot(mean_rf_dims, mean_roc_auc_scores, color, label=r'Mean AUC for %s' % (model_name))
+    # plt.yticks(range(int(np.min(rf_dims)), int(np.max(rf_dims))))
     plt.ylim([-0.05, 1.05])
     plt.ylabel('AUC')
     plt.xlabel('Receptive field size (rf)')
@@ -113,6 +113,7 @@ def compare(dir1, dir2, dir3, dir4, dir5):
 
     plt.legend(loc="lower right")
     plt.title('Area under the ROC curve')
+    plt.xticks([0, 1, 2, 3, 4])
     # Hide the right and top spines
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
