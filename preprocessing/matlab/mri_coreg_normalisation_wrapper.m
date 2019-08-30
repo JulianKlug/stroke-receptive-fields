@@ -11,10 +11,10 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/temp/nifti_extracted copy';
-spm_path = '/Users/julian/Documents/MATLAB/spm12';
+data_path = '/home/klug/data/original_data/2018/part1bis_and_part2a';
+spm_path = '/home/klug/spm12';
 do_not_recalculate = true;
-with_VOI = true;
+with_VOI = false;
 with_DWI = true;
 
 script_path = mfilename('fullpath');
@@ -79,10 +79,12 @@ for i = 1: numel ( subjects )
                             strcat('wcoreg_','t2_ADC_', subjects{i}, '.nii'));
     wcoreg_TRACE = fullfile(data_path, subjects{i}, mri_dir, ...
                             strcat('wcoreg_','t2_TRACE_', subjects{i}, '_001', '.nii'));
+    wcoreg_TRACE_2 = fullfile(data_path, subjects{i}, mri_dir, ...
+                            strcat('wcoreg_','t2_TRACE_001', subjects{i}, '.nii'));
     try
         if exist(fullfile(data_path,subjects{i}, mri_dir, wcoreg_sequences(1).name))...
                 && ((with_VOI && exist(wcoreg_VOI)) || ~with_VOI) ...
-                && ((with_DWI && exist(wcoreg_ADC) && exist(wcoreg_TRACE)) || ~with_DWI) ...
+                && ((with_DWI && exist(wcoreg_ADC) && (exist(wcoreg_TRACE) || exist(wcoreg_TRACE_2))) || ~with_DWI) ...
                 && do_not_recalculate
             fprintf('Skipping subject "%s" as normalised files are already present.\n', subjects{i});
             continue;
@@ -213,7 +215,7 @@ for i = 1: numel ( subjects )
       fprintf('Splitting TRACE %sn',fn);
       for ctr=1:sz(4)
           tvol.fname = fullfile(data_path, subjects{i}, mri_dir, ...
-                            strcat('coreg_','t2_TRACE_', ctr, '_', subjects{i}, '.nii'));
+                            strcat('coreg_','t2_TRACE_', sprintf('_%.3d',ctr), '_', subjects{i}, '.nii'));
           spm_write_vol(tvol,img(:,:,:,ctr));
           images_to_normalize{end+1} = tvol.fname;
       end
