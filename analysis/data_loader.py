@@ -221,7 +221,7 @@ def load_nifti(main_dir, ct_sequences, label_sequences, mri_sequences, mri_label
 # Save data as compressed numpy array
 def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = None,
                        ct_sequences = [], label_sequences = [], mri_sequences = False,
-                       external_memory=False, high_resolution = False):
+                       external_memory=False, high_resolution = False, enforce_VOI=True):
     """
     Load data
         - Image data (from preprocessed Nifti)
@@ -248,7 +248,7 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
         if high_resolution:
             ct_sequences = ['coreg_Tmax', 'coreg_CBF', 'coreg_MTT', 'coreg_CBV']
 
-    if len(label_sequences) < 1:
+    if len(label_sequences) < 1 and enforce_VOI:
         # Import VOI GT with brain mask applied
         # to avoid False negatives in areas that cannot be predicted (as their are not part of the RAPID perf maps)
         label_sequences = ['masked_wcoreg_VOI']
@@ -256,18 +256,18 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
         if high_resolution:
             label_sequences = ['masked_coreg_VOI']
 
+    mri_sequences = []
+    mri_label_sequences = []
     if mri_sequences:
         mri_sequences = ['wcoreg_t2_tse_tra', 'wcoreg_t2_TRACE', 'wcoreg_t2_ADC']
         # for MRI labeling, the mask should not be applied
-        mri_label_sequences = ['wcoreg_VOI']
+        if enforce_VOI:
+            mri_label_sequences = ['wcoreg_VOI']
 
         if high_resolution:
             mri_sequences = ['coreg_t2_tse_tra', 'coreg_t2_TRACE', 'coreg_t2_ADC']
             # for MRI labeling, the mask should not be applied
             mri_label_sequences = ['coreg_VOI']
-    else:
-        mri_sequences = []
-        mri_label_sequences = []
 
     brain_mask_name = 'brain_mask.nii'
     if high_resolution:
