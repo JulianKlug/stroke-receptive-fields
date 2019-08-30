@@ -76,7 +76,8 @@ def get_paths_and_ids(data_dir, ct_sequences, ct_label_sequences, mri_sequences,
         if len(ct_sequences) == len(ct_channels) and len(ct_label_sequences) == len(ct_lesion_map) \
                 and n_mri_sequences == len(mri_channels) and len(mri_label_sequences) == len(mri_lesion_map) \
                 and len(brain_mask) == 1:
-            ct_lesion_paths.append(ct_lesion_map[0])
+            if len(ct_lesion_map) > 0:
+                ct_lesion_paths.append(ct_lesion_map[0])
             if len(mri_lesion_map) > 0:
                 mri_lesion_paths.append(mri_lesion_map[0])
             brain_mask_paths.append(brain_mask[0])
