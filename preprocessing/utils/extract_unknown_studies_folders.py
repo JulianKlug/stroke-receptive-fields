@@ -11,7 +11,7 @@ def find_matching_modality_folder(given_modality, given_date, given_time, search
                     if os.path.isdir(os.path.join(search_dir,o))]
     for modality in modalities:
         # don't put studies back into the same folder
-        if modality == 'study':
+        if modality == 'series':
             continue
 
         modality_dir = os.path.join(search_dir, modality)
@@ -64,10 +64,18 @@ def extract_unknown_studies_folders_wrapper(main_dir):
         folder_dir = os.path.join(main_dir, folder)
         print(folder, i / len(folders))
         modalities = [o for o in os.listdir(folder_dir)
-                        if os.path.isdir(os.path.join(folder_dir,o)) and o.startswith('study')]
+                        if os.path.isdir(os.path.join(folder_dir,o))]
+
+
         for modality in modalities:
-            extract_unknown_studies_folder(os.path.join(folder_dir, modality))
+            if modality.startswith('series'):
+                    extract_unknown_studies_folder(os.path.join(folder_dir, modality))
+            series = [o for o in os.listdir(os.path.join(folder_dir, modality))
+                      if os.path.isdir(os.path.join(folder_dir, o)) and o.startswith('series')]
+            for serie in series:
+                extract_unknown_studies_folder(os.path.join(folder_dir, modality, serie))
+
         i = i + 1
 
-# subject_dir = '/Volumes/stroke_hdd1/stroke_db/2016/part2'
-# extract_unknown_studies_folders_wrapper(subject_dir)
+subject_dir = '/Volumes/stroke_hdd1/stroke_db/2018/imaging_data/part1/uncomplete_part1_c'
+extract_unknown_studies_folders_wrapper(subject_dir)

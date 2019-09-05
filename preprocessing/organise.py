@@ -8,16 +8,19 @@ import hashlib
 from utils.naming_verification import tight_verify_name, loose_verify_name
 
 main_dir = '/Volumes/stroke_hdd1/stroke_db/2017/imaging_data/included/'
-data_dir = os.path.join(main_dir, 'add_iat')
-output_dir = os.path.join(main_dir, 'extracted_add_iat')
+data_dir = os.path.join(main_dir, 'ivt_only')
+output_dir = os.path.join(main_dir, 'extracted_dwi_ivt_only')
 enforce_VOI = True
 copy = True
+include_DWI = True
+enforce_RAPID = False
 spc_ct_sequences = image_name_config.spc_ct_sequences
 pct_sequences = image_name_config.pct_sequences
 ct_perf_sequence_names = image_name_config.ct_perf_sequence_names
 mri_sequences = image_name_config.mri_sequences
 alternative_mri_sequences = image_name_config.alternative_mri_sequences
-subject_name_seperator = '_'
+additional_mri_channels = image_name_config.adc_mri_channel + image_name_config.trace_mri_channel
+subject_name_seperator = ' '
 error_log_columns = ['folder', 'error', 'exclusion', 'message']
 move_log_columns = ['folder', 'initial_path', 'new_path']
 
@@ -37,13 +40,19 @@ def get_subject_info(dir):
     modality_0 = [o for o in os.listdir(dir)
                     if os.path.isdir(os.path.join(dir,o))][0]
     modality_0_path = os.path.join(dir, modality_0)
-    studies = [o for o in os.listdir(modality_0_path)
-                    if os.path.isdir(os.path.join(modality_0_path,o))]
+    studies = [o for o in os.listdir(modality_0_path)]
+
     for study in studies:
         study_0_path = os.path.join(modality_0_path, study)
-        dcms = [f for f in os.listdir(study_0_path) if f.endswith(".dcm")]
-        if not dcms: continue
-        dcm = pydicom.dcmread(os.path.join(study_0_path, dcms[0]))
+
+        if study.endswith('.dcm'):
+            dcm_path = study_0_path
+        else:
+            if not os.path.isdir(study_0_path): continue
+            dcms = [f for f in os.listdir(study_0_path) if f.endswith(".dcm")]
+            dcm_path = os.path.join(study_0_path, dcms[0])
+            if not dcms: continue
+        dcm = pydicom.dcmread(dcm_path)
 
         full_name = '_'.join(re.split(r'[/^ ]', unidecode(str(dcm.PatientName).upper())))
         last_name = unidecode(str(dcm.PatientName).split('^')[0].upper())
@@ -97,10 +106,13 @@ def get_ct_paths_and_date(dir, error_log_df):
             for study in studies:
                 study_dir = os.path.join(modality_dir, study)
 
-                if loose_verify_name(study, pct_sequences):
+                if loose_verify_name(study, pct_sequences) and enforce_RAPID:
                     dcms = [f for f in os.listdir(study_dir) if f.endswith(".dcm") and not f.startswith('.')]
                     if not 'color' in study and 'RAPID' in study and len(dcms) >= 37:
                         hasPCT_maps = 1
+                if not enforce_RAPID and loose_verify_name(study, ct_perf_sequence_names):
+                    hasPCT_maps = 1
+
 
                 if loose_verify_name(study, spc_ct_sequences): hasSPC = 1
 
@@ -180,7 +192,8 @@ def add_MRI_paths_and_date(dir, imaging_info, error_log_df):
                     if os.path.isdir(os.path.join(dir,o))]
     for folder in folders:
         folder_dir = os.path.join(dir, folder)
-        (last_name, first_name, patient_birth_date) = get_subject_info(folder_dir)
+        subject_info = get_subject_info(folder_dir)
+        (last_name, first_name, patient_birth_date) = subject_info
         subject_key = last_name + '^' + first_name + '^' + patient_birth_date
         # Skip patients with no perfusion CT
         if not subject_key in imaging_info:
@@ -256,6 +269,9 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
         if tight_verify_name(mri_study, mri_sequences):
             selected_mri_study_paths.append(mri_study_path)
 
+        if loose_verify_name(mri_study, additional_mri_channels) and include_DWI and 'isoDWI' not in mri_study:
+            selected_mri_study_paths.append(mri_study_path)
+
         if ('VOI' in mri_study or 'lesion' in mri_study or 'Lesion' in mri_study) and os.path.isfile(mri_study_path):
             new_file_name = 'VOI_' + patient_identifier + '.nii'
             new_file_path = os.path.join(patient_output_folder, new_file_name)
@@ -266,7 +282,8 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
                     ignore_index=True)
 
     # if no MRI with primary sequence found, try with secondary sequence
-    if not selected_mri_study_paths: # ie not mri study found yet
+    t2_found = np.any([loose_verify_name(selected, mri_sequences) for selected in selected_mri_study_paths])
+    if not t2_found: # ie no t2 mri study found yet
         for mri_study in mri_studies:
             mri_study_path = os.path.join(mri_folder_path, mri_study)
             if tight_verify_name(mri_study, alternative_mri_sequences):
@@ -279,11 +296,22 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
         selected_study_name = os.path.basename(selected_study_path)
         # rename to constant name space
         if selected_study_path in selected_mri_study_paths:
-            new_study_name = 't2_tse_tra' + '_' + patient_identifier
             modality_name = 'MRI'
         else:
             modality_name = 'pCT'
 
+        # match names for mri sequences
+        if loose_verify_name(selected_study_name, mri_sequences) or loose_verify_name(selected_study_name, alternative_mri_sequences):
+            new_study_name = 't2_tse_tra' + '_' + patient_identifier
+
+        if loose_verify_name(selected_study_name, image_name_config.trace_mri_channel) and not loose_verify_name(selected_study_name, image_name_config.adc_mri_channel):
+            new_study_name = 'TRACE' + '_' + patient_identifier
+
+        if loose_verify_name(selected_study_name, image_name_config.adc_mri_channel):
+            new_study_name = 'ADC' + '_' + patient_identifier
+
+
+        # match names with ct sequences
         if 'Tmax' in selected_study_name or 'TMax' in selected_study_name:
             new_study_name = 'Tmax' + '_' + patient_identifier
         if 'MTT' in selected_study_name:
@@ -358,6 +386,7 @@ def main(dir, output_dir):
         # hash id for anonymisation
         ID = hashlib.sha256(patient_identifier.encode('utf-8')).hexdigest()[:8]
         pid = 'subj-' + str(ID)
+
         print('Copying data for', patient_identifier)
         patient_output_folder = os.path.join(output_dir, pid)
         if os.path.exists(patient_output_folder):

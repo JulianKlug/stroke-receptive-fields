@@ -1,6 +1,4 @@
 import os
-import subprocess
-import numpy as np
 import nibabel as nib
 
 
@@ -19,7 +17,13 @@ def mask_lesion(lesion_name, lesion_dir, lesion_mask_path, brain_mask_path):
     nib.save(masked_img, os.path.join(lesion_dir,  'masked_' + lesion_name))
 
 # Apply a brain mask to the MRI lesion maps to avoid having parts of the lesion outside of brain available in RAPID maps
-def mask_lesions_wrapper(data_dir):
+def mask_lesions_wrapper(data_dir, high_resolution = False):
+    lesion_label_name = 'wcoreg_VOI'
+    brain_mask_name = 'brain_mask'
+    if high_resolution:
+        lesion_label_name = 'coreg_VOI'
+        brain_mask_name = 'hd_brain_mask'
+
     subjects = [o for o in os.listdir(data_dir)
                     if os.path.isdir(os.path.join(data_dir,o))]
 
@@ -39,11 +43,11 @@ def mask_lesions_wrapper(data_dir):
 
             for study in studies:
                 study_path = os.path.join(modality_dir, study)
-                if modality.startswith('MRI') & study.startswith('wcoreg_VOI'):
+                if modality.startswith('MRI') & study.startswith(lesion_label_name):
                     lesion_mask_path.append(study_path)
                     lesion_mask.append(study)
                     lesion_dir = modality_dir
-                if modality.startswith('pCT') & study.startswith('brain_mask'):
+                if modality.startswith('pCT') & study.startswith(brain_mask_name):
                     brain_mask_path.append(study_path)
 
         if (not (lesion_mask_path) or not (brain_mask_path)):

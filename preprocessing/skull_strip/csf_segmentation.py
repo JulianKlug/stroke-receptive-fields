@@ -3,7 +3,7 @@ import nibabel as nib
 import numpy as np
 from scipy.ndimage.morphology import binary_closing, binary_erosion, binary_dilation
 
-def createCSFMask(data_dir, betted_spc_name):
+def createCSFMask(data_dir, betted_spc_name, output_name = 'CSF_mask'):
     """
     Input: 
     - betted_spc_name: name of the original native CT file (SPC) that has been skull-stripped 
@@ -38,4 +38,4 @@ def createCSFMask(data_dir, betted_spc_name):
     image_extension = '.nii'
     # MATLAB can not open NIFTI saved as int, thus float is necessary
     labeled_img = nib.Nifti1Image(CSF_mask.astype('float64'), affine=coordinate_space)
-    nib.save(labeled_img, os.path.join(data_dir,  'CSF_mask' + image_extension))
+    nib.save(labeled_img, os.path.join(data_dir,  output_name + image_extension))

@@ -1,10 +1,17 @@
 import os, subprocess
 from csf_segmentation import createCSFMask
 
-main_dir = '/home/klug/data/original_data/2016/2016_extracted_data'
+main_dir = '/Users/julian/temp/prepro'
 data_dir = os.path.join(main_dir, '')
 skull_strip_path = os.path.join(os.getcwd(), 'skull_strip.sh')
+high_definition = True
 print(skull_strip_path)
+
+SPC_start = 'SPC'
+CSF_mask_name = 'CSF_mask'
+if high_definition:
+    SPC_start = 'reor_SPC'
+    CSF_mask_name = 'hd_CSF_mask'
 
 
 subjects = [o for o in os.listdir(data_dir)
@@ -22,8 +29,9 @@ for subject in subjects:
 
         for study in studies:
             study_path = os.path.join(modality_dir, study)
-            if modality.startswith('pCT') & study.startswith('SPC'):
+            if modality.startswith('pCT') & study.startswith(SPC_start):
                 print(study)
 
                 subprocess.run([skull_strip_path, '-i', study], cwd = modality_dir)
-                createCSFMask(modality_dir, 'betted_' + study + '.gz')
+
+                createCSFMask(modality_dir, 'betted_' + study + '.gz', output_name = CSF_mask_name)

@@ -11,10 +11,11 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/master/data/maskCSF_test2';
-spm_path = '/Users/julian/Documents/MATLAB/spm12';
+data_path = '/home/klug/data/original_data/2018/part1bis_and_part2a';
+spm_path = '/home/klug/spm12';
 do_not_recalculate = true;
 with_VOI = false;
+with_DWI = true;
 
 script_path = mfilename('fullpath');
 script_folder = script_path(1 : end - size(mfilename, 2));
@@ -74,9 +75,16 @@ for i = 1: numel ( subjects )
             strcat('wcoreg_', 't2_tse_tra', '_', subjects{i}, '*', '.nii*')));
     wcoreg_VOI = fullfile(data_path, subjects{i}, mri_dir, ...
                             strcat('wcoreg_','VOI_', subjects{i}, '.nii'));
+    wcoreg_ADC = fullfile(data_path, subjects{i}, mri_dir, ...
+                            strcat('wcoreg_','t2_ADC_', subjects{i}, '.nii'));
+    wcoreg_TRACE = fullfile(data_path, subjects{i}, mri_dir, ...
+                            strcat('wcoreg_','t2_TRACE_', subjects{i}, '_001', '.nii'));
+    wcoreg_TRACE_2 = fullfile(data_path, subjects{i}, mri_dir, ...
+                            strcat('wcoreg_','t2_TRACE_001', subjects{i}, '.nii'));
     try
         if exist(fullfile(data_path,subjects{i}, mri_dir, wcoreg_sequences(1).name))...
                 && ((with_VOI && exist(wcoreg_VOI)) || ~with_VOI) ...
+                && ((with_DWI && exist(wcoreg_ADC) && (exist(wcoreg_TRACE) || exist(wcoreg_TRACE_2))) || ~with_DWI) ...
                 && do_not_recalculate
             fprintf('Skipping subject "%s" as normalised files are already present.\n', subjects{i});
             continue;
@@ -109,6 +117,13 @@ for i = 1: numel ( subjects )
     mri_files =  dir(fullfile(data_path, subjects{i}, mri_dir, strcat('t2_tse_tra_', subjects{i}, '.nii')));
     mri_input = fullfile(data_path, subjects{i}, mri_dir, ...
                  mri_files.name);
+             
+    % display which subject and sequence is being processed
+    fprintf('Processing subject "%s" , "%s" \n' ,...
+        subjects{i}, mri_files.name);
+ 
+%     define which other should be coregistered with the main t2 image
+    linked_images = {};
     if with_VOI
       lesion_map_initial = fullfile(data_path, subjects{i}, ...
                    strcat('VOI_', subjects{i}, '.nii'));
@@ -118,17 +133,24 @@ for i = 1: numel ( subjects )
       if (exist(lesion_map_initial))
           movefile(lesion_map_initial, lesion_map);
       end
-      linked_images = {lesion_map};
-    else
-      linked_images = {};
+      linked_images{end + 1} = lesion_map;
     end
-
-    % display which subject and sequence is being processed
-    fprintf('Processing subject "%s" , "%s" \n' ,...
-        subjects{i}, mri_files.name);
+    
+    if with_DWI
+        ADC_sequence = fullfile(data_path, subjects{i}, mri_dir, ...
+                   strcat('t2_ADC_', subjects{i}, '.nii'));
+        TRACE_sequence = fullfile(data_path, subjects{i}, mri_dir, ...
+                   strcat('t2_TRACE_', subjects{i}, '.nii'));
+        linked_images{end + 1} = ADC_sequence;
+        linked_images{end + 1} = TRACE_sequence;
+    end
+    
+    linked_images = linked_images(:)
 
     %% COREGISTRATION to native CT
 
+    fprintf('Registering T2 to SPC for "%s" \n' ,...
+        mri_files.name);
     coregistration_to_native = coregister_job(center_base_image, mri_input, linked_images);
     log_file = fullfile(data_path, subjects{i}, mri_dir, ...
         'logs',strcat('to_SPC_301mm_Std_', 'coreg.mat'));
@@ -146,13 +168,23 @@ for i = 1: numel ( subjects )
     coreg_lesion_map = fullfile(data_path, subjects{i}, mri_dir, ...
                             strcat('coreg_','VOI_', subjects{i}, '.nii'));
 
+    coreg_ADC = fullfile(data_path, subjects{i}, mri_dir, ...
+        strcat('coreg_','t2_ADC_', subjects{i}, '.nii'));
+    coreg_TRACE = fullfile(data_path, subjects{i}, mri_dir, ...
+        strcat('coreg_','t2_TRACE_', subjects{i}, '.nii'));
+                        
     % Use coregistration and resetting origin
     % (ref: rorden lab Clinical toolbox)
+    images_to_center = strvcat(center_base_image, coreg_mri_input);
     if with_VOI
-      setOrigin(strvcat(center_base_image, coreg_mri_input, coreg_lesion_map), true, 3);
-    else
-      setOrigin(strvcat(center_base_image, coreg_mri_input), true, 3);
+        images_to_center = strvcat(images_to_center, coreg_lesion_map);
     end
+    
+    if with_DWI
+        images_to_center = strvcat(images_to_center, coreg_ADC, coreg_TRACE);
+    end
+    
+    setOrigin(images_to_center, true, 3)
 
     %% RUN NORMALISATION
     %
@@ -165,6 +197,28 @@ for i = 1: numel ( subjects )
       images_to_normalize = {coreg_mri_input, coreg_lesion_map};
     else
       images_to_normalize = {coreg_mri_input};
+    end
+    
+    if with_DWI
+      images_to_normalize{end + 1} = coreg_ADC;
+      
+      % Decompose TRACE sequences (4D TRACE fails the normalisation otherwise)
+      vol = spm_vol(coreg_TRACE);
+      img = spm_read_vols(vol);
+      sz = size(img);
+      
+      tvol = vol(1);
+      tvol = rmfield(tvol,'private');
+      
+      [dn,fn,ext] = fileparts(coreg_TRACE);
+      
+      fprintf('Splitting TRACE %sn',fn);
+      for ctr=1:sz(4)
+          tvol.fname = fullfile(data_path, subjects{i}, mri_dir, ...
+                            strcat('coreg_','t2_TRACE_', sprintf('_%.3d',ctr), '_', subjects{i}, '.nii'));
+          spm_write_vol(tvol,img(:,:,:,ctr));
+          images_to_normalize{end+1} = tvol.fname;
+      end
     end
 
     % Normalisation script

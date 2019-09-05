@@ -29,13 +29,15 @@ CT :
 0. utils/resolve_RAPID_4D_maps: resolve RAPID maps with 4 dimensions
     - get_RAPID_4D_list: find subjects with 4D RAPID maps
     - resolve_RAPID_4D_maps : reduce dimensions to 3D of given subjects (subjects may need to be downloaded from the server first as this function requires an Xserver for graphical feedback)
+--> Add this point data can be uploaded to a remote server
 1. skull_strip/skull_strip_wrapper.py : batch skull strip native CTs of multiple patients and segment CSF
 2. matlab/perfCT_coregistration_wrapper.m : coregister perfusion CT to betted native CT
 3. matlab/perfCT_normalisation_wrapper.m : normalise perfusion CT and native CT to CT_MNI
 
 MRI :
 
-- matlab/mri_coreg_normalisation_wrapper.m : recenter subject CT, co-register T2 to subject CT, co-register T2 to CT-MNI and normalise to CT-MNI
+(0. matlab/dwi_mri_coregistration_wrapper.m : if DWI is used, it has to be coregistered to T2 first) 
+1. matlab/mri_coreg_normalisation_wrapper.m : recenter subject CT, co-register T2 to subject CT, co-register T2 to CT-MNI and normalise to CT-MNI
 
 Post:
 As RAPID performs excessive skull-stripping, same crop has to be applied to lesion maps to remove lesions without underlying input data. 
@@ -43,6 +45,15 @@ At the same time the CSF_mask is integrated into the non-brain mask.
 - masking/brain_mask.py : create brain masks based on RAPID perfusion maps
 - masking/mask_lesions.py : apply brain masks to lesions
 - binarize_lesions.py : binarize all lesions by applying a 0.8 threshold from the maximum value (this is necessary as sometimes drawn lesions are 0-1 or 0-255 and during the normalisation values can be slightly altered)
+- utils/preprocessing_verification : visual verification of preprocessing
+
+### Additional steps for using HD images 
+
+HD images are not warped to CT-MNI space, and can thus conserve the initial voxel space.
+
+- skull_strip_wrapper: with high_resolution = True
+- brain_mask: with high_resolution = True
+- mask_lesions: with high_resolution = True  
 
 #### Requirements
 
