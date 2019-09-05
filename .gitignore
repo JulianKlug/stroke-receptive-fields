@@ -1,3 +1,6 @@
+#Matlab autosave
+*.m~
+
 # MAC stuff
 .DS_Store
 */.DS_Store
