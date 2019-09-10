@@ -15,14 +15,24 @@ Pre :
 0. image_name_config.py : file defining name space of relevant MRI and CT sequences
 1. organise.py : organise into a new working directory, extracting only useful and renaming to something sensible + anonymize patient information
     - Nb.: watch out for patient seperator, patient might be missed if they use a different seperator in their file/folder names
-2. to_nii_batch.py : batch convert subject DICOMs to Nifti
-3. flatten.py : flatten into an MRI and a CT folder
-4. verify_completeness.py : verify that all necessary files are present
+2. verify_completeness.py (dcm) : verify that all necessary files are present
+3. to_nii_batch.py : batch convert subject DICOMs to Nifti
+4. flatten.py : flatten into an MRI and a CT folder
+5. verify_completeness.py (nifti) : verify that all necessary files are present
 
 Verify clinical exclusion criteria:
 - Time between CT and MRI (reported in anonymisation_key from organise.py)
 - other exclusion criteria: IAT before CT, no treatment received
     - extract_patient_characteristics.py: extract relevant patient characteristics from main excel database
+
+(Angio-CT):
+If Angio-CTs are used, in which the head has to be extracted from the half-body image, after which the skull has to be 
+stripped from the image.
+1. 
+- Use robustfov (FSL) to get FOV on head only
+- Use FLIRT with mutual Information (FSL) to coregister to SPC
+- Create Mask by skull stripping the SPC
+- Apply mask to angio
 
 CT :
 

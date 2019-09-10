@@ -1,9 +1,9 @@
 import os
 import subprocess
 
-main_dir = '/Volumes/stroke_hdd1/stroke_db/2016/'
-data_dir = os.path.join(main_dir, 'dwi_extracted_12082019')
-output_dir = os.path.join(main_dir, 'nifti_dwi_extracted_12082019')
+main_dir = '/Users/julian/stroke_research/brain_and_donuts/data/multi_subj/'
+data_dir = os.path.join(main_dir, 'extracted_initial_data')
+output_dir = os.path.join(main_dir, 'nifti_extracted_initial_data')
 dcm2niix_path = '/Users/julian/stroke_research/dcm2niix_11-Apr-2019_mac/dcm2niix'
 
 def move_lesion_files(search_dir, output_sub_dir):
