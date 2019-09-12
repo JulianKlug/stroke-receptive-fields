@@ -1,9 +1,9 @@
 import sys
-sys.path.insert(0, './voxelWise')
+sys.path.insert(0, '..')
 
 import numpy as np
 from collections import Counter
-from ext_mem_utils import delete_lines
+from voxelwise.ext_mem_utils import delete_lines
 import xgboost as xgb
 
 def undersample_by_index(X, y):

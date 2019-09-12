@@ -1,12 +1,11 @@
 import os, sys, shutil, traceback, timeit
 sys.path.insert(0, '../')
 from sklearn.model_selection import train_test_split, KFold
-from sklearn.preprocessing import StandardScaler
 import numpy as np
 from sampling_utils import get_undersample_selector_array
 import receptiveField as rf
 from scoring_utils import evaluate
-from utils import gaussian_smoothing, rescale_outliers
+from utils import gaussian_smoothing, rescale_outliers, standardise
 from penumbra_evaluation import penumbra_match
 from channel_normalisation import normalise_channel_by_contralateral
 
@@ -388,14 +387,4 @@ def evaluate_fold(model, n_test_subjects, n_x, n_y, n_z, imgX, mask_array, id_ar
 
     return results
 
-def standardise(imgX, clinX):
-    original_shape = imgX.shape
-    imgX = imgX.reshape(-1, imgX.shape[-1])
-    scaler = StandardScaler(copy = False)
-    rescaled_imgX = scaler.fit_transform(imgX).reshape(original_shape)
-    if clinX is not None:
-        rescaled_clinX = scaler.fit_transform(clinX)
-    else:
-        rescaled_clinX = clinX
-    return rescaled_imgX, rescaled_clinX
 

@@ -4,12 +4,6 @@ sys.path.insert(0, '../')
 import os, timeit, traceback, torch
 import numpy as np
 import matplotlib.pyplot as plt
-from vxl_xgboost.external_mem_xgb import External_Memory_xgb
-from vxl_xgboost.ram_xgb import Ram_xgb
-from vxl_glm.LogReg_glm import LogReg_glm
-import visual
-import data_loader
-import manual_data
 from email_notification import NotificationSystem
 from cv_framework import repeated_kfold_cv
 from figures.train_test_evaluation import wrapper_plot_train_evaluation

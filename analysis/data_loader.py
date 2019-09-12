@@ -344,9 +344,18 @@ def load_saved_data(data_dir, filename = 'data_set.npz'):
     ids = np.load(os.path.join(data_dir, filename), allow_pickle=True)['ids']
     clinical_inputs = np.load(os.path.join(data_dir, filename), allow_pickle=True)['clinical_inputs']
     ct_inputs = np.load(os.path.join(data_dir, filename), allow_pickle=True)['ct_inputs']
-    ct_lesion_GT = np.load(os.path.join(data_dir, filename), allow_pickle=True)['ct_lesion_GT']
-    mri_inputs = np.load(os.path.join(data_dir, filename), allow_pickle=True)['mri_inputs']
-    mri_lesion_GT = np.load(os.path.join(data_dir, filename), allow_pickle=True)['mri_lesion_GT']
+    try:
+        ct_lesion_GT = np.load(os.path.join(data_dir, filename), allow_pickle=True)['ct_lesion_GT']
+    except:
+        ct_lesion_GT = np.load(os.path.join(data_dir, filename), allow_pickle=True)['lesion_GT']
+
+    try:
+        mri_inputs = np.load(os.path.join(data_dir, filename), allow_pickle=True)['mri_inputs']
+        mri_lesion_GT = np.load(os.path.join(data_dir, filename), allow_pickle=True)['mri_lesion_GT']
+    except:
+        mri_inputs = []
+        mri_lesion_GT = []
+
     brain_masks = np.load(os.path.join(data_dir, filename), allow_pickle=True)['brain_masks']
 
     print('Loading a total of', ct_inputs.shape[0], 'subjects.')

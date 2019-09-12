@@ -5,7 +5,7 @@ import os
 from rolling_window import rolling_window
 import numpy as np
 import xgboost as xgb
-from ext_mem_utils import save_to_svmlight
+from voxelwise.ext_mem_utils import save_to_svmlight
 
 
 def reshape_to_receptive_field(input_data_array, output_data_array, receptive_field_dimensions, mask_array = None, include_only = np.NaN, verbose = False) :
