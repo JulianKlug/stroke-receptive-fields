@@ -13,6 +13,7 @@ main_save_dir = os.path.join(data_dir, 'recanalised_subgroup_analysis')
 recanalisation_status_path = '/home/klug/data/clinical_data/all_2016_2017/recanalisation_status.xlsx'
 
 data_set = data_loader.load_saved_data(data_dir)
+clinical_inputs, ct_inputs, ct_lesion_GT, mri_inputs, mri_lesion_GT, brain_masks, ids, param = data_set
 
 # Feature can accelerate some algorithms
 # should not be used if predetermined thresholds are used
@@ -30,7 +31,6 @@ rf_hyperopt_end = 1
 
 recanalised_indexes, non_recanalised_indexes, unknown_status_indexes = split_dataset(data_set,
                                                                                      recanalisation_status_path)
-clinical_inputs, ct_inputs, ct_lesion_GT, mri_inputs, mri_lesion_GT, brain_masks, ids, param = data_set
 clinical_inputs = None
 
 total_subjs = len(ids)
