@@ -1,8 +1,6 @@
 import sys, os, shutil, torch
 sys.path.insert(0, '../')
 import numpy as np
-import pandas as pd
-from random import shuffle
 
 from utils import gaussian_smoothing, rescale_outliers, standardise
 from sampling_utils import get_undersample_selector_array
@@ -16,30 +14,8 @@ from email_notification import NotificationSystem
 
 notification_system = NotificationSystem()
 
-def split_dataset(data_set, recanalisation_status_path):
-    clinical_inputs, ct_inputs, ct_lesion_GT, mri_inputs, mri_lesion_GT, brain_masks, ids, param = data_set
-    recanalisation_status_df = pd.read_excel(recanalisation_status_path)
-
-    recanalised_indexes = []
-    non_recanalised_indexes = []
-    unknown_status_indexes = []
-
-    for df_idx, row in recanalisation_status_df.iterrows():
-        index = np.where(ids == row['anonymised_id'])[0]
-        if index.size == 0: continue
-        index = index[0]
-        if row['Recanalized'] == 1:
-            recanalised_indexes.append(index)
-        elif row['Recanalized'] == 0:
-            non_recanalised_indexes.append(index)
-        else:
-            unknown_status_indexes.append(index)
-
-    return recanalised_indexes, non_recanalised_indexes, unknown_status_indexes
-
-def evaluate_recanalised_subgroup(Model_Generator, data_set, recanalisation_status_path, save_dir,
+def evaluate_subgroup(Model_Generator, data_set, selected_indexes, save_dir,
                                   save_function, receptive_field_dimensions, feature_scaling, pre_smoothing):
-    recanalised_indexes, non_recanalised_indexes, unknown_status_indexes = split_dataset(data_set, recanalisation_status_path)
     clinX, imgX, y, mri_inputs, mri_lesion_GT, mask_array, ids, param = data_set
 
     if len(imgX.shape) < 5:
@@ -47,13 +23,7 @@ def evaluate_recanalised_subgroup(Model_Generator, data_set, recanalisation_stat
 
     print('Input image data shape:', imgX.shape)
     n_x, n_y, n_z, n_c = imgX[0].shape
-
-
-    total_subjs = len(ids)
-    if len(recanalised_indexes) >= round(total_subjs/5):
-        size_test_group = round(total_subjs / 5)
-    else:
-        size_test_group = len(recanalised_indexes)
+    n_test_subjects = len(selected_indexes)
 
     model_params = Model_Generator.get_settings()
     Model_Generator.hello_world()
@@ -126,14 +96,10 @@ def evaluate_recanalised_subgroup(Model_Generator, data_set, recanalisation_stat
     if pre_smoothing:
         imgX = gaussian_smoothing(imgX)
 
-    shuffle(recanalised_indexes)
-    selected_recanalised_indexes = recanalised_indexes[:size_test_group]
-    non_selected_recanalised_indexes = recanalised_indexes[size_test_group:]
+    imgX_test, y_test, mask_test = imgX[selected_indexes], y[selected_indexes], mask_array[selected_indexes]
+    imgX_train, y_train, mask_train = np.delete(imgX, selected_indexes, axis=0),  np.delete(y, selected_indexes, axis=0), np.delete(mask_array, selected_indexes, axis=0)
 
-    imgX_test, y_test, mask_test = imgX[selected_recanalised_indexes], y[selected_recanalised_indexes], mask_array[selected_recanalised_indexes]
-    imgX_train, y_train, mask_train = np.delete(imgX, selected_recanalised_indexes, axis=0),  np.delete(y, selected_recanalised_indexes, axis=0), np.delete(mask_array, selected_recanalised_indexes, axis=0)
-
-    if ids is not None: ids_test = ids[selected_recanalised_indexes]
+    if ids is not None: ids_test = ids[selected_indexes]
     else: ids_test = None
 
     n_train, n_test = imgX_train.shape[0], imgX_test.shape[0]
@@ -181,7 +147,7 @@ def evaluate_recanalised_subgroup(Model_Generator, data_set, recanalisation_stat
     y_test = model.get_test_labels()
     imgX_test = imgX_test[mask_test]
 
-    fold_result = evaluate(probas_, y_test, mask_test, ids_test, size_test_group, n_x, n_y, n_z, model_threshold)
+    fold_result = evaluate(probas_, y_test, mask_test, ids_test, n_test_subjects, n_x, n_y, n_z, model_threshold)
     print('Model successfully tested.')
     fold_result['trained_model'] = trained_model
     fold_result['train_evals'] = evals_result
@@ -211,6 +177,10 @@ def evaluate_recanalised_subgroup(Model_Generator, data_set, recanalisation_stat
     results['test_image_wise_hausdorff'].append(fold_result['image_wise_hausdorff'])
     results['test_image_wise_modified_hausdorff'].append(fold_result['image_wise_modified_hausdorff'])
     results['test_image_wise_dice'].append(fold_result['image_wise_dice'])
+    results['image_wise_roc_auc'].append(fold_result['image_wise_roc_auc'])
+    results['image_wise_fpr'].append(fold_result['image_wise_fpr'])
+    results['image_wise_tpr'].append(fold_result['image_wise_tpr'])
+    results['image_wise_roc_thresholds'].append(fold_result['image_wise_roc_thresholds'])
     results['train_evals'].append(fold_result['train_evals'])
     if not (fold_result['penumbra_metrics'] is None):
         results['test_penumbra_metrics']['predicted_in_penumbra_ratio'] \
@@ -224,7 +194,7 @@ def evaluate_recanalised_subgroup(Model_Generator, data_set, recanalisation_stat
 
     return results
 
-def recanalisation_evaluation_launcher(model_name, Model_Generator, data_set, recanalisation_status_path, output_dir,
+def subgroup_evaluation_launcher(model_name, Model_Generator, data_set, selected_indexes, output_dir,
                                        receptive_field_dimensions, feature_scaling, pre_smoothing):
     def saveGenerator(output_dir, model_name):
         def save(results, trained_models, figures):
@@ -251,7 +221,7 @@ def recanalisation_evaluation_launcher(model_name, Model_Generator, data_set, re
         return save
     save_function = saveGenerator(output_dir, model_name)
 
-    results = evaluate_recanalised_subgroup(Model_Generator, data_set, recanalisation_status_path, output_dir,
+    results = evaluate_subgroup(Model_Generator, data_set, selected_indexes, output_dir,
                                   save_function, receptive_field_dimensions, feature_scaling, pre_smoothing)
 
     accuracy = np.median(results['test_accuracy'])
