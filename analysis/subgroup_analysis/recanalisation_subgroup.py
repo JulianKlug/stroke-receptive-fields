@@ -8,9 +8,13 @@ from voxelwise.vxl_glm.LogReg_glm import LogReg_glm
 from voxelwise.vxl_threshold.Campbell_model import Campbell_Model_Generator
 from voxelwise.vxl_threshold.customThresh  import customThreshold_Model_Generator
 
-data_dir = '/home/klug/data/working_data/all_2016_2017'
+# data_dir = '/home/klug/data/working_data/all_2016_2017'
+# main_save_dir = os.path.join(data_dir, 'recanalised_subgroup_analysis')
+# recanalisation_status_path = '/home/klug/data/clinical_data/all_2016_2017/recanalisation_status.xlsx'
+data_dir = '/Users/julian/stroke_research/data/all2016_dataset'
 main_save_dir = os.path.join(data_dir, 'recanalised_subgroup_analysis')
-recanalisation_status_path = '/home/klug/data/clinical_data/all_2016_2017/recanalisation_status.xlsx'
+recanalisation_status_path = '/Users/julian/OneDrive - unige.ch/stroke_research/article/data/clinical_data_all_2016_2017/included_subjects_data_23072019/recanalisation_status.xlsx'
+
 
 data_set = data_loader.load_saved_data(data_dir)
 clinical_inputs, ct_inputs, ct_lesion_GT, mri_inputs, mri_lesion_GT, brain_masks, ids, param = data_set

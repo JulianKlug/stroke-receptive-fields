@@ -167,7 +167,7 @@ rf_comp_results_df = pd.DataFrame(comparative_results_array, columns = rf_comp_d
 
 # Compare modalities to best (Tmax0_logRegGLM at rf3)
 modality_comp_df_columns = ['model','rf', 'model_result', 'ref_model_result', 'Pval', 'compared_variable', 'reference_rf3_model']
-reference_rf3_model_results = np.squeeze(np.array([k for k in all_results_array if k[1,0] == 3 and 'Tmax0_logReg' in k[0,0]]))
+reference_rf3_model_results = np.squeeze(np.array([k for k in all_results_array if k[1,0] == 0 and 'continuous_Tmax' in k[0,0]]))
 rf_3_model_results = np.array([k for k in all_results_array if k[1,0] == 3])
 # rf_3_model_results = np.array([k for k in all_results_array])
 
