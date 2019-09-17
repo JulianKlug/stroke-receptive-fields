@@ -5,9 +5,9 @@ import os, timeit, traceback, torch
 import numpy as np
 import matplotlib.pyplot as plt
 from email_notification import NotificationSystem
-from cv_framework import repeated_kfold_cv
-from figures.train_test_evaluation import wrapper_plot_train_evaluation
-from figures.plot_ROC import plot_roc
+from .cv_framework import repeated_kfold_cv
+from voxelwise.figures.train_test_evaluation import wrapper_plot_train_evaluation
+from voxelwise.figures.plot_ROC import plot_roc
 
 notification_system = NotificationSystem()
 
