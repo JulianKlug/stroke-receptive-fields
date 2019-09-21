@@ -2,6 +2,7 @@ import os
 from cv2 import GaussianBlur
 import numpy as np
 import nibabel as nib
+from sklearn.preprocessing import StandardScaler
 
 def gaussian_smoothing(data, kernel_shape = (5, 5)):
     '''
@@ -72,3 +73,15 @@ def rescale_outliers(imgX, MASKS):
                 imgX[i, ..., 0] = imgX[i, ..., channel] / 10
 
     return imgX
+
+
+def standardise(imgX, clinX):
+    original_shape = imgX.shape
+    imgX = imgX.reshape(-1, imgX.shape[-1])
+    scaler = StandardScaler(copy = False)
+    rescaled_imgX = scaler.fit_transform(imgX).reshape(original_shape)
+    if clinX is not None:
+        rescaled_clinX = scaler.fit_transform(clinX)
+    else:
+        rescaled_clinX = clinX
+    return rescaled_imgX, rescaled_clinX

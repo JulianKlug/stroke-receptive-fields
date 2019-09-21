@@ -1,9 +1,9 @@
 import numpy as np
 from sklearn.metrics import roc_curve
 from scipy.ndimage.morphology import binary_closing, binary_erosion, binary_dilation
-from vxl_threshold.Threshold_Model import Threshold_Model
-from scoring_utils import cutoff_youdens_j
-from channel_normalisation import normalise_channel_by_Tmax4, normalise_channel_by_contralateral
+from .Threshold_Model import Threshold_Model
+from voxelwise.scoring_utils import cutoff_youdens_j
+from voxelwise.channel_normalisation import normalise_channel_by_Tmax4, normalise_channel_by_contralateral
 
 class Campbell_threshold():
     '''

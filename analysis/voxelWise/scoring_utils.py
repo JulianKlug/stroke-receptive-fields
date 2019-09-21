@@ -52,6 +52,10 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
     image_wise_hausdorff = []
     image_wise_modified_hausdorff = []
     image_wise_dice = []
+    image_wise_roc_auc = []
+    image_wise_fpr = []
+    image_wise_tpr = []
+    image_wise_roc_thresholds = []
     # figure for visual evaluation
 
     plt.switch_backend('agg')
@@ -73,6 +77,12 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
         subj_image_wise_probas = probas_[vxl_index : vxl_index + subj_n_vxl]
         subj_image_wise_y_test = y_test[vxl_index : vxl_index + subj_n_vxl]
         vxl_index += subj_n_vxl
+
+        img_fpr, img_tpr, img_roc_thresholds = roc_curve(subj_image_wise_y_test, subj_image_wise_probas[:])
+        image_wise_roc_auc.append(auc(img_fpr, img_tpr))
+        image_wise_fpr.append(img_fpr)
+        image_wise_tpr.append(img_tpr)
+        image_wise_roc_thresholds.append(img_roc_thresholds)
 
         # Record predicted volume (GT volume can be derived from predicted volume and delta)
         thresholded_predicted_volume_vox.append(np.sum(subj_image_wise_probas >= threshold))
@@ -119,6 +129,10 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
         'image_wise_hausdorff': image_wise_hausdorff,
         'image_wise_modified_hausdorff': image_wise_modified_hausdorff,
         'image_wise_dice': image_wise_dice,
+        'image_wise_roc_auc': image_wise_roc_auc,
+        'image_wise_fpr': image_wise_fpr,
+        'image_wise_tpr': image_wise_tpr,
+        'image_wise_roc_thresholds': image_wise_roc_thresholds,
         'figure': figure
         }
 

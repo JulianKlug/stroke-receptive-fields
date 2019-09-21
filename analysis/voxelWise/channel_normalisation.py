@@ -1,5 +1,5 @@
 import numpy as np
-from dimension_utils import reconstruct_image
+from voxelwise.dimension_utils import reconstruct_image
 
 
 def normalise_channel_by_Tmax4(all_channel_data, data_positions, channel):

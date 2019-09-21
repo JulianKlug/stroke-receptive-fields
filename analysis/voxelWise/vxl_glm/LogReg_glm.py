@@ -1,6 +1,4 @@
-import os
-import numpy as np
-from vxl_glm.Glm import Glm
+from .Glm import Glm
 from sklearn import linear_model
 
 model = linear_model.LogisticRegression(verbose = 0, max_iter = 1000000000, n_jobs = -1)

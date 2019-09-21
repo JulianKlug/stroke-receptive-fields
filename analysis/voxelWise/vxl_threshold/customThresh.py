@@ -1,8 +1,8 @@
 import numpy as np
 from sklearn.metrics import roc_curve
 
-from vxl_threshold.Threshold_Model import Threshold_Model
-from scoring_utils import cutoff_youdens_j
+from .Threshold_Model import Threshold_Model
+from voxelwise.scoring_utils import cutoff_youdens_j
 
 class custom_threshold():
     def __init__(self, rf, fixed_threshold, inverse_relation):
