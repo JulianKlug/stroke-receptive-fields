@@ -5,7 +5,7 @@ import os, timeit, traceback, torch
 import numpy as np
 import matplotlib.pyplot as plt
 from email_notification import NotificationSystem
-from .cv_framework import repeated_kfold_cv
+from voxelwise.cv_framework import repeated_kfold_cv
 from voxelwise.figures.train_test_evaluation import wrapper_plot_train_evaluation
 from voxelwise.figures.plot_ROC import plot_roc
 
@@ -117,11 +117,12 @@ def launch_cv(model_name, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, IDS,
         raise
 
 def rf_hyperopt(model_name, Model_Generator, IN, OUT, CLIN, MASKS, IDS,
-                feature_scaling, pre_smoothing, channels_to_normalise, undef_normalisation,
+                feature_scaling, pre_smoothing, channels_to_normalise, undef_normalisation, flat_rf,
                 n_repeats, n_folds, main_save_dir, main_output_dir, rf_hp_start, rf_hp_end):
     print('Running Hyperopt of rf in range:', rf_hp_start, rf_hp_end)
     for rf in range(rf_hp_start, rf_hp_end):
         rf_dim = [rf, rf, rf]
+        if flat_rf: rf_dim = [rf, rf, 0]
         model_id = model_name + '_rf_' + str(rf)
         launch_cv(model_id, Model_Generator, rf_dim, IN, OUT, CLIN, MASKS, IDS,
                   feature_scaling, pre_smoothing, channels_to_normalise, undef_normalisation,
