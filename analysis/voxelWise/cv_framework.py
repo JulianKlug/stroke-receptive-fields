@@ -3,11 +3,11 @@ sys.path.insert(0, '../')
 from sklearn.model_selection import train_test_split, KFold
 import numpy as np
 from sampling_utils import get_undersample_selector_array
-import receptiveField as rf
-from scoring_utils import evaluate
+import voxelwise.receptiveField as rf
+from voxelwise.scoring_utils import evaluate
 from utils import gaussian_smoothing, rescale_outliers, standardise
-from penumbra_evaluation import penumbra_match
-from channel_normalisation import normalise_channel_by_contralateral
+from voxelwise.penumbra_evaluation import penumbra_match
+from voxelwise.channel_normalisation import normalise_channel_by_contralateral
 
 def repeated_kfold_cv(Model_Generator, save_dir, save_function,
             input_data_array, output_data_array, clinical_input_array = None, mask_array = None, id_array = None,

@@ -39,7 +39,7 @@ pre_smoothing = False
 channels_to_normalise = False
 
 # Add a normalization term to account for the number of voxels outside the defined brain ct_inputs a receptive field
-undef_normalisation = True
+undef_normalisation = False
 
 # Model_Generator = RAPID_Model_Generator(ct_inputs.shape, feature_scaling, threshold='train', post_smoothing=True)
 # Model_Generator = Campbell_Model_Generator(ct_inputs.shape, feature_scaling, pre_smoothing)

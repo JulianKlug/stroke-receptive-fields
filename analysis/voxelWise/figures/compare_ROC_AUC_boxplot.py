@@ -63,6 +63,8 @@ def wrapper_plot_auc_roc_boxplot(modality_dirs):
                     # this should be the same as glm(Tmax) at rf0
                     model_class = 'Tmax > t'
                     continue
+                if 'continuous_Tmax' in model_name:
+                    model_class = 'g(Tmax)'
                 if 'CBV' in model_name:
                     model_class = 'glm(CBV)'
                 if 'norm_CBV' in model_name:
@@ -108,7 +110,7 @@ def wrapper_plot_auc_roc_boxplot(modality_dirs):
     fig.tight_layout()
     fig1 = plt.gcf()
     plt.show()
-    fig1.savefig("/Users/julian/stroke_research/all_2016_2017_results/roc_auc_boxplot.svg", format="svg")
+    fig1.savefig("/Users/julian/stroke_research/all_2016_2017_results/roc_auc_boxplot_all.svg", format="svg")
 
     fig, ax = plt.subplots()
     axes = boxplot_sorted(scores_df, by=["model_tag"], column="dice", hue='rf', ax=ax)
@@ -121,7 +123,7 @@ def wrapper_plot_auc_roc_boxplot(modality_dirs):
     fig.tight_layout()
     fig1 = plt.gcf()
     plt.show()
-    fig1.savefig("/Users/julian/stroke_research/all_2016_2017_results/dice_boxplot.svg", format="svg")
+    fig1.savefig("/Users/julian/stroke_research/all_2016_2017_results/dice_boxplot_all.svg", format="svg")
 
 main_dir = '/Users/julian/stroke_research/all_2016_2017_results/selected_models'
 multiGLM = os.path.join(main_dir, 'all_pCT_logReg')
@@ -131,6 +133,7 @@ CBF = os.path.join(main_dir, 'CBF1_logReg')
 CBV = os.path.join(main_dir, 'CBV3_logReg')
 Tresh_Tmax = os.path.join(main_dir, 'Tmax_threshold')
 Campbell_model = os.path.join(main_dir, 'Campbell_model')
+continuous_Tmax = os.path.join(main_dir, 'continuous_Tmax')
 
 # wrapper_plot_auc_roc_boxplot([Tresh_Tmax, Tmax])
-wrapper_plot_auc_roc_boxplot([multiGLM, MTT, Tmax, CBF, CBV, Tresh_Tmax, Campbell_model])
+wrapper_plot_auc_roc_boxplot([multiGLM, MTT, Tmax, CBF, CBV, Tresh_Tmax, Campbell_model, continuous_Tmax])

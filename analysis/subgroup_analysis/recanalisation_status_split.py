@@ -13,9 +13,9 @@ def split_dataset(data_set, recanalisation_status_path):
         index = np.where(ids == row['anonymised_id'])[0]
         if index.size == 0: continue
         index = index[0]
-        if row['Recanalized'] == 1:
+        if row['iat_recanalized'] == 1:
             recanalised_indexes.append(index)
-        elif row['Recanalized'] == 0:
+        elif row['iat_recanalized'] == 0:
             non_recanalised_indexes.append(index)
         else:
             unknown_status_indexes.append(index)
