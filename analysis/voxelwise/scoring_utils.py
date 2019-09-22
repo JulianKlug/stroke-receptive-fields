@@ -32,6 +32,7 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
 
     # threshold chosen to evaluate binary metrics of model
     threshold = model_threshold
+    if np.isnan(threshold): threshold = 0.5
     print('Using threshold', str(threshold), 'for evaluation.')
     # get optimal cutOff on test data
     test_threshold = cutoff_youdens_j(fpr, tpr, roc_thresholds)
