@@ -41,14 +41,17 @@ channels_to_normalise = False
 # Add a normalization term to account for the number of voxels outside the defined brain ct_inputs a receptive field
 undef_normalisation = False
 
+# Use a flat receptive field (flat in z) - [rf_x, rf_y, 0]
+flat_rf = True
+
 # Model_Generator = RAPID_Model_Generator(ct_inputs.shape, feature_scaling, threshold='train', post_smoothing=True)
 # Model_Generator = Campbell_Model_Generator(ct_inputs.shape, feature_scaling, pre_smoothing)
-Model_Generator = Normalized_marker_Model_Generator(ct_inputs.shape, feature_scaling, normalisation_mode = 0, inverse_relation = False)
-# Model_Generator = LogReg_glm
+# Model_Generator = Normalized_marker_Model_Generator(ct_inputs.shape, feature_scaling, normalisation_mode = 0, inverse_relation = False)
+Model_Generator = LogReg_glm
 
-model_name = 'continuous_Tmax0'
-rf_hp_start = 0
-rf_hp_end = 1
+model_name = 'flat_Tmax0_glm'
+rf_hp_start = 1
+rf_hp_end = 2
 rf_hyperopt(model_name, Model_Generator, ct_inputs, ct_label, clinical_inputs, brain_masks, ids,
-            feature_scaling, pre_smoothing, channels_to_normalise, undef_normalisation,
+            feature_scaling, pre_smoothing, channels_to_normalise, undef_normalisation, flat_rf,
                 n_repeats, n_folds, main_save_dir, main_output_dir, rf_hp_start, rf_hp_end)
