@@ -97,6 +97,10 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
         'test_image_wise_hausdorff': [],
         'test_image_wise_modified_hausdorff': [],
         'test_image_wise_dice': [],
+        'test_image_wise_roc_auc': [],
+        'test_image_wise_fpr': [],
+        'test_image_wise_tpr': [],
+        'test_image_wise_roc_thresholds': [],
         'evaluation_thresholds': [],
         'optimal_thresholds_on_test_data': [],
         'test_penumbra_metrics': {
@@ -197,6 +201,10 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
                 results['test_image_wise_hausdorff'].append(fold_result['image_wise_hausdorff'])
                 results['test_image_wise_modified_hausdorff'].append(fold_result['image_wise_modified_hausdorff'])
                 results['test_image_wise_dice'].append(fold_result['image_wise_dice'])
+                results['test_image_wise_roc_auc'].append(fold_result['image_wise_roc_auc'])
+                results['test_image_wise_fpr'].append(fold_result['image_wise_fpr'])
+                results['test_image_wise_tpr'].append(fold_result['image_wise_tpr'])
+                results['test_image_wise_roc_thresholds'].append(fold_result['image_wise_roc_thresholds'])
                 results['train_evals'].append(fold_result['train_evals'])
                 if not (fold_result['penumbra_metrics'] is None):
                     results['test_penumbra_metrics']['predicted_in_penumbra_ratio']\
