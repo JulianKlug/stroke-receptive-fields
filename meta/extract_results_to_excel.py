@@ -2,9 +2,10 @@ import os, torch
 import pandas as pd
 import numpy as np
 from scipy.stats import wilcoxon
+from scipy.stats import mannwhitneyu
 
-main_dir = '/Users/julian/stroke_research/all_2016_2017_results/selected_models'
-output_dir = '/Users/julian/stroke_research/all_2016_2017_results/selected_models'
+main_dir = '/Users/julian/temp/reca_vs_non_reca'
+output_dir = '/Users/julian/temp/reca_vs_non_reca'
 
 columns = ['model','rf', 'test_roc_auc', 'test_image_wise_dice', 'test_image_wise_hausdorff',
 'test_accuracy', 'test_f1', 'test_jaccard', 'test_thresholded_volume_deltas', 'test_unthresholded_volume_deltas', 'test_image_wise_error_ratios', 'evaluation_thresholds']
@@ -55,8 +56,9 @@ for modality in modalites[0:]:
             current_all_list = np.concatenate((
                 np.repeat(model_name, n_runs).reshape(1, n_runs),
                 np.repeat(rf, n_runs).reshape(1, n_runs),
-                [np.array(results[i]) if i in results else np.repeat(np.nan, n_runs) for i in columns[2:]]
+                [np.squeeze(np.array(results[i])) if i in results else np.repeat(np.nan, n_runs) for i in columns[2:]]
                 ))
+
 
             # make sure all result lists have the same size by filling up with nan
             max_runs = 50
@@ -64,6 +66,12 @@ for modality in modalites[0:]:
             all_list[:] = np.nan
             all_list[:, : n_runs] = current_all_list
 
+            # coerce all variables to np arrays and floats
+            for selector in range(1, all_list.shape[0]):
+                if type(all_list[selector][0]) == list or isinstance(all_list[selector][0], np.ndarray):
+                    all_list[selector] = np.array([np.array(subL).astype(float) for subL in all_list[selector]])
+                else :
+                    all_list[selector] = all_list[selector].astype(float)
 
             try:
                 all_results_array
@@ -165,9 +173,12 @@ comparative_results_array = np.concatenate((comparative_results_array,
                 ]])))
 rf_comp_results_df = pd.DataFrame(comparative_results_array, columns = rf_comp_df_columns)
 
+for k in all_results_array:
+    print(k[0, 0], k[1,0], type(k[1,0]), int(k[1,0]) == 3, k[2,0], type(k[2,0]))
+
 # Compare modalities to best (Tmax0_logRegGLM at rf3)
 modality_comp_df_columns = ['model','rf', 'model_result', 'ref_model_result', 'Pval', 'compared_variable', 'reference_rf3_model']
-reference_rf3_model_results = np.squeeze(np.array([k for k in all_results_array if k[1,0] == 0 and 'continuous_Tmax' in k[0,0]]))
+reference_rf3_model_results = np.squeeze(np.array([k for k in all_results_array if k[1,0] == 3 and 'non_recanalised_multi' in k[0,0]]))
 rf_3_model_results = np.array([k for k in all_results_array if k[1,0] == 3])
 # rf_3_model_results = np.array([k for k in all_results_array])
 
@@ -178,6 +189,9 @@ for rf_3_model_result in rf_3_model_results:
     compared_variable_index = 2
     print('Comparing modality with', columns[compared_variable_index], 'for', rf_3_model_result[0,0])
     t, p = wilcoxon(flatten(rf_3_model_result[compared_variable_index]), flatten(reference_rf3_model_results[compared_variable_index]))
+
+    # For separate populations
+    # t, p = mannwhitneyu(flatten(rf_3_model_result[compared_variable_index]), flatten(reference_rf3_model_results[compared_variable_index]))
     modality_comp_list = [[model_base,
         rf_3_model_result[1,0],
         np.mean(flatten(rf_3_model_result[compared_variable_index])),

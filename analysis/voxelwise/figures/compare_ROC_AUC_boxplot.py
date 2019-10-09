@@ -23,7 +23,7 @@ def boxplot_sorted(df, by, column, rot=0, ax=None, hue=None):
         ax = ax, dodge = False, palette="Pastel2")
 
 columns = ['model_name', 'rf', 'model_class', 'model_tag', 'roc_auc', 'dice']
-def wrapper_plot_auc_roc_boxplot(modality_dirs):
+def wrapper_plot_auc_roc_boxplot(modality_dirs, save_dir):
     scores_df = pd.DataFrame(columns = columns)
 
     for modality_dir in modality_dirs[:]:
@@ -110,7 +110,7 @@ def wrapper_plot_auc_roc_boxplot(modality_dirs):
     fig.tight_layout()
     fig1 = plt.gcf()
     plt.show()
-    fig1.savefig("/Users/julian/stroke_research/all_2016_2017_results/roc_auc_boxplot_all.svg", format="svg")
+    fig1.savefig(os.path.join(save_dir, "roc_auc_boxplot_all.svg"), format="svg")
 
     fig, ax = plt.subplots()
     axes = boxplot_sorted(scores_df, by=["model_tag"], column="dice", hue='rf', ax=ax)
@@ -123,17 +123,17 @@ def wrapper_plot_auc_roc_boxplot(modality_dirs):
     fig.tight_layout()
     fig1 = plt.gcf()
     plt.show()
-    fig1.savefig("/Users/julian/stroke_research/all_2016_2017_results/dice_boxplot_all.svg", format="svg")
+    fig1.savefig(os.path.join(save_dir, "dice_boxplot_all.svg"), format="svg")
 
-main_dir = '/Users/julian/stroke_research/all_2016_2017_results/selected_models'
+main_dir = '/Users/julian/temp/boxplot_figure'
 multiGLM = os.path.join(main_dir, 'all_pCT_logReg')
 MTT = os.path.join(main_dir, 'MTT2_logReg')
 Tmax = os.path.join(main_dir, 'Tmax0_logReg')
 CBF = os.path.join(main_dir, 'CBF1_logReg')
 CBV = os.path.join(main_dir, 'CBV3_logReg')
-Tresh_Tmax = os.path.join(main_dir, 'Tmax_threshold')
-Campbell_model = os.path.join(main_dir, 'Campbell_model')
+# Tresh_Tmax = os.path.join(main_dir, 'Tmax_threshold')
+# Campbell_model = os.path.join(main_dir, 'Campbell_model')
 continuous_Tmax = os.path.join(main_dir, 'continuous_Tmax')
 
 # wrapper_plot_auc_roc_boxplot([Tresh_Tmax, Tmax])
-wrapper_plot_auc_roc_boxplot([multiGLM, MTT, Tmax, CBF, CBV, Tresh_Tmax, Campbell_model, continuous_Tmax])
+wrapper_plot_auc_roc_boxplot([multiGLM, MTT, Tmax, CBF, CBV, continuous_Tmax], main_dir)
