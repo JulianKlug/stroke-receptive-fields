@@ -9,9 +9,10 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/master/data/maskCSF_test2';
+data_path = '/Users/julian/stroke_research/brain_and_donuts/data/multi_subj/extracted_angio_data';
 spm_path = '/Users/julian/Documents/MATLAB/spm12';
 do_not_recalculate = false; 
+with_angio = true;
 
 script_path = mfilename('fullpath');
 script_folder = script_path(1 : end - size(mfilename, 2));
@@ -50,6 +51,7 @@ sequences = {
     'Tmax'
     };
 
+angio_ct_name = 'betted_Angio_CT_075_Qr40_3_A_90kV';
 csf_mask_name = 'CSF_mask.nii';
 
 % Base image to co-register to
@@ -104,8 +106,19 @@ for i = 1: numel ( subjects )
     for j = 1: numel(sequences)
         input{end + 1} = fullfile(data_path, subjects{i}, modality, ...
                             strcat('coreg_', sequences{j}, '_' ,subjects{i}, '.nii'));
-
     end
+    
+    if with_angio
+       angio_file_list = dir(fullfile(data_path, subjects{i}, modality, ...
+                            strcat(angio_ct_name, '_' ,subjects{i}, '.nii*')));
+       angio_file = fullfile(data_path, subjects{i}, modality, angio_file_list(1).name);
+       [filepath,name,ext] = fileparts(angio_file);
+        if strcmp(ext, '.gz') 
+            gunzip(angio_file);
+            angio_file = angio_file(1: end - 3);
+        end
+        input{end + 1} = angio_file
+    end 
 
     % Coregister CSF mask of betted image to template as well
     csf_mask_list = dir(fullfile(base_image_dir, subjects{i}, modality, ...

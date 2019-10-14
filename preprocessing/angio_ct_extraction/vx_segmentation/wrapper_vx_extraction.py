@@ -1,11 +1,12 @@
 import os
 import subprocess
-from brain_extraction import extract_brain
 
-main_dir = '/Users/julian/stroke_research/brain_and_donuts/data/multi_subj/nifti_extracted_initial_data'
+extract_vx_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'extract_vx.sh')
+
+
+main_dir = '/Users/julian/stroke_research/brain_and_donuts/data/multi_subj/extracted_angio_data'
 data_dir = os.path.join(main_dir, '')
 
-spc_start = 'SPC_301mm'
 # Find default Angio file, no MIP projection
 angio_start = 'Angio_CT_075'
 
@@ -23,13 +24,11 @@ for subject in subjects:
                         if os.path.isfile(os.path.join(modality_dir,o))]
 
         if modality.startswith('pCT'):
-            spc_files = [i for i in os.listdir(modality_dir) if os.path.isfile(os.path.join(modality_dir, i)) and i.startswith(spc_start) and i.endswith('.nii')]
-            angio_files = [i for i in os.listdir(modality_dir) if os.path.isfile(os.path.join(modality_dir, i)) and i.startswith(angio_start) and i.endswith('.nii')]
-
-            if len(spc_files) != 1:
-                raise Exception('No SPC file found / or collision', subject, spc_files)
+            angio_files = [i for i in os.listdir(modality_dir)
+                                if os.path.isfile(os.path.join(modality_dir, i))
+                                    and i.startswith('wbetted_' + angio_start) and i.endswith('.nii')]
             if len(angio_files) != 1:
                 raise Exception('No Angio file found / or collision', subject, angio_files)
 
-            print('Extracting for', subject)
-            extract_brain(angio_files[0], spc_files[0], modality_dir)
+            print('Extracting Vessels for', subject)
+            subprocess.run([extract_vx_path, '-i', angio_files[0]], cwd = modality_dir)

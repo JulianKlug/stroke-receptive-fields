@@ -28,11 +28,7 @@ Verify clinical exclusion criteria:
 (Angio-CT):
 If Angio-CTs are used, in which the head has to be extracted from the half-body image, after which the skull has to be 
 stripped from the image.
-1. 
-- Use robustfov (FSL) to get FOV on head only
-- Use FLIRT with mutual Information (FSL) to coregister to SPC
-- Create Mask by skull stripping the SPC
-- Apply mask to angio
+1. angio_ct_extraction/brain_extract_wrapper.py : center FOV on head and extract brain only
 
 CT :
 
@@ -128,6 +124,19 @@ HD images are not warped to CT-MNI space, and can thus conserve the initial voxe
 [^2]: Manniesing R, Oei MTH, Oostveen LJ, Melendez J, Smit EJ, Platel B, et al. White Matter and Gray Matter Segmentation in 4D Computed Tomography. Scientific Reports. 2017 Mar 9;7(1):119. 
 
 [^3]: Rorden C, Bonilha L, Fridriksson J, Bender B, Karnath H-O. Age-specific CT and MRI templates for spatial normalization. Neuroimage. 2012;61(4):957-65.
+
+##### Optional Angio-CT Pre-Processing
+
+1. Brain-extraction [angio_ct_extraction/brain_extract_wrapper.py]
+    - Use robustfov (FSL) to get FOV on head only
+    - Use FLIRT with mutual Information (FSL) to coregister to SPC
+    - Create Mask by skull stripping the SPC
+    - Apply mask to angio
+    
+2. Co-registration and Normalization (see above)
+
+3. Blood vessel segmentation [angio_ct_extraction/wrapper_vx_extraction.py]
+    - Threshold masked image at 90 HU
 
 #### MRI Pre-processing
 

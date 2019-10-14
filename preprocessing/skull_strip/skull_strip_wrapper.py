@@ -1,10 +1,10 @@
 import os, subprocess
 from csf_segmentation import createCSFMask
 
-main_dir = '/Users/julian/temp/prepro'
+main_dir = '/Users/julian/stroke_research/brain_and_donuts/data/multi_subj/nifti_extracted_initial_data'
 data_dir = os.path.join(main_dir, '')
 skull_strip_path = os.path.join(os.getcwd(), 'skull_strip.sh')
-high_definition = True
+high_definition = False
 print(skull_strip_path)
 
 SPC_start = 'SPC'
