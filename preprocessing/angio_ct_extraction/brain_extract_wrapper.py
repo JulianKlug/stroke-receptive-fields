@@ -1,8 +1,7 @@
 import os
-import subprocess
-from brain_extraction import extract_brain
+import brain_extraction
 
-main_dir = '/Users/julian/stroke_research/brain_and_donuts/data/multi_subj/nifti_extracted_initial_data'
+main_dir = '/Users/julian/temp/extraction_bv40/trial1'
 data_dir = os.path.join(main_dir, '')
 
 spc_start = 'SPC_301mm'
@@ -32,4 +31,5 @@ for subject in subjects:
                 raise Exception('No Angio file found / or collision', subject, angio_files)
 
             print('Extracting for', subject)
-            extract_brain(angio_files[0], spc_files[0], modality_dir)
+            brain_extraction.align_FOV(angio_files[0], spc_files[0], modality_dir)
+            brain_extraction.extract_brain(angio_files[0], spc_files[0], modality_dir)

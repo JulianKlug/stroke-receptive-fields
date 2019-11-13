@@ -25,11 +25,6 @@ Verify clinical exclusion criteria:
 - other exclusion criteria: IAT before CT, no treatment received
     - extract_patient_characteristics.py: extract relevant patient characteristics from main excel database
 
-(Angio-CT):
-If Angio-CTs are used, in which the head has to be extracted from the half-body image, after which the skull has to be 
-stripped from the image.
-1. angio_ct_extraction/brain_extract_wrapper.py : center FOV on head and extract brain only
-
 CT :
 
 0. utils/resolve_RAPID_4D_maps: resolve RAPID maps with 4 dimensions
@@ -39,6 +34,20 @@ CT :
 1. skull_strip/skull_strip_wrapper.py : batch skull strip native CTs of multiple patients and segment CSF
 2. matlab/perfCT_coregistration_wrapper.m : coregister perfusion CT to betted native CT
 3. matlab/perfCT_normalisation_wrapper.m : normalise perfusion CT and native CT to CT_MNI
+
+(Angio-CT):
+If Angio-CTs are used, the head has to be extracted from the half-body image, after which the skull has to be 
+stripped from the image. Finally vessels are extracted. 
+
+Angio Sequence used is Angio_CT_075_Bv40 as the contrast between contrast agent and brain matter is greater
+
+0. Follow all Pre steps with the include_angio setting set to True (organise.py)
+1. Do the skull_strip step mentioned above for the rest of the CT --> CSF segmentation
+
+2. angio_ct_extraction/brain_extract_wrapper.py : center FOV on head and extract brain only (applies the priorly obtained CSF mask)
+3. angio_ct_extraction/vx_segmentation/wrapper_vx_extraction.py: extract only brain_vessels
+
+4. Do all the rest of CT processing from step 2 on with the with_angio option for the normalisation (see above)
 
 MRI :
 
@@ -57,6 +66,7 @@ At the same time the CSF_mask is integrated into the non-brain mask.
 
 HD images are not warped to CT-MNI space, and can thus conserve the initial voxel space.
 
+After running the whole CT and MRI preprocessing, run these steps again with the high_resolution setting
 - skull_strip_wrapper: with high_resolution = True
 - brain_mask: with high_resolution = True
 - mask_lesions: with high_resolution = True  
@@ -127,16 +137,18 @@ HD images are not warped to CT-MNI space, and can thus conserve the initial voxe
 
 ##### Optional Angio-CT Pre-Processing
 
+Angio Sequence used is Angio_CT_075_Bv40 as the contrast between contrast agent and brain matter is greater
+
 1. Brain-extraction [angio_ct_extraction/brain_extract_wrapper.py]
     - Use robustfov (FSL) to get FOV on head only
     - Use FLIRT with mutual Information (FSL) to coregister to SPC
     - Create Mask by skull stripping the SPC
     - Apply mask to angio
     
-2. Co-registration and Normalization (see above)
-
-3. Blood vessel segmentation [angio_ct_extraction/wrapper_vx_extraction.py]
+2. Blood vessel segmentation [angio_ct_extraction/wrapper_vx_extraction.py]
     - Threshold masked image at 90 HU
+    
+3. Co-registration and Normalization (see above)
 
 #### MRI Pre-processing
 

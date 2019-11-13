@@ -32,7 +32,7 @@ tmpfile=`mktemp`
 
 echo 'Extracting : '${img}
 
-# Thresholding Image to 0-100
+# Thresholding Image
 fslmaths "${img}" -thr 90.000000 -uthr 700.000000  "${outfile}"
 # Creating 0 - 100 mask to remask after filling
 fslmaths "${outfile}"  -bin   "${tmpfile}";

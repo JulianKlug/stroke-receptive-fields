@@ -8,7 +8,7 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/stroke_research/brain_and_donuts/data/multi_subj/nifti_extracted_initial_data';
+data_path = '/Users/julian/temp/extraction_bv40/trial1';
 spm_path = '/Users/julian/Documents/MATLAB/spm12';
 do_not_recalculate = true; 
 

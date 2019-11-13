@@ -1,9 +1,9 @@
 import os
 import subprocess
 
-main_dir = '/Users/julian/stroke_research/brain_and_donuts/data/multi_subj/'
-data_dir = os.path.join(main_dir, 'extracted_initial_data')
-output_dir = os.path.join(main_dir, 'nifti_extracted_initial_data')
+main_dir = '/Volumes/stroke_hdd1/temp/'
+data_dir = os.path.join(main_dir, 'all_angio')
+output_dir = os.path.join(main_dir, 'nifti_all_angio')
 dcm2niix_path = '/Users/julian/stroke_research/dcm2niix_11-Apr-2019_mac/dcm2niix'
 
 def move_lesion_files(search_dir, output_sub_dir):
@@ -34,7 +34,9 @@ def to_nii_batch_conversion(data_dir, output_dir):
                 study_output_dir = os.path.join(output_dir, subject, modality)
                 if not os.path.exists(study_output_dir):
                     os.makedirs(study_output_dir)
-                subprocess.run([dcm2niix_path, '-m', 'y', '-b', 'y', '-z', 'n',
+
+                if not os.path.exists(os.path.join(study_output_dir, study + '.nii')):
+                    subprocess.run([dcm2niix_path, '-m', 'y', '-b', 'y', '-z', 'n',
                                     '-f', study, '-o', study_output_dir, study_dir], cwd = modality_dir)
             # search for lesion files at study level
             move_lesion_files(modality_dir, os.path.join(output_dir, subject))

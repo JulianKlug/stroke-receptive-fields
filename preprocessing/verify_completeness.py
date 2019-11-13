@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 
-data_dir = '/Users/julian/stroke_research/brain_and_donuts/data/multi_subj/extracted_initial_data'
+data_dir = '/Volumes/stroke_hdd1/temp/nifti_all_angio'
 
 def verify_completeness_nifti(data_dir):
     subject_folders = [o for o in os.listdir(data_dir)
@@ -129,4 +129,4 @@ def verify_completeness_dcm(data_dir):
     return bool(all_complete)
 
 if __name__ == "__main__":
-    verify_completeness_dcm(data_dir)
+    verify_completeness_nifti(data_dir)

@@ -3,7 +3,7 @@ import nibabel as nib
 import numpy as np
 from scipy.ndimage.morphology import binary_closing, binary_erosion, binary_dilation
 
-def createCSFMask(data_dir, betted_spc_name, output_name = 'CSF_mask'):
+def createCSFMask(data_dir, betted_spc_name, output_csf_name = 'CSF_mask', output_brain_name = 'brain_mask'):
     """
     Input: 
     - betted_spc_name: name of the original native CT file (SPC) that has been skull-stripped 
@@ -21,6 +21,8 @@ def createCSFMask(data_dir, betted_spc_name, output_name = 'CSF_mask'):
     img = nib.load(path)
     data = img.get_data()
     data[np.isnan(data)] = 0
+
+
     clipped_range_data = data[(data > 0) & (data < 40)]
     # intensity threshold μ − 1.96σ
     CSF_threshold = np.mean(clipped_range_data) - 1.96 * np.std(clipped_range_data)
@@ -34,8 +36,20 @@ def createCSFMask(data_dir, betted_spc_name, output_name = 'CSF_mask'):
 
     CSF_mask = binary_closing(CSF_mask, np.ones((4,4,4), dtype=np.int))
 
+    # remove territories that were added excessively through closing (image borders)
+    CSF_mask[:3, :, :] = 1
+    CSF_mask[-3:, :, :] = 1
+    CSF_mask[:, :3, :] = 1
+    CSF_mask[:, -3:, :] = 1
+    CSF_mask[:, :, :3] = 1
+    CSF_mask[:, :, -3:] = 1
+
+    brain_mask = -1 * CSF_mask + 1
+
     coordinate_space = img.affine
     image_extension = '.nii'
     # MATLAB can not open NIFTI saved as int, thus float is necessary
-    labeled_img = nib.Nifti1Image(CSF_mask.astype('float64'), affine=coordinate_space)
-    nib.save(labeled_img, os.path.join(data_dir,  output_name + image_extension))
+    labeled_csf_mask = nib.Nifti1Image(CSF_mask.astype('float64'), affine=coordinate_space)
+    labeled_brain_mask = nib.Nifti1Image(brain_mask.astype('float64'), affine=coordinate_space)
+    nib.save(labeled_csf_mask, os.path.join(data_dir,  output_csf_name + image_extension))
+    nib.save(labeled_brain_mask, os.path.join(data_dir,  output_brain_name + image_extension))

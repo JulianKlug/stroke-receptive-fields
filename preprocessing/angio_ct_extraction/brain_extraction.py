@@ -1,8 +1,7 @@
 import os
 import subprocess
 
-def extract_brain(image_to_bet, no_contrast_anatomical, data_dir):
-    output_path = os.path.join(data_dir, 'betted_' + image_to_bet)
+def align_FOV(image_to_bet, no_contrast_anatomical, data_dir):
 
     # Use robustfov (FSL) to get FOV on head only
     print('Setting FOV')
@@ -20,12 +19,20 @@ def extract_brain(image_to_bet, no_contrast_anatomical, data_dir):
         '-bins', '256', '-cost', 'mutualinfo', '-searchrx', '-90', '90', '-searchry', '-90', '90', '-searchrz', '-90', '90', '-dof', '12', '-interp', 'trilinear'
     ], cwd = data_dir)
 
-    print('Removing skull of', no_contrast_anatomical)
-    skull_strip_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'skull_strip.sh')
-    subprocess.run([skull_strip_path, '-i', no_contrast_anatomical], cwd = data_dir)
+def extract_brain(image_to_bet, no_contrast_anatomical, data_dir, brain_mask=True):
+    output_path = os.path.join(data_dir, 'betted_' + image_to_bet)
+    coreg_name = 'coreg_crp_' + image_to_bet + '.gz'
+    coreg_path = os.path.join(data_dir, coreg_name)
+
+    if not brain_mask:
+        print('Removing skull of', no_contrast_anatomical)
+        skull_strip_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'skull_strip.sh')
+        subprocess.run([skull_strip_path, '-i', no_contrast_anatomical], cwd = data_dir)
+        mask_path = os.path.join(data_dir, 'betted_' + no_contrast_anatomical + '_Mask.nii.gz')
+    else:
+        mask_path = os.path.join(data_dir, 'brain_mask.nii')
 
     print('Applying mask')
-    mask_path = os.path.join(data_dir, 'betted_' + no_contrast_anatomical + '_Mask.nii.gz')
     subprocess.run([
         'fslmaths', coreg_path, '-mas', mask_path, output_path
     ], cwd = data_dir)

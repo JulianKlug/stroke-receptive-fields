@@ -1,10 +1,10 @@
 import os, subprocess
 from csf_segmentation import createCSFMask
 
-main_dir = '/Users/julian/stroke_research/brain_and_donuts/data/multi_subj/nifti_extracted_initial_data'
+main_dir = '/Users/julian/temp/extraction_bv40/trial1'
 data_dir = os.path.join(main_dir, '')
 skull_strip_path = os.path.join(os.getcwd(), 'skull_strip.sh')
-high_definition = False
+high_definition = True
 print(skull_strip_path)
 
 SPC_start = 'SPC'
@@ -34,4 +34,4 @@ for subject in subjects:
 
                 subprocess.run([skull_strip_path, '-i', study], cwd = modality_dir)
 
-                createCSFMask(modality_dir, 'betted_' + study + '.gz', output_name = CSF_mask_name)
+                createCSFMask(modality_dir, 'betted_' + study + '.gz', output_csf_name = CSF_mask_name)
