@@ -45,7 +45,7 @@ Angio Sequence used is Angio_CT_075_Bv40 as the contrast between contrast agent 
 1. Do the skull_strip step mentioned above for the rest of the CT --> CSF segmentation
 
 2. angio_ct_extraction/brain_extract_wrapper.py : center FOV on head and extract brain only (applies the priorly obtained CSF mask)
-3. angio_ct_extraction/vx_segmentation/wrapper_vx_extraction.py: extract only brain_vessels
+3. angio_ct_extraction/vx_segmentation/wrapper_vx_extraction.py: extract only brain_vessels (hessian vesselness)
 
 4. Do all the rest of CT processing from step 2 on with the with_angio option for the normalisation (see above)
 
