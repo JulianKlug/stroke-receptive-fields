@@ -10,6 +10,7 @@ def brain_extract_wrapper(data_dir, reverse_reading):
 
     error_log_columns = ['subject', 'message', 'excluded']
     error_log_df = pd.DataFrame(columns=error_log_columns)
+    timestamp = str(time.time()).split('.')[0]
 
     subjects = [o for o in os.listdir(data_dir)
                     if os.path.isdir(os.path.join(data_dir,o))]
@@ -58,7 +59,7 @@ def brain_extract_wrapper(data_dir, reverse_reading):
                 brain_extraction.align_FOV(angio_files[0], spc_files[0], modality_dir)
                 brain_extraction.extract_brain(angio_files[0], spc_files[0], modality_dir)
 
-    error_log_df.to_excel(os.path.join(data_dir, 'brain_extraction_error_log' + str(time.time()).split('.')[0] + '.xlsx'))
+                error_log_df.to_excel(os.path.join(data_dir, 'brain_extraction_error_log' + timestamp + '.xlsx'))
 
 
 
