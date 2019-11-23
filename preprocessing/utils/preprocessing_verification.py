@@ -1,19 +1,17 @@
-import os, sys
+import os, sys, argparse
 import nibabel as nib
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
-from naming_verification import loose_verify_name
+from naming_verification import loose_verify_name, loose_verify_start
 import numpy as np
 
 
-def visual_verification(data_dir):
+def visual_verification(data_dir, sequences=['wreor_SPC', 'wcoreg_CBF', 'wcoreg_t2', 'wcoreg_VOI']):
     subjects = [o for o in os.listdir(data_dir)
                 if os.path.isdir(os.path.join(data_dir, o))]
 
-    sequences = ['wreor_SPC', 'wcoreg_CBF', 'wcoreg_t2', 'wcoreg_VOI']
-
     plt.switch_backend('agg')
-    ncol = 10
+    ncol = len(sequences) + 2
     nrow = len(subjects) + 2
     figure = plt.figure(figsize=(ncol + 1, nrow + 1))
     gs = gridspec.GridSpec(nrow, ncol,
@@ -33,12 +31,13 @@ def visual_verification(data_dir):
         for modality in modalities:
             modality_dir = os.path.join(subject_dir, modality)
             studies = [o for o in os.listdir(modality_dir)
-                       if o.endswith(".nii")]
+                       if (o.endswith(".nii") or o.endswith(".nii.gz"))]
 
             for study in studies:
                 study_path = os.path.join(modality_dir, study)
 
-                if loose_verify_name(study, sequences):
+                # if loose_verify_name(study, sequences):
+                if loose_verify_start(study, sequences):
                     img = nib.load(study_path)
                     data = img.get_data()
                     tag = '-'.join(study.split('-')[0].split('_')[1:-1])
@@ -70,4 +69,8 @@ def visual_add(image, i_subj, i_image, gs, image_id=None):
 
 if __name__ == '__main__':
     path = sys.argv[1]
-    visual_verification(path)
+    parser = argparse.ArgumentParser(description='Display selected images of all subjects.')
+    parser.add_argument('input_folder')
+    parser.add_argument('--sequences', nargs='*')
+    args = parser.parse_args()
+    visual_verification(args.input_folder, args.sequences)

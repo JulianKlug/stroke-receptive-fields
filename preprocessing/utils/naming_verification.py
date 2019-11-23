@@ -11,3 +11,9 @@ def loose_verify_name(name_to_verify, name_range):
     for possible_sequence_name in name_range:
         if possible_sequence_name in name_to_verify:
             return True
+
+def loose_verify_start(name_to_verify, name_range):
+    for possible_sequence_name in name_range:
+        if name_to_verify.startswith(possible_sequence_name):
+            return True
+
