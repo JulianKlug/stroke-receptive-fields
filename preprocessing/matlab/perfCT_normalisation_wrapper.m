@@ -9,7 +9,7 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '//Users/julian/temp/extraction_kv90/newBET_kv90';
+data_path = '/Users/julian/temp/extraction_kv90/newBET_kv90';
 spm_path = '/Users/julian/Documents/MATLAB/spm12';
 do_not_recalculate = false; 
 with_angio = true;
@@ -51,10 +51,9 @@ sequences = {
     'Tmax'
     };
 
-angio_ct_name = 'extracted_betted_Angio_CT_075_Qr40_3_A_90kV';
-angio_ct_suffix = '.nii.gz_Mask';
-% angio_ct_name = 'extracted_betted_Angio_CT_075_Bv40';
-% angio_ct_suffix = '';
+angio_ct_name = 'filtered_extracted_betted_Angio_CT_075_Qr40_3_A_90kV';
+angio_mask_ct_name = 'mask_filtered_extracted_betted_Angio_CT_075_Qr40_3_A_90kV';
+angio_ct_suffix = '';
 csf_mask_name = 'CSF_mask.nii';
 
 % Base image to co-register to
@@ -113,14 +112,20 @@ for i = 1: numel ( subjects )
     
     if with_angio
        angio_file_list = dir(fullfile(data_path, subjects{i}, modality, ...
-                            strcat(angio_ct_name, '_' ,subjects{i}, angio_ct_suffix, '.nii*')));
+                            strcat(angio_ct_name, '_' ,subjects{i}, '*', angio_ct_suffix, '.nii*')));
        angio_file = fullfile(data_path, subjects{i}, modality, angio_file_list(1).name);
+       angio_mask_file_list = dir(fullfile(data_path, subjects{i}, modality, ...
+                            strcat(angio_mask_ct_name, '_' ,subjects{i}, '*', angio_ct_suffix, '.nii*')));
+       angio_mask_file = fullfile(data_path, subjects{i}, modality, angio_mask_file_list(1).name);
        [filepath,name,ext] = fileparts(angio_file);
         if strcmp(ext, '.gz') 
             gunzip(angio_file);
+            gunzip(angio_mask_file);
+            angio_mask_file = angio_mask_file(1: end - 3);
             angio_file = angio_file(1: end - 3);
         end
         input{end + 1} = angio_file
+        input{end + 1} = angio_mask_file
     end 
 
     % Coregister CSF mask of betted image to template as well
