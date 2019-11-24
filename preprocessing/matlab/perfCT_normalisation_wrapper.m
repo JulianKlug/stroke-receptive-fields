@@ -9,9 +9,9 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/temp/extraction_kv90/newBET_kv90';
+data_path = '/Users/julian/temp/fromServer';
 spm_path = '/Users/julian/Documents/MATLAB/spm12';
-do_not_recalculate = false; 
+do_not_recalculate = true; 
 with_angio = true;
 
 script_path = mfilename('fullpath');
@@ -51,8 +51,8 @@ sequences = {
     'Tmax'
     };
 
-angio_ct_name = 'filtered_extracted_betted_Angio_CT_075_Qr40_3_A_90kV';
-angio_mask_ct_name = 'mask_filtered_extracted_betted_Angio_CT_075_Qr40_3_A_90kV';
+angio_ct_name = 'filtered_extracted_betted_Angio_CT_075_Bv40';
+angio_mask_ct_name = 'mask_filtered_extracted_betted_Angio_CT_075_Bv40';
 angio_ct_suffix = '';
 csf_mask_name = 'CSF_mask.nii';
 
@@ -79,17 +79,30 @@ for i = 1: numel ( subjects )
     for jj = 1: numel(sequences)
         coreg_sequences = dir(fullfile(base_image_dir, subjects{i}, modality, ...
             strcat('wcoreg_', sequences{jj}, '_', subjects{i}, '*', '.nii*')));
-        csf_mask_names = dir(fullfile(base_image_dir, subjects{i}, modality, ...
-            strcat('wcoreg_', csf_mask_name,'*')));
         try
-            if exist(fullfile(base_image_dir, subjects{i}, modality, coreg_sequences(1).name)) | ...
-                exist(fullfile(base_image_dir, subjects{i}, modality, csf_mask_names(1).name))
+            if exist(fullfile(base_image_dir, subjects{i}, modality, coreg_sequences(1).name))
                 wcoreg_count = wcoreg_count + 1;
             end
         catch ME
         end
     end
-    if wcoreg_count == size(sequences, 2) + 1 && do_not_recalculate
+    norm_csf_mask_names = dir(fullfile(base_image_dir, subjects{i}, modality, ...
+            strcat('w', csf_mask_name,'*')));
+    norm_angio = dir(fullfile(base_image_dir, subjects{i}, modality, ...
+            strcat('w', angio_ct_name, '_' ,subjects{i}, '*', angio_ct_suffix, '.nii*')));
+    try
+        if exist(fullfile(base_image_dir, subjects{i}, modality, norm_csf_mask_names(1).name))
+            wcoreg_count = wcoreg_count + 1;
+        end
+        if with_angio && exist(fullfile(base_image_dir, subjects{i}, modality, norm_angio(1).name))
+            wcoreg_count = wcoreg_count + 1;
+        end
+    catch ME
+    end
+        
+    if do_not_recalculate && ...
+        (wcoreg_count == size(sequences, 2) + 1 && ~with_angio) || ...
+        (wcoreg_count == size(sequences, 2) + 2 && with_angio)
         fprintf('Skipping subject "%s" as normalised files are already present.\n', subjects{i});
         continue;
     end    
