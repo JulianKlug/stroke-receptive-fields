@@ -49,6 +49,9 @@ Angio Sequence used is Angio_CT_075_Bv40 as the contrast between contrast agent 
 
 4. Do all the rest of CT processing from step 2 on with the with_angio option for the normalisation (see above)
 
+5. Post-processing (see below)
+- Skip masking steps 
+
 MRI :
 
 (0. matlab/dwi_mri_coregistration_wrapper.m : if DWI is used, it has to be coregistered to T2 first) 
@@ -70,6 +73,7 @@ After running the whole CT and MRI preprocessing, run these steps again with the
 - skull_strip_wrapper: with high_resolution = True
 - brain_mask: with high_resolution = True
 - mask_lesions: with high_resolution = True  
+- binarize_lesions: with high_resolution = True
 
 #### Requirements
 
