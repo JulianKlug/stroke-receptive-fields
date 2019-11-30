@@ -50,7 +50,8 @@ Angio Sequence used is Angio_CT_075_Bv40 as the contrast between contrast agent 
 4. Do all the rest of CT processing from step 2 on with the with_angio option for the normalisation (see above)
 
 5. Post-processing (see below)
-- Skip masking steps 
+- masking/brain_mask.py with restrict_to_RAPID_maps set to False
+- Skip lesion_masking 
 
 MRI :
 
