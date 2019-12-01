@@ -11,11 +11,11 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/home/klug/data/original_data/2018/part1bis_and_part2a';
+data_path = '/Users/julian/temp/extraction_bv40/trial1';
 spm_path = '/home/klug/spm12';
 do_not_recalculate = true;
 with_VOI = false;
-with_DWI = true;
+with_DWI = false;
 
 script_path = mfilename('fullpath');
 script_folder = script_path(1 : end - size(mfilename, 2));

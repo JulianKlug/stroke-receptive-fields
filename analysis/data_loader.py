@@ -102,7 +102,7 @@ def load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_ma
     # get CT dimensions by extracting first image
     first_image = nib.load(ct_paths[0][0])
     first_image_data = first_image.get_data()
-    n_x, n_y, n_z = first_image.shape
+    n_x, n_y, n_z = first_image_data.shape
     ct_n_c = len(ct_paths[0])
     print(ct_n_c, 'CT channels found.')
 
@@ -221,8 +221,8 @@ def load_nifti(main_dir, ct_sequences, label_sequences, mri_sequences, mri_label
 
 # Save data as compressed numpy array
 def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = None,
-                       ct_sequences = [], label_sequences = [], mri_sequences = False,
-                       external_memory=False, high_resolution = False, enforce_VOI=True):
+                       ct_sequences = [], label_sequences = [], use_mri_sequences = False,
+                       external_memory=False, high_resolution = False, enforce_VOI=True, use_vessels=False):
     """
     Load data
         - Image data (from preprocessed Nifti)
@@ -234,9 +234,10 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
         clinical_dir (optional) : directory containing clinical data (excel)
         ct_sequences (optional, array) : array with names of ct sequences
         label_sequences (optional, array) : array with names of VOI sequences
-        mri_sequences (optional, boolean) : boolean determining if mri sequences should be included
+        use_mri_sequences (optional, boolean) : boolean determining if mri sequences should be included
         external_memory (optional, default False): on external memory usage, NaNs need to be converted to -1
         high_resolution (optional, default False): use non normalized images (patient space instead of MNI space)
+        use_vessels (optional, default False): use vessel masks as ct input
 
     Returns:
         'clinical_data': numpy array containing the data for each of the patients [patient, (n_parameters)]
@@ -248,18 +249,26 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
         # ct_sequences = ['wcoreg_RAPID_TMax_[s]']
         if high_resolution:
             ct_sequences = ['coreg_Tmax', 'coreg_CBF', 'coreg_MTT', 'coreg_CBV']
+        if use_vessels:
+            ct_sequences = ['wmask_filtered_extracted_betted_Angio']
+            if high_resolution:
+                ct_sequences = ['mask_filtered_extracted_betted_Angio']
 
     if len(label_sequences) < 1 and enforce_VOI:
         # Import VOI GT with brain mask applied
         # to avoid False negatives in areas that cannot be predicted (as their are not part of the RAPID perf maps)
         label_sequences = ['masked_wcoreg_VOI']
+        if use_vessels:
+            label_sequences = ['wcoreg_VOI']
+            if high_resolution:
+                label_sequences = ['coreg_VOI']
 
         if high_resolution:
             label_sequences = ['masked_coreg_VOI']
 
     mri_sequences = []
     mri_label_sequences = []
-    if mri_sequences:
+    if use_mri_sequences:
         mri_sequences = ['wcoreg_t2_tse_tra', 'wcoreg_t2_TRACE', 'wcoreg_t2_ADC']
         # for MRI labeling, the mask should not be applied
         if enforce_VOI:

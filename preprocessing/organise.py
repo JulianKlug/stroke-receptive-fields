@@ -9,14 +9,16 @@ from utils.naming_verification import tight_verify_name, loose_verify_name
 
 main_dir = '/Volumes/stroke_hdd1/stroke_db/2017/imaging_data/included/'
 data_dir = os.path.join(main_dir, 'ivt_only')
-output_dir = os.path.join(main_dir, 'extracted_dwi_ivt_only')
+output_dir = os.path.join(main_dir, 'extracted_angio_90kv_ivt_only')
 enforce_VOI = True
 copy = True
-include_DWI = True
+include_DWI = False
+include_angio = True
 enforce_RAPID = False
 spc_ct_sequences = image_name_config.spc_ct_sequences
 pct_sequences = image_name_config.pct_sequences
 ct_perf_sequence_names = image_name_config.ct_perf_sequence_names
+additional_ct_channels = image_name_config.angio_ct_sequences
 mri_sequences = image_name_config.mri_sequences
 alternative_mri_sequences = image_name_config.alternative_mri_sequences
 additional_mri_channels = image_name_config.adc_mri_channel + image_name_config.trace_mri_channel
@@ -50,8 +52,8 @@ def get_subject_info(dir):
         else:
             if not os.path.isdir(study_0_path): continue
             dcms = [f for f in os.listdir(study_0_path) if f.endswith(".dcm")]
-            dcm_path = os.path.join(study_0_path, dcms[0])
             if not dcms: continue
+            dcm_path = os.path.join(study_0_path, dcms[0])
         dcm = pydicom.dcmread(dcm_path)
 
         full_name = '_'.join(re.split(r'[/^ ]', unidecode(str(dcm.PatientName).upper())))
@@ -102,6 +104,7 @@ def get_ct_paths_and_date(dir, error_log_df):
 
             hasSPC = 0
             hasPCT_maps = 0
+            has_angio = 0
 
             for study in studies:
                 study_dir = os.path.join(modality_dir, study)
@@ -114,9 +117,22 @@ def get_ct_paths_and_date(dir, error_log_df):
                     hasPCT_maps = 1
 
 
-                if loose_verify_name(study, spc_ct_sequences): hasSPC = 1
+                if loose_verify_name(study, spc_ct_sequences):
+                    hasSPC = 1
 
-                if hasSPC and hasPCT_maps:
+                if include_angio and loose_verify_name(study, additional_ct_channels):
+                    has_angio = 1
+
+                all_needed_studies_found = 0
+                if include_angio:
+                    if hasSPC and hasPCT_maps and has_angio:
+                        all_needed_studies_found = 1
+                else:
+                    if hasSPC and hasPCT_maps:
+                        all_needed_studies_found = 1
+
+
+                if all_needed_studies_found:
                     # verify CT is unique
                     if pCT_found == 1:
                         message = 'Two perfusion CTs found'
@@ -137,6 +153,14 @@ def get_ct_paths_and_date(dir, error_log_df):
                         }})
                     pCT_found = 1
                     break
+
+            if include_angio and hasSPC and hasPCT_maps and not has_angio:
+                #  Excluded as no angio was found
+                message = 'No angioCT found (' + str(additional_ct_channels) + ')'
+                print(folder, message)
+                error_log_df = error_log_df.append(
+                    pd.DataFrame([[folder, False, True, message]], columns=error_log_columns),
+                    ignore_index=True)
 
     return imaging_info, error_log_df
 
@@ -249,6 +273,12 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
         if loose_verify_name(ct_study, spc_ct_sequences):
             selected_ct_study_paths.append(ct_study_path)
 
+        # Find addtional CT sequences like angio
+        if include_angio and loose_verify_name(ct_study, additional_ct_channels):
+            selected_ct_study_paths.append(ct_study_path)
+
+        # Find pCT sequences
+        # Disregard sequences that are not perfusion CT
         if 'color' in ct_study or not 'RAPID' in ct_study:
             continue
         dcms = [f for f in os.listdir(os.path.join(ct_folder_path, ct_study)) if f.endswith(".dcm") and not f.startswith('.')]
@@ -323,6 +353,9 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
 
         if loose_verify_name(selected_study_name, spc_ct_sequences):
             new_study_name = 'SPC_301mm_Std' + '_' + patient_identifier
+
+        if loose_verify_name(selected_study_name, additional_ct_channels):
+            new_study_name = 'Angio_CT_075_Bv40' + '_' + patient_identifier
 
         output_modality_dir = os.path.join(patient_output_folder, modality_name)
         if not os.path.exists(output_modality_dir):

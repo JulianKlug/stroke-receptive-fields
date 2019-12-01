@@ -2,14 +2,14 @@ import os
 import numpy as np
 import pandas as pd
 
-main_dir = '/Volumes/stroke_hdd1/stroke_db/2016/'
-data_dir = os.path.join(main_dir, 'extracted_dwi_part1')
+
+data_dir = '/Volumes/stroke_hdd1/temp/nifti_all_angio'
 
 def verify_completeness_nifti(data_dir):
     subject_folders = [o for o in os.listdir(data_dir)
                     if os.path.isdir(os.path.join(data_dir,o))]
     print(len(subject_folders), 'subjects found.')
-    state_columns = ['subject', 'hasT2', 'hasMTT', 'hasTmax', 'hasCBF', 'hasCBV', 'hasSPC', 'hasVOI', 'hasTRACE', 'hasADC']
+    state_columns = ['subject', 'hasT2', 'hasMTT', 'hasTmax', 'hasCBF', 'hasCBV', 'hasSPC', 'hasVOI', 'hasTRACE', 'hasADC', 'hasAngio']
     imaging_completeness_df = pd.DataFrame(columns=state_columns)
     all_complete = 1
 
@@ -27,6 +27,7 @@ def verify_completeness_nifti(data_dir):
         hasVOI = 0
         hasTRACE = 0
         hasADC = 0
+        hasAngio = 0
 
         for modality in modalities:
             modality_dir = os.path.join(folder_dir, modality)
@@ -40,14 +41,15 @@ def verify_completeness_nifti(data_dir):
                 if 'SPC_301mm_Std' in study: hasSPC = 1
                 if 'TRACE' in study: hasTRACE = 1
                 if 'ADC' in study: hasADC = 1
+                if 'Angio' in study: hasAngio = 1
 
         # lesion files should be in subject dir
         nii_files = [f for f in os.listdir(folder_dir) if f.endswith(".nii")]
         for file in nii_files:
             if 'VOI' in file: hasVOI = 1
 
-        conditions = [hasT2, hasMTT, hasTmax, hasCBF, hasCBV, hasSPC, hasVOI, hasTRACE, hasADC]
-        condition_names = ['hasT2', 'hasMTT', 'hasTmax', 'hasCBF', 'hasCBV', 'hasSPC', 'hasVOI', 'hasTRACE', 'hasADC']
+        conditions = [hasT2, hasMTT, hasTmax, hasCBF, hasCBV, hasSPC, hasVOI, hasTRACE, hasADC, hasAngio]
+        condition_names = ['hasT2', 'hasMTT', 'hasTmax', 'hasCBF', 'hasCBV', 'hasSPC', 'hasVOI', 'hasTRACE', 'hasADC', 'hasAngio']
 
         if np.all(conditions):
             print(folder, 'is complete.')
@@ -55,7 +57,7 @@ def verify_completeness_nifti(data_dir):
             missing_files = np.array(condition_names)[np.where(np.array(conditions) < 1)[0]]
             print(folder, 'is missing', missing_files)
             imaging_completeness_df = imaging_completeness_df.append(
-                pd.DataFrame([[folder, hasT2, hasMTT, hasTmax, hasCBF, hasCBV, hasSPC, hasVOI, hasTRACE, hasADC]],
+                pd.DataFrame([[folder, hasT2, hasMTT, hasTmax, hasCBF, hasCBV, hasSPC, hasVOI, hasTRACE, hasADC, hasAngio]],
                 columns = state_columns),
                 ignore_index=True)
             all_complete = 0
@@ -69,7 +71,7 @@ def verify_completeness_dcm(data_dir):
                        if os.path.isdir(os.path.join(data_dir, o))]
     print(len(subject_folders), 'subjects found.')
     state_columns = ['subject', 'hasT2', 'hasMTT', 'hasTmax', 'hasCBF', 'hasCBV', 'hasSPC', 'hasVOI', 'hasTRACE',
-                     'hasADC']
+                     'hasADC', 'hasAngio']
     imaging_completeness_df = pd.DataFrame(columns=state_columns)
     all_complete = 1
 
@@ -87,6 +89,7 @@ def verify_completeness_dcm(data_dir):
         hasVOI = 0
         hasTRACE = 0
         hasADC = 0
+        hasAngio = 1
 
         for modality in modalities:
             modality_dir = os.path.join(folder_dir, modality)
@@ -100,14 +103,15 @@ def verify_completeness_dcm(data_dir):
                 if 'SPC_301mm_Std' in study: hasSPC = 1
                 if 'TRACE' in study: hasTRACE = 1
                 if 'ADC' in study: hasADC = 1
+                if 'Angio' in study: hasAngio = 1
 
         # lesion files should be in subject dir
         nii_files = [f for f in os.listdir(folder_dir) if f.endswith(".nii")]
         for file in nii_files:
             if 'VOI' in file: hasVOI = 1
 
-        conditions = [hasT2, hasMTT, hasTmax, hasCBF, hasCBV, hasSPC, hasVOI, hasTRACE, hasADC]
-        condition_names = ['hasT2', 'hasMTT', 'hasTmax', 'hasCBF', 'hasCBV', 'hasSPC', 'hasVOI', 'hasTRACE', 'hasADC']
+        conditions = [hasT2, hasMTT, hasTmax, hasCBF, hasCBV, hasSPC, hasVOI, hasTRACE, hasADC, hasAngio]
+        condition_names = ['hasT2', 'hasMTT', 'hasTmax', 'hasCBF', 'hasCBV', 'hasSPC', 'hasVOI', 'hasTRACE', 'hasADC', 'hasAngio']
 
         if np.all(conditions):
             print(folder, 'is complete.')
@@ -115,7 +119,7 @@ def verify_completeness_dcm(data_dir):
             missing_files = np.array(condition_names)[np.where(np.array(conditions) < 1)[0]]
             print(folder, 'is missing', missing_files)
             imaging_completeness_df = imaging_completeness_df.append(
-                pd.DataFrame([[folder, hasT2, hasMTT, hasTmax, hasCBF, hasCBV, hasSPC, hasVOI, hasTRACE, hasADC]],
+                pd.DataFrame([[folder, hasT2, hasMTT, hasTmax, hasCBF, hasCBV, hasSPC, hasVOI, hasTRACE, hasADC, hasAngio]],
                              columns=state_columns),
                 ignore_index=True)
             all_complete = 0
