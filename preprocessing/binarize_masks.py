@@ -39,7 +39,8 @@ def binarize_mask(mask_file_name, mask_dir, threshold=0.5, relative_to_max=False
     nib.save(binary_img, os.path.join(masked_lesion_path))
 
 
-def binarize_masks_wrapper(data_dir, masked_VOI=True, high_resolution=False):
+def binarize_masks_wrapper(data_dir, masked_VOI=False, high_resolution=False):
+    # masked_VOI only necessary if mask_lesions has been called before
     subjects = [o for o in os.listdir(data_dir)
                     if os.path.isdir(os.path.join(data_dir,o))]
 
@@ -60,8 +61,6 @@ def binarize_masks_wrapper(data_dir, masked_VOI=True, high_resolution=False):
         modalities = [o for o in os.listdir(subject_dir)
                         if os.path.isdir(os.path.join(subject_dir,o))]
 
-
-
         for modality in modalities:
             modality_dir = os.path.join(subject_dir, modality)
             studies = [o for o in os.listdir(modality_dir)
@@ -70,7 +69,6 @@ def binarize_masks_wrapper(data_dir, masked_VOI=True, high_resolution=False):
             for study in studies:
                 study_path = os.path.join(modality_dir, study)
                 if modality.startswith('MRI') & study.startswith(VOI_start) & study.endswith('.nii'):
-                    binarize_mask(study, modality_dir, threshold=0.8, relative_to_max=True)
+                    binarize_mask(study, modality_dir, threshold=0.7, relative_to_max=True)
                 if modality.startswith('pCT') & study.startswith(vessel_mask_start) & study.endswith('.nii'):
                     binarize_mask(study, modality_dir, threshold=0.2, relative_to_max=False)
-
