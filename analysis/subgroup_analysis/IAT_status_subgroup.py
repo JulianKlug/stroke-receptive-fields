@@ -35,19 +35,19 @@ flat_rf = False
 #Model_Generator = customThreshold_Model_Generator(ct_inputs.shape, feature_scaling, fixed_threshold = 6)
 #Model_Generator = Campbell_Model_Generator(ct_inputs.shape, feature_scaling, pre_smoothing)
 Model_Generator = LogReg_glm
-model_name = 'IAT_multiGLM'
+model_name = 'IVT_multiGLM'
 rf_hyperopt_start = 0
 rf_hyperopt_end = 5
 n_repeats = 10
 n_folds = 5
 
 IAT_indexes, IVT_indexes, unknown_status_indexes = split_dataset(data_set, IAT_status_path)
-selected = IAT_indexes
+selected = IVT_indexes
 
 print(len(unknown_status_indexes), 'subjects with unknown status:', ids[unknown_status_indexes])
 
-#
-# ct_inputs, ct_label, clinical_inputs, brain_masks, ids = ct_inputs[selected], ct_label[selected], None, brain_masks[selected], ids[selected]
-# rf_hyperopt(model_name, Model_Generator, ct_inputs, ct_label, clinical_inputs, brain_masks, ids,
-#             feature_scaling, pre_smoothing, channels_to_normalise, undef_normalisation, flat_rf,
-#                 n_repeats, n_folds, main_save_dir, main_save_dir, rf_hyperopt_start, rf_hyperopt_end)
+
+ct_inputs, ct_label, clinical_inputs, brain_masks, ids = ct_inputs[selected], ct_label[selected], None, brain_masks[selected], ids[selected]
+rf_hyperopt(model_name, Model_Generator, ct_inputs, ct_label, clinical_inputs, brain_masks, ids,
+            feature_scaling, pre_smoothing, channels_to_normalise, undef_normalisation, flat_rf,
+                n_repeats, n_folds, main_save_dir, main_save_dir, rf_hyperopt_start, rf_hyperopt_end)

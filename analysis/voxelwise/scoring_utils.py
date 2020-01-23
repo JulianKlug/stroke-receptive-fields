@@ -1,5 +1,5 @@
 import os, torch, math
-from sklearn.metrics import f1_score, jaccard_similarity_score, precision_score, roc_curve, auc, accuracy_score
+from sklearn.metrics import f1_score, jaccard_score, precision_score, roc_curve, auc, accuracy_score
 import numpy as np
 from scipy.spatial.distance import directed_hausdorff
 from numpy.core.umath_tests import inner1d
@@ -38,7 +38,7 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
     test_threshold = cutoff_youdens_j(fpr, tpr, roc_thresholds)
     print('Optimal threshold based on test data:', str(test_threshold))
 
-    jaccard = jaccard_similarity_score(y_test, probas_[:] >= threshold)
+    jaccard = jaccard_score(y_test, probas_[:] >= threshold)
     accuracy = accuracy_score(y_test, probas_[:] >= threshold)
     f1 = f1_score(y_test, probas_[:] >= threshold)
     # Positive predictive value : tp / (tp + fp)
@@ -97,7 +97,7 @@ def evaluate(probas_, y_test, mask_test, ids_test, n_subjects: int, n_x, n_y, n_
         image_wise_error_ratios.append(
             np.sum(abs(subj_image_wise_y_test - (subj_image_wise_probas >= threshold))) / n_voxels
         )
-        image_wise_jaccards.append(jaccard_similarity_score(subj_image_wise_y_test, subj_image_wise_probas[:] >= threshold))
+        image_wise_jaccards.append(jaccard_score(subj_image_wise_y_test, subj_image_wise_probas[:] >= threshold))
         image_wise_dice.append(dice(subj_image_wise_y_test, subj_image_wise_probas[:] >= threshold))
 
         # To calculate the hausdorff_distance, the image has to be rebuild as a 3D image
