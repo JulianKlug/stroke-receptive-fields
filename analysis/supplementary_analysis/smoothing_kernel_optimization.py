@@ -5,15 +5,15 @@ from voxelwise.vxl_glm.LogReg_glm import LogReg_glm
 from voxelwise.vxl_continuous.normalized_marker_model import Normalized_marker_Model_Generator
 from voxelwise.wrapper_cv import launch_cv, rf_hyperopt
 
-main_dir = '/Users/julian/stroke_research/data/all2016_subset_prepro'
-# main_dir = '/home/klug/data/working_data/2016_all'
-data_dir = os.path.join(main_dir, '')
+
+data_dir = '/home/klug/data/working_data/all_2016_2017'
+main_dir = os.path.join(data_dir, 'smoothing_kernel_hyperopt')
 main_output_dir = os.path.join(main_dir, 'models')
 main_save_dir = os.path.join(main_dir, 'temp_data')
 
 clinical_inputs, ct_inputs, ct_label, _, _, brain_masks, ids, params = data_loader.load_saved_data(data_dir)
 # Order: 'wcoreg_RAPID_Tmax', 'wcoreg_RAPID_rCBF', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV'
-ct_inputs = ct_inputs[:, :, :, :, 0]
+ct_inputs = ct_inputs[..., 0]
 
 # Ignore clinical data for now
 clinical_inputs = None
@@ -21,10 +21,8 @@ clinical_inputs = None
 # brain_masks = numpy.full(ct_label.shape, True) # do not use brain_masks
 # ct_inputs, ct_label = manual_data.load(data_dir) # select data manually
 
-# n_repeats = 10
-# n_folds = 5
-n_repeats = 1
-n_folds = 2
+n_repeats = 10
+n_folds = 5
 
 # Feature can accelerate some algorithms
 # should not be used if predetermined thresholds are used
