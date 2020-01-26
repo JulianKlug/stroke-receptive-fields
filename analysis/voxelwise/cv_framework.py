@@ -28,6 +28,7 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
         id_array: array with subj ids
         feature_scalinng: boolean if data should be normalised
         pre_smoothing: boolean if gaussian smoothing should be applied on all images slices of z
+            if a tuple is give, the tuple will be used as smoothing kernel shape
         channel_normalisation: False or array of channels to normalise
         receptive_field_dimensions : in the form of a list as  [rf_x, rf_y, rf_z]
         n_repeats (optional, default 1): repeats of kfold CV
@@ -137,7 +138,10 @@ def repeated_kfold_cv(Model_Generator, save_dir, save_function,
 
     # Smooth data with a gaussian Kernel before using it for training/testing
     if pre_smoothing:
-        imgX = gaussian_smoothing(imgX)
+        if type(pre_smoothing) == tuple:
+            imgX = gaussian_smoothing(imgX, pre_smoothing)
+        else:
+            imgX = gaussian_smoothing(imgX)
 
     # Normalise channels by contralateral side before using them for training / testing
     if channels_to_normalise:
