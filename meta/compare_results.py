@@ -102,7 +102,7 @@ def compare_results(score_file_1, score_file_2, output_dir=None):
     compared_results_df = pd.DataFrame(np.concatenate(np.array((['comparison']), np.array(p_val_array))), columns=columns)
 
 
-    with pd.ExcelWriter(os.path.join(output_dir, 'results.xlsx')) as writer:
+    with pd.ExcelWriter(os.path.join(output_dir, model_1 + '_vs_' + model_2+ '_comparison.xlsx')) as writer:
         mean_results_df.to_excel(writer, sheet_name='mean_results')
         median_results_df.to_excel(writer, sheet_name='median_results')
         std_results_df.to_excel(writer, sheet_name='std_results')
