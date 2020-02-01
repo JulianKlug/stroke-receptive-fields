@@ -60,8 +60,13 @@ def Normalized_marker_Model_Generator(X_shape, feature_scaling, normalisation_mo
         raise ValueError('Only one channel allowed.')
 
     class normalized_marker_model(Continuous_Model):
-        def __init__(self, fold_dir, fold_name, n_channels = 1, n_channels_out = 1, rf = 1):
-            super().__init__(fold_dir, fold_name, model = individually_normalized_marker(rf, inverse_relation))
+        def __init__(self, fold_dir, fold_name, n_channels = 1, n_channels_out = 1, rf = 1, model=None):
+            if model is None:
+                super().__init__(fold_dir, fold_name, model = individually_normalized_marker(rf, inverse_relation))
+            else:
+                print('Loading pretrained model')
+                super().__init__(fold_dir, fold_name, model=model, pretrained=True)
+
             if (n_channels != 1):
                 raise Exception('Normalized marker model only works with one channel.')
 
