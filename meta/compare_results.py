@@ -18,10 +18,10 @@ def compare_results(score_file_1, score_file_2, output_dir=None):
         output_dir = os.path.dirname(score_file_1)
 
     results_1 = torch.load(score_file_1)
-    model_1 = os.path.basename(score_file_1)
+    model_1 = os.path.basename(score_file_1).split('.')[0]
 
     results_2 = torch.load(score_file_2)
-    model_2 = os.path.basename(score_file_2)
+    model_2 = os.path.basename(score_file_2).split('.')[0]
 
     models = [(model_1, results_1), (model_2, results_2)]
 
@@ -89,20 +89,25 @@ def compare_results(score_file_1, score_file_2, output_dir=None):
     std_results_df = pd.DataFrame(std_results_array, columns=columns)
     median_results_df = pd.DataFrame(median_results_array, columns=columns)
 
+
     # Comparison
-    model_1_array = np.array([k for k in all_results_array if k[0,0] == model_1])
-    model_2_array = np.array([k for k in all_results_array if k[0,0] == model_2])
+    model_1_array = np.squeeze(np.array([k for k in all_results_array if k[0,0] == model_1]))
+    model_2_array = np.squeeze(np.array([k for k in all_results_array if k[0,0] == model_2]))
+
     p_val_array = []
     for compared_column_index in range(1, len(columns)):
         print('Comparing', columns[compared_column_index])
-        t, p = wilcoxon(flatten(model_1_array[compared_column_index]),
-                        flatten(model_2_array[compared_column_index]))
+        try:
+            t, p = wilcoxon(flatten(model_1_array[compared_column_index]),
+                            flatten(model_2_array[compared_column_index]))
+        except:
+            p = np.nan
         p_val_array.append(p)
 
-    compared_results_df = pd.DataFrame(np.concatenate(np.array((['comparison']), np.array(p_val_array))), columns=columns)
+    compared_results_df = pd.DataFrame([np.concatenate((['comparison'], np.array(p_val_array)))], columns=columns)
 
 
-    with pd.ExcelWriter(os.path.join(output_dir, model_1 + '_vs_' + model_2+ '_comparison.xlsx')) as writer:
+    with pd.ExcelWriter(os.path.join(output_dir, str(model_1 + '_vs_' + model_2 + '_comparison.xlsx'))) as writer:
         mean_results_df.to_excel(writer, sheet_name='mean_results')
         median_results_df.to_excel(writer, sheet_name='median_results')
         std_results_df.to_excel(writer, sheet_name='std_results')
