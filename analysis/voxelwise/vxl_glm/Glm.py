@@ -5,10 +5,12 @@ class Glm():
     """
     """
 
-    def __init__(self, fold_dir, fold_name, model = None):
-        super(Glm, self).__init__()
+    def __init__(self, fold_dir, fold_name, model=None, pre_trained=False):
+        super().__init__()
         self.model = model
         self.trained_model = None
+        if pre_trained:
+            self.trained_model = model
 
         self.X_train = None
         self.y_train = None
