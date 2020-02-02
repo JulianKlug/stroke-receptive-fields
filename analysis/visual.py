@@ -29,3 +29,4 @@ def display(img_data, block=True, title=None, cmap='gray'):
     if title:
         plt.suptitle(title)
     plt.show(block = block)
+    return plt
