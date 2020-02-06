@@ -1,8 +1,8 @@
 import os
 import nibabel as nib
 import numpy as np
-from clinical_data.clinical_data_loader import load_clinical_data
-from utils import find_max_shape, rescale_outliers
+from .clinical_data.clinical_data_loader import load_clinical_data
+from .utils import find_max_shape, rescale_outliers
 
 # provided a given directory return list of paths to ct_sequences and lesion_maps
 def get_paths_and_ids(data_dir, ct_sequences, ct_label_sequences, mri_sequences, mri_label_sequences, brain_mask_name):
