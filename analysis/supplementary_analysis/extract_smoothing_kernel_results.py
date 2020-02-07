@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 
-columns = ['model','rf', 'kernel_width' 'test_roc_auc', 'test_image_wise_dice', 'test_image_wise_hausdorff',
+columns = ['model','rf', 'kernel_width', 'test_roc_auc', 'test_image_wise_dice', 'test_image_wise_hausdorff',
 'test_accuracy', 'test_f1', 'test_jaccard', 'test_thresholded_volume_deltas', 'test_unthresholded_volume_deltas', 'test_image_wise_error_ratios', 'evaluation_thresholds']
 
 
@@ -31,7 +31,10 @@ def extract_results(main_dir, output_dir=None):
                 result_files = [i for i in os.listdir(rf_eval_dir)
                                     if os.path.isfile(os.path.join(rf_eval_dir, i))
                                         and i.startswith('scores_') and i.endswith('.npy')]
-                results = torch.load(os.path.join(rf_eval_dir, result_files[0]))
+                try:
+                    results = torch.load(os.path.join(rf_eval_dir, result_files[0]))
+                except:
+                    continue
 
                 params_files = [i for i in os.listdir(rf_eval_dir)
                                     if os.path.isfile(os.path.join(rf_eval_dir, i))
@@ -46,14 +49,14 @@ def extract_results(main_dir, output_dir=None):
                 except (KeyError, TypeError):
                     rf = int(result_files[0].split('_')[-1].split('.')[0])
 
-                kernel_width = int(result_files[0].split('_')[-3]).split('.')[0].split('k')[-1]
+                kernel_width = int(result_files[0].split('_')[-3].split('.')[0].split('k')[-1])
 
-                mean_list = [[model_name, rf] + [np.mean(flatten(results[i])) if i in results else np.nan for i in columns[3:]]]
-                std_list = [[model_name, rf] + [np.std(flatten(results[i])) if i in results else np.nan for i in columns[3:]]]
+                mean_list = [[model_name, rf, kernel_width] + [np.mean(flatten(results[i])) if i in results else np.nan for i in columns[3:]]]
+                std_list = [[model_name, rf, kernel_width] + [np.std(flatten(results[i])) if i in results else np.nan for i in columns[3:]]]
                 median_list = [
-                    [model_name, rf] + [np.median(flatten(results[i])) if i in results else np.nan for i in columns[3:]]]
+                    [model_name, rf, kernel_width] + [np.median(flatten(results[i])) if i in results else np.nan for i in columns[3:]]]
 
-                n_runs = len(results[columns[2]])
+                n_runs = len(results[columns[3]])
                 current_all_list = np.concatenate((
                     np.repeat(model_name, n_runs).reshape(1, n_runs),
                     np.repeat(rf, n_runs).reshape(1, n_runs),
