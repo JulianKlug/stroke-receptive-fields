@@ -1,6 +1,7 @@
 import os, torch, sys
 import pandas as pd
 import numpy as np
+from scipy.stats import wilcoxon
 
 
 columns = ['model','rf', 'kernel_width' 'test_roc_auc', 'test_image_wise_dice', 'test_image_wise_hausdorff',
@@ -111,12 +112,53 @@ def extract_results(main_dir, output_dir=None):
     std_results_df = pd.DataFrame(std_results_array, columns = columns)
     median_results_df = pd.DataFrame(median_results_array, columns = columns)
 
+    # Compare all kernel widths for the same model
+    all_kw_comp_df_columns = ['model', 'compared_variable']
+    for kk in range(1, 13):
+        kwi = 2 * (kk - 1) + 1
+        kwii = 2 * kk + 1
+        all_kw_comp_df_columns.append('p' + kwi + '-', kwii )
+    all_kw_1_model_results = np.array([k for k in all_results_array if k[2, 0] == 1])
+    for kw_1_model_result in all_kw_1_model_results:
+        # compare roc auc
+        compared_variable_index = 3
+        model_base = '_'.join(kw_1_model_result[0, 0].split('_')[:-1])
+        all_kw_comp_list = [model_base, columns[compared_variable_index]]
+        for kk in range(1, 13):
+            kwi = 2 * (kk - 1) + 1
+            kwii = 2 * kk + 1
+            ref_model = [k for k in all_results_array if k[2, 0] == kwi and k[0, 0].startswith(model_base)]
+            corres_kwi_plus1_model = [k for k in all_results_array if
+                                     k[2, 0] == kwii and k[0, 0].startswith(model_base)]
+            if not ref_model or not corres_rf_plus1_model:
+                all_kw_comp_list.append(np.nan)
+                continue
+            ref_model = ref_model[0]
+            corres_rf_plus1_model = corres_rf_plus1_model[0]
+
+            print('Comparing kernel width with', columns[compared_variable_index], 'for', model_base, 'for', kwi, 'and', kwii)
+            t, p = wilcoxon(flatten(ref_model[compared_variable_index]),
+                            flatten(corres_rf_plus1_model[compared_variable_index]))
+            all_kw_comp_list.append(p)
+
+        all_kw_comp_list = [all_kw_comp_list]
+
+        try:
+            all_kw_comp_array
+        except NameError:
+            all_kw_comp_array = np.array(all_kw_comp_array)
+        else:
+            all_kw_comp_array = np.concatenate((all_kw_comp_array,
+                                                np.array(all_kw_comp_list)))
+    all_kw_comp_results_df = pd.DataFrame(all_kw_comp_array, columns=all_kw_comp_df_columns)
+
 
 
     with pd.ExcelWriter(os.path.join(output_dir, 'smoothing_kernel_results.xlsx')) as writer:
         mean_results_df.to_excel(writer, sheet_name='mean_results')
         std_results_df.to_excel(writer, sheet_name='std_results')
         median_results_df.to_excel(writer, sheet_name='median_results')
+        all_kw_comp_results_df.to_excel(writer, sheet_name='kernel_width_comparison')
 
 if __name__ == '__main__':
     path_1 = sys.argv[1]
