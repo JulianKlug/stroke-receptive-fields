@@ -3,8 +3,9 @@ from cv2 import GaussianBlur
 import numpy as np
 import nibabel as nib
 from sklearn.preprocessing import StandardScaler
+from scipy.ndimage.filters import gaussian_filter
 
-def gaussian_smoothing(data, kernel_shape = (5, 5)):
+def gaussian_smoothing(data, kernel_width = 5, threeD = False):
     '''
     Smooth a set of n images with a 2D gaussian kernel on their x, y planes iterating through z
     Every plane in z is smoothed independently
@@ -15,12 +16,19 @@ def gaussian_smoothing(data, kernel_shape = (5, 5)):
         Campbell Bruce C.V., Christensen Søren, Levi Christopher R., Desmond Patricia M., Donnan Geoffrey A., Davis Stephen M., et al. Cerebral Blood Flow Is the Optimal CT Perfusion Parameter for Assessing Infarct Core. Stroke. 2011 Dec 1;42(12):3435–40.
     :return: smoothed_data
     '''
+    sigma = kernel_width / 3
+    truncate = ((kernel_width - 1) / 2 - 0.5) / sigma
     smoothed_data = np.empty(data.shape)
     if len(data.shape) != 5:
         raise ValueError('Shape of data to smooth should be (n, x, y, z, c) and not', data.shape)
     for i in range(data.shape[0]):
         for c in range(data.shape[4]):
-            smoothed_data[i, :, :, :, c] = GaussianBlur(data[i, :, :, :, c], kernel_shape, 0)
+            if not threeD:
+                for z in range(data.shape[3]):
+                    smoothed_data[i, :, :, z, c] = gaussian_filter(data[i, :, :, z, c], kernel_width / 3,
+                                                                   truncate=truncate)
+            else:
+                smoothed_data[i, :, :, :, c] = gaussian_filter(data[i, :, :, :, c], kernel_width/3, truncate=truncate)
     return smoothed_data
 
 
