@@ -6,10 +6,12 @@ class Continuous_Model():
     This model predicts any voxel by using a threshold
     """
 
-    def __init__(self, fold_dir, fold_name, model = None):
+    def __init__(self, fold_dir, fold_name, model = None, pretrained=False):
         super(Continuous_Model, self).__init__()
         self.model = model
         self.trained_model = None
+        if pretrained:
+            self.trained_model = model
 
         self.X_train = None
         self.y_train = None

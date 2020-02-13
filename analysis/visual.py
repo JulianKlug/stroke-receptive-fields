@@ -3,12 +3,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def display(img_data, block = True, title = None):
+def display(img_data, block=True, title=None, cmap='gray'):
     def show_slices(slices):
         """ Function to display row of image slices """
         fig, axes = plt.subplots(1, len(slices))
         for i, slice in enumerate(slices):
-            axes[i].imshow(slice.T, cmap="gray", origin="lower")
+            axes[i].imshow(slice.T, cmap=cmap, origin="lower")
 
     if len(img_data.shape) > 3 : img_data = np.squeeze(img_data)
     n_i, n_j, n_k = img_data.shape
@@ -29,3 +29,4 @@ def display(img_data, block = True, title = None):
     if title:
         plt.suptitle(title)
     plt.show(block = block)
+    return plt
