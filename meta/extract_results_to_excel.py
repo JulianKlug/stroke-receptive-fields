@@ -156,7 +156,7 @@ all_rf_comp_results_df = pd.DataFrame(all_rf_comp_array, columns = all_rf_comp_d
 
 # Compare rf3 to rf0 for the same model
 # 2 --> compare roc auc
-compared_variable_index = 3
+compared_variable_index = 2
 rf_comp_df_columns = ['model','mean_rf0', 'mean_rf3', 'Pval', 'compared_variable']
 rf_3_model_results = np.array([k for k in all_results_array if k[1,0] == 3])
 all_rf0 = []
@@ -169,9 +169,18 @@ for rf_3_model_result in rf_3_model_results:
     t, p = wilcoxon(flatten(rf_3_model_result[compared_variable_index]), flatten(corres_rf0_model[compared_variable_index]))
     all_rf3.append(flatten(rf_3_model_result[compared_variable_index]))
     all_rf0.append(flatten(corres_rf0_model[compared_variable_index]))
+
+    # Nan Mean can at times throw attribute errors, but is in general safer than mean
+    try:
+        temp_mean_rf0_model_result = np.nanmean(flatten(corres_rf0_model[compared_variable_index]))
+        temp_mean_rf3_model_result = np.nanmean(flatten(rf_3_model_result[compared_variable_index]))
+    except AttributeError:
+        temp_mean_rf0_model_result = np.mean(flatten(corres_rf0_model[compared_variable_index]))
+        temp_mean_rf3_model_result = np.mean(flatten(rf_3_model_result[compared_variable_index]))
+
     comparative_list = [[model_base,
-        np.nanmean(flatten(corres_rf0_model[compared_variable_index])),
-        np.nanmean(flatten(rf_3_model_result[compared_variable_index])),
+        temp_mean_rf0_model_result,
+        temp_mean_rf3_model_result,
         p,
         columns[compared_variable_index]
         ]]
@@ -198,9 +207,9 @@ rf_comp_results_df = pd.DataFrame(comparative_results_array, columns = rf_comp_d
 # for k in all_results_array:
 #     print(k[0, 0], k[1,0], type(k[1,0]), int(k[1,0]) == 3, k[2,0], type(k[2,0]))
 
-# Compare modalities to best (Tmax0_logRegGLM at rf3)
+# Compare modalities to best (ex: Tmax0_logRegGLM at rf3 - k[1,0] == 3)
 modality_comp_df_columns = ['model','rf', 'model_result', 'ref_model_result', 'Pval', 'compared_variable', 'reference_rf3_model']
-reference_rf3_model_results = np.squeeze(np.array([k for k in all_results_array if k[1,0] == 3 and 'IVT_Tmax0_GLM' in k[0,0]]))
+reference_rf3_model_results = np.squeeze(np.array([k for k in all_results_array if k[1,0] == 3 and 'IVT_multiGLM' in k[0,0]]))
 print('Using', reference_rf3_model_results[0,0], 'as reference for comparison')
 rf_3_model_results = np.array([k for k in all_results_array if k[1,0] == 3])
 # rf_3_model_results = np.array([k for k in all_results_array])
@@ -209,16 +218,25 @@ for rf_3_model_result in rf_3_model_results:
     model_base = '_'.join(rf_3_model_result[0, 0].split('_')[:-1])
 
     # 2 --> compare roc auc
-    compared_variable_index = 3
+    compared_variable_index = 2
     print('Comparing modality with', columns[compared_variable_index], 'for', rf_3_model_result[0,0])
     # t, p = wilcoxon(flatten(rf_3_model_result[compared_variable_index]), flatten(reference_rf3_model_results[compared_variable_index]))
 
     # For separate populations
     t, p = mannwhitneyu(flatten(rf_3_model_result[compared_variable_index]), flatten(reference_rf3_model_results[compared_variable_index]))
+
+    # Nan Mean can at times throw attribute errors, but is in general safer than mean
+    try:
+        temp_mean_model_result = np.nanmean(flatten(rf_3_model_result[compared_variable_index]))
+        temp_mean_ref_model_result = np.nanmean(flatten(reference_rf3_model_results[compared_variable_index]))
+    except AttributeError:
+        temp_mean_model_result = np.mean(flatten(rf_3_model_result[compared_variable_index]))
+        temp_mean_ref_model_result = np.mean(flatten(reference_rf3_model_results[compared_variable_index]))
+
     modality_comp_list = [[model_base,
         rf_3_model_result[1,0],
-        np.nanmean(flatten(rf_3_model_result[compared_variable_index])),
-        np.nanmean(flatten(reference_rf3_model_results[compared_variable_index])),
+        temp_mean_model_result,
+        temp_mean_ref_model_result,
         p,
         columns[compared_variable_index],
         reference_rf3_model_results[0,0]
