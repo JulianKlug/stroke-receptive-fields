@@ -9,9 +9,9 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/temp/fromServer';
+data_path = '/Users/julian/temp/standard_prepro_test/standard_test_extracted_nifti_2';
 spm_path = '/Users/julian/Documents/MATLAB/spm12';
-do_not_recalculate = true; 
+do_not_recalculate = false; 
 with_angio = true;
 
 script_path = mfilename('fullpath');
@@ -51,7 +51,8 @@ sequences = {
     'Tmax'
     };
 
-angio_ct_name = 'filtered_extracted_betted_Angio_CT_075_Bv40';
+angio_ct_name = 'betted_Angio_CT_075_Bv40';
+angio_vx_ct_name = 'filtered_extracted_betted_Angio_CT_075_Bv40';
 angio_mask_ct_name = 'mask_filtered_extracted_betted_Angio_CT_075_Bv40';
 angio_ct_suffix = '';
 csf_mask_name = 'CSF_mask.nii';
@@ -101,8 +102,8 @@ for i = 1: numel ( subjects )
     end
         
     if do_not_recalculate && ...
-        (wcoreg_count == size(sequences, 2) + 1 && ~with_angio) || ...
-        (wcoreg_count == size(sequences, 2) + 2 && with_angio)
+        ((wcoreg_count == size(sequences, 2) + 1 && ~with_angio) || ...
+        (wcoreg_count == size(sequences, 2) + 2 && with_angio))
         fprintf('Skipping subject "%s" as normalised files are already present.\n', subjects{i});
         continue;
     end    
@@ -127,18 +128,25 @@ for i = 1: numel ( subjects )
        angio_file_list = dir(fullfile(data_path, subjects{i}, modality, ...
                             strcat(angio_ct_name, '_' ,subjects{i}, '*', angio_ct_suffix, '.nii*')));
        angio_file = fullfile(data_path, subjects{i}, modality, angio_file_list(1).name);
+       angio_vx_file_list = dir(fullfile(data_path, subjects{i}, modality, ...
+                            strcat(angio_vx_ct_name, '_' ,subjects{i}, '*', angio_ct_suffix, '.nii*')));
+       angio_vx_file = fullfile(data_path, subjects{i}, modality, angio_vx_file_list(1).name);
        angio_mask_file_list = dir(fullfile(data_path, subjects{i}, modality, ...
                             strcat(angio_mask_ct_name, '_' ,subjects{i}, '*', angio_ct_suffix, '.nii*')));
        angio_mask_file = fullfile(data_path, subjects{i}, modality, angio_mask_file_list(1).name);
+       
        [filepath,name,ext] = fileparts(angio_file);
         if strcmp(ext, '.gz') 
             gunzip(angio_file);
             gunzip(angio_mask_file);
+            gunzip(angio_vx_file);
             angio_mask_file = angio_mask_file(1: end - 3);
             angio_file = angio_file(1: end - 3);
+            angio_vx_file = angio_vx_file(1: end - 3);
         end
-        input{end + 1} = angio_file
-        input{end + 1} = angio_mask_file
+        input{end + 1} = angio_file;
+        input{end + 1} = angio_vx_file;
+        input{end + 1} = angio_mask_file;
     end 
 
     % Coregister CSF mask of betted image to template as well
@@ -150,7 +158,12 @@ for i = 1: numel ( subjects )
         gunzip(csf_mask_image);
         csf_mask_image = csf_mask_image(1: end - 3);
     end
-    input{end + 1} = csf_mask_image;
+    % Work on a copy of the CSF Mask image to be able to
+    % eventually repreocess the original later
+    csf_mask_to_warp = fullfile(base_image_dir, subjects{i}, modality, ...
+        strcat('reor_', csf_mask_name));
+    copyfile(csf_mask_image, csf_mask_to_warp);
+    input{end + 1} = csf_mask_to_warp;
    
     %% RUN NORMALISATION
     
@@ -158,12 +171,13 @@ for i = 1: numel ( subjects )
     fprintf('Processing subject "%s" , "%s" + "%s" (%s files)\n' ,...
         subjects{i}, strjoin(sequences), csf_mask_name, sprintf('%d',size (input ,2)));
     
+%     Keep an original copy of the base_image
     base_image_to_warp = fullfile(base_image_dir, subjects{i}, modality, ...
     strcat('reor_', base_image_prefix, base_image_name, subjects{i}, '.nii'));
     copyfile(base_image, base_image_to_warp);
-
+    
 %         Script using modern SPM12 normalise function
-    normalise_to_CT(base_image_to_warp, input, ct_template);
+      normalise_to_CT(base_image_to_warp, input, ct_template);
 
     
 %% (SHOULD NOT BE USED ANYMORE) Script based on Clinical_CT toolbox based on SPM8 normalise 

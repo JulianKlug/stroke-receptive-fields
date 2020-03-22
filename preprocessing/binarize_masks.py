@@ -1,4 +1,4 @@
-import os
+import os, argparse
 import numpy as np
 import nibabel as nib
 
@@ -72,3 +72,10 @@ def binarize_masks_wrapper(data_dir, masked_VOI=False, high_resolution=False):
                     binarize_mask(study, modality_dir, threshold=0.7, relative_to_max=True)
                 if modality.startswith('pCT') & study.startswith(vessel_mask_start) & study.endswith('.nii'):
                     binarize_mask(study, modality_dir, threshold=0.2, relative_to_max=False)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Binarize masks by applying a threshold')
+    parser.add_argument('input_directory')
+    args = parser.parse_args()
+    binarize_masks_wrapper(args.input_directory)
