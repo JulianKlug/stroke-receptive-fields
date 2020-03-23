@@ -138,10 +138,16 @@ for i = 1: numel ( subjects )
        [filepath,name,ext] = fileparts(angio_file);
         if strcmp(ext, '.gz') 
             gunzip(angio_file);
-            gunzip(angio_mask_file);
-            gunzip(angio_vx_file);
-            angio_mask_file = angio_mask_file(1: end - 3);
             angio_file = angio_file(1: end - 3);
+        end
+        [filepath,name,ext] = fileparts(angio_mask_file);
+        if strcmp(ext, '.gz') 
+            gunzip(angio_mask_file);
+            angio_mask_file = angio_mask_file(1: end - 3);
+        end
+        [filepath,name,ext] = fileparts(angio_vx_file);
+        if strcmp(ext, '.gz') 
+            gunzip(angio_vx_file);
             angio_vx_file = angio_vx_file(1: end - 3);
         end
         input{end + 1} = angio_file;
