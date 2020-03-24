@@ -9,7 +9,7 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/temp/standard_prepro_test/standard_test_extracted_nifti_2';
+data_path = '/Users/julian/temp/retest_extraction';
 spm_path = '/Users/julian/Documents/MATLAB/spm12';
 do_not_recalculate = false; 
 with_angio = true;
@@ -54,7 +54,7 @@ sequences = {
 angio_ct_name = 'betted_Angio_CT_075_Bv40';
 angio_vx_ct_name = 'filtered_extracted_betted_Angio_CT_075_Bv40';
 angio_mask_ct_name = 'mask_filtered_extracted_betted_Angio_CT_075_Bv40';
-angio_ct_suffix = '';
+angio_ct_extension = '.nii.gz';
 csf_mask_name = 'CSF_mask.nii';
 
 % Base image to co-register to
@@ -90,7 +90,7 @@ for i = 1: numel ( subjects )
     norm_csf_mask_names = dir(fullfile(base_image_dir, subjects{i}, modality, ...
             strcat('w', csf_mask_name,'*')));
     norm_angio = dir(fullfile(base_image_dir, subjects{i}, modality, ...
-            strcat('w', angio_ct_name, '_' ,subjects{i}, '*', angio_ct_suffix, '.nii*')));
+            strcat('w', angio_ct_name, '_' ,subjects{i}, '*', angio_ct_extension)));
     try
         if exist(fullfile(base_image_dir, subjects{i}, modality, norm_csf_mask_names(1).name))
             wcoreg_count = wcoreg_count + 1;
@@ -126,13 +126,13 @@ for i = 1: numel ( subjects )
     
     if with_angio
        angio_file_list = dir(fullfile(data_path, subjects{i}, modality, ...
-                            strcat(angio_ct_name, '_' ,subjects{i}, '*', angio_ct_suffix, '.nii*')));
+                            strcat(angio_ct_name, '_' ,subjects{i}, '*', angio_ct_extension)));
        angio_file = fullfile(data_path, subjects{i}, modality, angio_file_list(1).name);
        angio_vx_file_list = dir(fullfile(data_path, subjects{i}, modality, ...
-                            strcat(angio_vx_ct_name, '_' ,subjects{i}, '*', angio_ct_suffix, '.nii*')));
+                            strcat(angio_vx_ct_name, '_' ,subjects{i}, '*', angio_ct_extension)));
        angio_vx_file = fullfile(data_path, subjects{i}, modality, angio_vx_file_list(1).name);
        angio_mask_file_list = dir(fullfile(data_path, subjects{i}, modality, ...
-                            strcat(angio_mask_ct_name, '_' ,subjects{i}, '*', angio_ct_suffix, '.nii*')));
+                            strcat(angio_mask_ct_name, '_' ,subjects{i}, '*', angio_ct_extension)));
        angio_mask_file = fullfile(data_path, subjects{i}, modality, angio_mask_file_list(1).name);
        
        [filepath,name,ext] = fileparts(angio_file);
