@@ -7,13 +7,14 @@ from unidecode import unidecode
 import hashlib
 from utils.naming_verification import tight_verify_name, loose_verify_name
 
-main_dir = '/Volumes/stroke_hdd1/stroke_db/2017/imaging_data/included/'
-data_dir = os.path.join(main_dir, 'ivt_only')
-output_dir = os.path.join(main_dir, 'extracted_angio_90kv_ivt_only')
+main_dir = '/Users/julian/temp/VPCT_extraction_test'
+data_dir = os.path.join(main_dir, 'orig')
+output_dir = os.path.join(main_dir, 'extracted')
 enforce_VOI = True
-copy = True
+copy = True  # if set to false, this script will not attempt the final step of copying the files to reorganise (for debugging only)
 include_DWI = False
-include_angio = True
+include_angio = False
+include_pCT = True
 enforce_RAPID = False
 spc_ct_sequences = image_name_config.spc_ct_sequences
 pct_sequences = image_name_config.pct_sequences
@@ -113,9 +114,8 @@ def get_ct_paths_and_date(dir, error_log_df):
                     dcms = [f for f in os.listdir(study_dir) if f.endswith(".dcm") and not f.startswith('.')]
                     if not 'color' in study and 'RAPID' in study and len(dcms) >= 37:
                         hasPCT_maps = 1
-                if not enforce_RAPID and loose_verify_name(study, ct_perf_sequence_names):
+                if (not enforce_RAPID or include_pCT) and loose_verify_name(study, ct_perf_sequence_names):
                     hasPCT_maps = 1
-
 
                 if loose_verify_name(study, spc_ct_sequences):
                     hasSPC = 1
@@ -277,12 +277,16 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
         if include_angio and loose_verify_name(ct_study, additional_ct_channels):
             selected_ct_study_paths.append(ct_study_path)
 
-        # Find pCT sequences
+        # Find original pCT 4D image
+        if include_pCT and loose_verify_name(ct_study, ct_perf_sequence_names):
+            selected_ct_study_paths.append(ct_study_path)
+
+        # Find perfusion CT sequences
         # Disregard sequences that are not perfusion CT
         if 'color' in ct_study or not 'RAPID' in ct_study:
             continue
         dcms = [f for f in os.listdir(os.path.join(ct_folder_path, ct_study)) if f.endswith(".dcm") and not f.startswith('.')]
-        # exclude pCTs with something else than 37 images
+        # exclude perfusionCTs with something else than 37 images
         if len(dcms) < 37:
             continue
 
@@ -356,6 +360,9 @@ def move_selected_patient_data(patient_identifier, ct_folder_path, mri_folder_pa
 
         if loose_verify_name(selected_study_name, additional_ct_channels):
             new_study_name = 'Angio_CT_075_Bv40' + '_' + patient_identifier
+
+        if loose_verify_name(selected_study_name, ct_perf_sequence_names):
+            new_study_name = 'VPCT' + '_' + patient_identifier
 
         output_modality_dir = os.path.join(patient_output_folder, modality_name)
         if not os.path.exists(output_modality_dir):
