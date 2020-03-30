@@ -15,4 +15,9 @@ To define the ischemic core, CBF is first normalised to the median value in:
  
  Then a threshold is applied if the normalized CBF is < 30%
  
+ ## Smoothing 
  
+Smoothing is attempted by sequentially applying:
+1. binary closing with a structuring element width a 3D-ball element with a 3 voxel diameter 
+2. binary opening with a structuring element width a 3D-ball element with a 3 voxel diameter 
+3. removing all elements smaller than 1000 voxels with a type 1 connectivity
