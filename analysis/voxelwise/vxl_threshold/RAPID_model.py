@@ -1,11 +1,11 @@
 import numpy as np
 from sklearn.metrics import roc_curve
 from scipy.ndimage.morphology import binary_closing, binary_erosion, binary_dilation
-from vxl_threshold.Threshold_Model import Threshold_Model
-from scoring_utils import cutoff_youdens_j
-from dimension_utils import reconstruct_image
-from channel_normalisation import normalise_channel_by_Tmax4, normalise_channel_by_contralateral
-from penumbra_evaluation import threshold_Tmax6
+from .Threshold_Model import Threshold_Model
+from analysis.voxelwise.scoring_utils import cutoff_youdens_j
+from analysis.voxelwise.dimension_utils import reconstruct_image
+from analysis.voxelwise.channel_normalisation import normalise_channel_by_Tmax4, normalise_channel_by_contralateral
+from analysis.voxelwise.penumbra_evaluation import threshold_Tmax6
 
 class RAPID_threshold():
     def __init__(self, rf, threshold = 'train', post_smoothing=True):
@@ -71,7 +71,7 @@ class RAPID_threshold():
         tresholded_voxels[(CBF_normalised_byTmax4 < threshold) & (penumbra)] = 1
         if self.smoothing: tresholded_voxels = self.smooth_prediction(tresholded_voxels, data_position_indices)
 
-        return np.squeeze(-1 * CBF_normalised_byTmax4)
+        return np.squeeze(tresholded_voxels)
 
 def RAPID_Model_Generator(X_shape, feature_scaling, threshold='train', post_smoothing=True):
     """
