@@ -6,6 +6,7 @@ function [] = apply_motion_correction(V0_file)
     
 %% Load the initial 4D data
 % V0_file = dir(fullfile(input_dir, 'VPCT*.nii'));
+[~, V0_name, V0_ext] = fileparts(fullfile(V0_file.folder, V0_file.name));
 V0_header = spm_vol(fullfile(V0_file.folder, V0_file.name));
 V0 = spm_read_vols(V0_header);
 
@@ -22,14 +23,18 @@ spm('defaults', 'FMRI');
 spm_jobman('run', settings.matlabbatch);
 %% build X
 %1. add constant linear & quadratic trends
-CSFavg = ones(size(V0,4), 1);
-X=[ones(numel(CSFavg),1) [1:numel(CSFavg)]'/numel(CSFavg) ...
-    [1:numel(CSFavg)].^2'/(numel(CSFavg)^2)];
+X=[ones(size(V0,4),1) [1:size(V0,4)]'/size(V0,4) ...
+    [1:size(V0,4)].^2'/(size(V0,4)^2)];
 %2. add motion params:
-mot = dir(fullfile(main_dir,'rp*.txt')); %%(Because I called the file rp... just set it differently in case)
-Cov=load(fullfile(main_dir,mot(1).name));
-X=[X,Cov(:,1:6)]; %take first 6 (not derivative if they are there)
- 
+mot = dir(fullfile(split_4D_subfolder,'rp*.txt'));
+motion_file = fullfile(main_dir, 'motion_params_' + V0_name + '.txt');    
+copyfile(fullfile(split_4D_subfolder, mot(1).name), motion_file);
+
+Cov = load(motion_file);
+X=[X,Cov(:,1:6)]; % take first 6 variables (not derivative if they are there)
+
+%% Voxel level GLM 
+% V0Cov is the cleaned resulting 4D volume (residuals of the GLM)
 V0Cov=zeros(size(V0));
 V0idx=(1:size(V0,4));
 for i=1:size(V0,1)
@@ -40,9 +45,15 @@ for i=1:size(V0,1)
         end
     end
 end
-V0Cov(isnan(V0Cov))=0;
+V0Cov(isnan(V0Cov)) = 0;
+
+%% Save motion corrected output 
 V0Cov_header = V0_header(1);
 [V0Cov_header.fname] = deal('outputfile.nii');
 rest_Write4DNIfTI(V0Cov, V0Cov_header, 'outputfile.nii')
+
+%% Clean up
+rmdir(split_4D_subfolder)
+
 end
 
