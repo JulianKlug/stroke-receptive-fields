@@ -4,13 +4,13 @@ This repository hosts scripts for a research project on prediction of ischemic s
 ## How-to
 ### Pre-processing Pipeline
 
-Extraction Verification
+##### 1. Data Verification
 - pre_verification/find_empty_folders.py : find empty folders in subject directories hinting towards failed exports and save in excel file
 - pre_verification/verify_RAPID37.py : check that all subjects with perfusion CTs have 37 RAPID images (and not 11)
 - utils/extract_unknown_studies_folder.py : extract images saved as an unspecified "study" folder
 - utils/extract_RAPID37_folder.py : extract images saved as an unspecified "RAPID37" folder
 
-Pre :
+##### 2. Data Extraction
 
 0. image_name_config.py : file defining name space of relevant MRI and CT sequences
 1. organise.py : organise into a new working directory, extracting only useful and renaming to something sensible + anonymize patient information
@@ -25,7 +25,7 @@ Verify clinical exclusion criteria:
 - other exclusion criteria: IAT before CT, no treatment received
     - extract_patient_characteristics.py: extract relevant patient characteristics from main excel database
 
-CT :
+#### 3. CT Preprocessing
 
 0. utils/resolve_RAPID_4D_maps: resolve RAPID maps with 4 dimensions
     - get_RAPID_4D_list: find subjects with 4D RAPID maps
@@ -35,7 +35,7 @@ CT :
 2. matlab/perfCT_coregistration_wrapper.m : coregister perfusion CT to betted native CT
 3. matlab/perfCT_normalisation_wrapper.m : normalise perfusion CT and native CT to CT_MNI (if this needs to be reprocessed, step 2. also needs to be done again)
 
-(Angio-CT):
+##### 3.5 Angio-CT
 If Angio-CTs are used, the head has to be extracted from the half-body image, after which the skull has to be 
 stripped from the image. Finally vessels are extracted. 
 
@@ -53,12 +53,12 @@ Angio Sequence used is Angio_CT_075_Bv40 as the contrast between contrast agent 
 - masking/brain_mask.py with restrict_to_RAPID_maps set to False
 - Skip lesion_masking 
 
-MRI :
+#### 4. MRI preprocessing
 
 (0. matlab/dwi_mri_coregistration_wrapper.m : if DWI is used, it has to be coregistered to T2 first) 
 1. matlab/mri_coreg_normalisation_wrapper.m : recenter subject CT, co-register T2 to subject CT, co-register T2 to CT-MNI and normalise to CT-MNI
 
-Post:
+#### 5. Post-processing
 As RAPID performs excessive skull-stripping, same crop has to be applied to lesion maps to remove lesions without underlying input data. 
 At the same time the CSF_mask is integrated into the non-brain mask.
 - binarize_maks.py : binarize all masks (lesions and others) by applying a threshold from the maximum value (this is necessary as sometimes drawn lesions are 0-1 or 0-255 and during the normalisation values can be slightly altered)
@@ -66,7 +66,7 @@ At the same time the CSF_mask is integrated into the non-brain mask.
 - masking/mask_lesions.py : apply brain masks to lesions
 - utils/preprocessing_verification : visual verification of preprocessing
 
-### Additional steps for using HD images 
+#### Additional steps for using HD images 
 
 HD images are not warped to CT-MNI space, and can thus conserve the initial voxel space.
 
