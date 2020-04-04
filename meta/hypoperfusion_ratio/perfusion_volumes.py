@@ -5,7 +5,7 @@ import numpy as np
 from analysis import data_loader
 from scipy.ndimage.morphology import binary_closing, binary_opening
 from skimage.morphology import remove_small_objects, ball
-from analysis.voxelwise.channel_normalisation import normalise_channel_by_Tmax4, normalise_channel_by_contralateral
+from analysis.voxelwise.channel_normalisation import normalise_channel_by_Tmax4, normalise_channel_by_contralateral, normalise_by_contralateral_region
 from analysis.utils import rescale_outliers
 from analysis.dataset_visualization import visualize_dataset
 
@@ -29,7 +29,7 @@ def smooth(data):
     return smoothed_data
 
 
-def compute_core(data, brain_masks, threshold=0.3, use_Tmax4_normalisation=True):
+def compute_core(data, brain_masks, threshold=0.3, use_Tmax4_normalisation=True, use_region_wise_normalisation=True):
     '''
     Compute voxelwise ischemic core
     '''
@@ -37,12 +37,15 @@ def compute_core(data, brain_masks, threshold=0.3, use_Tmax4_normalisation=True)
 
     CBF_normalised_byTmax4, _ = normalise_channel_by_Tmax4(data[brain_masks].reshape(-1, 4), brain_masks, 1)
     CBF_normalised_byContralateral, _ = normalise_channel_by_contralateral(data[brain_masks].reshape(-1, 4), brain_masks, 1)
+    CBF_normalised_byContralateral_Region = normalise_by_contralateral_region(data, three_D_region=False)[..., 1]    
 
     tresholded_voxels = np.zeros(data[..., 0].shape)
     # Parts of penumbra (Tmax > 6) where CBF < 30% of healthy tissue (contralateral or region where Tmax < 4s)
     tresholded_voxels[(CBF_normalised_byContralateral < threshold) & (penumbra == 1)] = 1
     if use_Tmax4_normalisation:
         tresholded_voxels[(CBF_normalised_byTmax4 < threshold) & (penumbra == 1)] = 1
+    if use_region_wise_normalisation:
+        tresholded_voxels[(CBF_normalised_byContralateral_Region < threshold) & (penumbra == 1)] = 1
 
     return tresholded_voxels
 
@@ -77,6 +80,11 @@ def estimate_perfusion_volumes(data_dir):
     norm_cbf_under_30_withoutTmax4 = compute_core(ct_inputs, brain_masks, use_Tmax4_normalisation=False)
     smooth_cbf30_noT4 = smooth(norm_cbf_under_30_withoutTmax4)
 
+    norm_cbf_under_30_withTmax4_and_regional = compute_core(ct_inputs, brain_masks, use_Tmax4_normalisation=True,
+                                                            use_region_wise_normalisation=True)
+    smooth_cbf30_T4_and_region = smooth(norm_cbf_under_30_withTmax4_and_regional)
+
+
     # Compute volumes
     tmax_over_6_volume = np.sum(tmax_over_6, axis=(1, 2, 3))
     smooth_tmax6_volume = np.sum(smooth_tmax6, axis=(1, 2, 3))
@@ -89,6 +97,9 @@ def estimate_perfusion_volumes(data_dir):
 
     norm_cbf_under_30_withoutTmax4_volume = np.sum(norm_cbf_under_30_withoutTmax4, axis=(1, 2, 3))
     smooth_cbf30_noT4_volume = np.sum(smooth_cbf30_noT4, axis=(1, 2, 3))
+
+    norm_cbf_under_30_withTmax4_and_regional_volume = np.sum(norm_cbf_under_30_withTmax4_and_regional, axis=(1, 2, 3))
+    smooth_cbf30_T4_and_region_volume = np.sum(smooth_cbf30_T4_and_region, axis=(1, 2, 3))
 
     gt_volume = np.sum(ct_label, axis=(1, 2, 3))
 
@@ -103,6 +114,9 @@ def estimate_perfusion_volumes(data_dir):
     perfusion_volumes['smooth_norm1_cbf_under_30p'] = smooth_cbf30_noT4_volume
     perfusion_volumes['norm2_cbf_under_30p'] = norm_cbf_under_30_withTmax4_volume
     perfusion_volumes['smooth_norm2_cbf_under_30p'] = smooth_cbf30_T4_volume
+    perfusion_volumes['norm3_cbf_under_30p'] = norm_cbf_under_30_withTmax4_and_regional_volume
+    perfusion_volumes['smooth_norm3_cbf_under_30p'] = smooth_cbf30_T4_and_region_volume
+
     perfusion_volumes['ground_truth'] = gt_volume
 
     # Convert units: voxel to mm3
@@ -117,6 +131,7 @@ def estimate_perfusion_volumes(data_dir):
         tmax_over_10, smooth_tmax10,
         norm_cbf_under_30_withoutTmax4, smooth_cbf30_noT4,
         norm_cbf_under_30_withTmax4, smooth_cbf30_T4,
+        norm_cbf_under_30_withTmax4_and_regional, smooth_cbf30_T4_and_region,
         ct_label
     ), axis=-1)
     stacked_volume_labels = [
@@ -124,6 +139,7 @@ def estimate_perfusion_volumes(data_dir):
         'tmax_over_10s', 'smooth_tmax_over_10s',
         'norm1_cbf_under_30p', 'smooth_norm1_cbf_under_30p',
         'norm2_cbf_under_30p', 'smooth_norm2_cbf_under_30p',
+        'norm3_cbf_under_30p', 'smooth_norm3_cbf_under_30p',
         'ground_truth'
     ]
 
