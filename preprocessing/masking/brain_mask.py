@@ -68,7 +68,7 @@ def createBrainMask(data_dir, ct_sequences, csf_image_name, save = True, save_na
     return labeled, csf_label
 
 def createBrainMaskWrapper(data_dir, restrict_to_RAPID_maps=True, high_resolution = False):
-    csf_image_name = 'wCSF_mask.nii'
+    csf_image_name = 'wreor_CSF_mask.nii'
     ct_sequences = ['wcoreg_Tmax', 'wcoreg_MTT', 'wcoreg_CBV', 'wcoreg_CBF']
     save_name = 'brain_mask'
     # ct_sequences = ['wcoreg_RAPID_Tmax', 'wcoreg_RAPID_MTT', 'wcoreg_RAPID_rCBV', 'wcoreg_RAPID_rCBF']

@@ -33,7 +33,7 @@ CT :
 --> Add this point data can be uploaded to a remote server
 1. skull_strip/skull_strip_wrapper.py : batch skull strip native CTs of multiple patients and segment CSF
 2. matlab/perfCT_coregistration_wrapper.m : coregister perfusion CT to betted native CT
-3. matlab/perfCT_normalisation_wrapper.m : normalise perfusion CT and native CT to CT_MNI
+3. matlab/perfCT_normalisation_wrapper.m : normalise perfusion CT and native CT to CT_MNI (if this needs to be reprocessed, step 2. also needs to be done again)
 
 (Angio-CT):
 If Angio-CTs are used, the head has to be extracted from the half-body image, after which the skull has to be 
@@ -61,7 +61,7 @@ MRI :
 Post:
 As RAPID performs excessive skull-stripping, same crop has to be applied to lesion maps to remove lesions without underlying input data. 
 At the same time the CSF_mask is integrated into the non-brain mask.
-- binarize_lesions.py : binarize all lesions by applying a 0.8 threshold from the maximum value (this is necessary as sometimes drawn lesions are 0-1 or 0-255 and during the normalisation values can be slightly altered)
+- binarize_maks.py : binarize all masks (lesions and others) by applying a threshold from the maximum value (this is necessary as sometimes drawn lesions are 0-1 or 0-255 and during the normalisation values can be slightly altered)
 - masking/brain_mask.py : create brain masks based on RAPID perfusion maps
 - masking/mask_lesions.py : apply brain masks to lesions
 - utils/preprocessing_verification : visual verification of preprocessing

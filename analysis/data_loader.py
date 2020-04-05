@@ -222,7 +222,8 @@ def load_nifti(main_dir, ct_sequences, label_sequences, mri_sequences, mri_label
 # Save data as compressed numpy array
 def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = None,
                        ct_sequences = [], label_sequences = [], use_mri_sequences = False,
-                       external_memory=False, high_resolution = False, enforce_VOI=True, use_vessels=False):
+                       external_memory=False, high_resolution = False, enforce_VOI=True, use_vessels=False,
+                       use_angio=False):
     """
     Load data
         - Image data (from preprocessed Nifti)
@@ -238,6 +239,8 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
         external_memory (optional, default False): on external memory usage, NaNs need to be converted to -1
         high_resolution (optional, default False): use non normalized images (patient space instead of MNI space)
         use_vessels (optional, default False): use vessel masks as ct input
+        use_angio (optional, default False): use angio CT as ct input
+
 
     Returns:
         'clinical_data': numpy array containing the data for each of the patients [patient, (n_parameters)]
@@ -253,12 +256,16 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
             ct_sequences = ['wmask_filtered_extracted_betted_Angio']
             if high_resolution:
                 ct_sequences = ['mask_filtered_extracted_betted_Angio']
+        if use_angio:
+            ct_sequences = ['wbetted_Angio']
+            if high_resolution:
+                ct_sequences = ['betted_Angio']
 
     if len(label_sequences) < 1 and enforce_VOI:
         # Import VOI GT with brain mask applied
         # to avoid False negatives in areas that cannot be predicted (as their are not part of the RAPID perf maps)
         label_sequences = ['masked_wcoreg_VOI']
-        if use_vessels:
+        if use_vessels or use_angio:
             label_sequences = ['wcoreg_VOI']
             if high_resolution:
                 label_sequences = ['coreg_VOI']
