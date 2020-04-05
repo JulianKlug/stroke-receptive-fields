@@ -66,6 +66,10 @@ At the same time the CSF_mask is integrated into the non-brain mask.
 - masking/mask_lesions.py : apply brain masks to lesions
 - utils/preprocessing_verification : visual verification of preprocessing
 
+ToDo:
+[] Add Rescaling RAPID perfusion maps to post-processing
+
+
 ### Additional steps for using HD images 
 
 HD images are not warped to CT-MNI space, and can thus conserve the initial voxel space.
