@@ -37,7 +37,7 @@ def compute_core(data, brain_masks, threshold=0.3, use_Tmax4_normalisation=True,
 
     CBF_normalised_byTmax4, _ = normalise_channel_by_Tmax4(data[brain_masks].reshape(-1, 4), brain_masks, 1)
     CBF_normalised_byContralateral, _ = normalise_channel_by_contralateral(data[brain_masks].reshape(-1, 4), brain_masks, 1)
-    CBF_normalised_byContralateral_Region = normalise_by_contralateral_region(data, three_D_region=False)[..., 1]    
+    CBF_normalised_byContralateral_Region = normalise_by_contralateral_region(data, three_D_region=False)[..., 1] * brain_masks
 
     tresholded_voxels = np.zeros(data[..., 0].shape)
     # Parts of penumbra (Tmax > 6) where CBF < 30% of healthy tissue (contralateral or region where Tmax < 4s)
@@ -74,10 +74,12 @@ def estimate_perfusion_volumes(data_dir):
     tmax_over_10 = threshold_volume(ct_inputs[..., 0], threshold=10)
     smooth_tmax10 = smooth(tmax_over_10)
 
-    norm_cbf_under_30_withTmax4 = compute_core(ct_inputs, brain_masks, use_Tmax4_normalisation=True)
+    norm_cbf_under_30_withTmax4 = compute_core(ct_inputs, brain_masks, use_Tmax4_normalisation=True,
+                                               use_region_wise_normalisation=False)
     smooth_cbf30_T4 = smooth(norm_cbf_under_30_withTmax4)
 
-    norm_cbf_under_30_withoutTmax4 = compute_core(ct_inputs, brain_masks, use_Tmax4_normalisation=False)
+    norm_cbf_under_30_withoutTmax4 = compute_core(ct_inputs, brain_masks, use_Tmax4_normalisation=False,
+                                                  use_region_wise_normalisation=False)
     smooth_cbf30_noT4 = smooth(norm_cbf_under_30_withoutTmax4)
 
     norm_cbf_under_30_withTmax4_and_regional = compute_core(ct_inputs, brain_masks, use_Tmax4_normalisation=True,
