@@ -26,32 +26,47 @@ Verify clinical exclusion criteria:
     - extract_patient_characteristics.py: extract relevant patient characteristics from main excel database
 
 #### 3. CT Preprocessing
+##### 3.1 General Pipeline
+This is the general pipeline, for specificities for perfusion maps, Angio-CT or 4D perfusion CT, please read the sections below first.
 
-0. utils/resolve_RAPID_4D_maps: resolve RAPID maps with 4 dimensions
-    - get_RAPID_4D_list: find subjects with 4D RAPID maps
-    - resolve_RAPID_4D_maps : reduce dimensions to 3D of given subjects (subjects may need to be downloaded from the server first as this function requires an Xserver for graphical feedback)
 --> Add this point data can be uploaded to a remote server
 1. skull_strip/skull_strip_wrapper.py : batch skull strip native CTs of multiple patients and segment CSF
 2. matlab/perfCT_coregistration_wrapper.m : coregister perfusion CT to betted native CT
 3. matlab/perfCT_normalisation_wrapper.m : normalise perfusion CT and native CT to CT_MNI (if this needs to be reprocessed, step 2. also needs to be done again)
 
-##### 3.5 Angio-CT
+##### 3.2 Perfusion maps 
+Map order: Tmax, CBF, MTT, CBV
+
+1. utils/resolve_RAPID_4D_maps: resolve RAPID maps with 4 dimensions
+    - get_RAPID_4D_list: find subjects with 4D RAPID maps
+    - resolve_RAPID_4D_maps : reduce dimensions to 3D of given subjects (subjects may need to be downloaded from the server first as this function requires an Xserver for graphical feedback)
+2. Proceed to the steps described in 3.1
+
+##### 3.3 Angio-CT
 If Angio-CTs are used, the head has to be extracted from the half-body image, after which the skull has to be 
 stripped from the image. Finally vessels are extracted. 
 
 Angio Sequence used is Angio_CT_075_Bv40 as the contrast between contrast agent and brain matter is greater
 
-0. Follow all Pre steps with the include_angio setting set to True (organise.py)
-1. Do the skull_strip step mentioned above for the rest of the CT --> CSF segmentation
+0. Follow all the Data Verification and Extraction steps with the include_angio setting set to True (organise.py)
+1. Do the skull_strip step mentioned above for the rest of the CT (3.1, step 1) --> CSF segmentation
 
 2. angio_ct_extraction/brain_extract_wrapper.py : center FOV on head and extract brain only (applies the priorly obtained CSF mask)
 3. angio_ct_extraction/vx_segmentation/wrapper_vx_extraction.py: extract only brain_vessels (hessian vesselness)
 
-4. Do all the rest of CT processing from step 2 on with the with_angio option for the normalisation (see above)
+4. Do all the rest of CT processing from step 2 (#3.1) on with the with_angio option for the normalisation (see above)
 
 5. Post-processing (see below)
 - masking/brain_mask.py with restrict_to_RAPID_maps set to False
 - Skip lesion_masking 
+
+##### 3.4 4D Perfusion CT
+
+0. Follow all the Data Verification and Extraction steps with the include_pCT setting set to True (organise.py)
+1. matlab/pCT_motion_correction.m: correct for motion in the 4D pCT file
+2. Follow all steps mentioned in the general CT processing (#3.1) with the with_pCT option on (see above)
+
+
 
 #### 4. MRI preprocessing
 
