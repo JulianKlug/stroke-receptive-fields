@@ -65,5 +65,5 @@ def extract_patient_characteristics(patient_id_path, patient_info_path, id_sheet
     output_df.to_excel(os.path.join(os.path.dirname(patient_info_path), 'output_df.xlsx'))
 
 extract_patient_characteristics(
-    '/Users/julian/temp/anon_key_2017.xlsx',
-    '/Users/julian/temp/190419_Données 2015-16-17.xlsx', id_sheet = 'Sheet1', info_sheet = 'Sheet1 (2)')
+    '/Users/julian/stroke_research/brain_and_donuts/patient_data/patient_selection/anonymisation_key_pCT_2016_2017.xlsx',
+    '/Users/julian/stroke_research/brain_and_donuts/patient_data/patient_selection/190419_Données 2015-16-17.xlsx', id_sheet = 'Sheet1', info_sheet = 'Sheet1 (2)')

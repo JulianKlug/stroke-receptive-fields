@@ -66,7 +66,9 @@ Angio Sequence used is Angio_CT_075_Bv40 as the contrast between contrast agent 
 1. matlab/pCT_motion_correction.m: correct for motion in the 4D pCT file
 2. Follow all steps mentioned in the general CT processing (#3.1) with the with_pCT option on (see above)
 
-
+3. Post-processing (see below)
+- masking/brain_mask.py with restrict_to_RAPID_maps set to False
+- Skip lesion_masking 
 
 #### 4. MRI preprocessing
 
