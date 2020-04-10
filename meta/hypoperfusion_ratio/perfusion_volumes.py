@@ -95,7 +95,7 @@ def estimate_perfusion_volumes(data_dir):
     for subj in range(ids.size):
         max_training_samples = 75
         if ids.size < max_training_samples:
-            max_training_samples = ids.size
+            max_training_samples = ids.size - 1
         training_indices = list(range(ct_inputs.shape[0]))
         training_indices.remove(subj)
         training_indices = np.random.choice(training_indices, max_training_samples, replace=False)
@@ -104,7 +104,8 @@ def estimate_perfusion_volumes(data_dir):
         rfm = rfm.fit(np.expand_dims(ct_inputs[training_indices, ..., 0], axis=-1), ct_label[training_indices], mask=brain_masks[training_indices])
 
         # predict for this subject
-        tmax_rf3[subj] = rfm.transform(np.expand_dims(ct_inputs[subj, ..., 0], axis=[0, -1])) * np.expand_dims(brain_masks[subj], axis=0).astype(int)
+        tmax_rf3[subj] = rfm.transform(np.expand_dims(np.expand_dims(ct_inputs[subj, ..., 0], axis=0), axis=-1)) \
+                                        * np.expand_dims(brain_masks[subj].astype(int), axis=0)
 
 
     smooth_tmax_rf3 = smooth(tmax_rf3) * brain_masks.astype(int)
