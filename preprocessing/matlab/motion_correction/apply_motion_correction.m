@@ -1,31 +1,37 @@
-function [] = apply_motion_correction(V0_file, output_prefix)
+function [] = apply_motion_correction(V0_file, V0_folder, output_prefix)
 %APPLY_MOTION_CORRECTION 
 %   Apply motion correction to a 4D file
 % Prerequisites (need to be in path): SPM12, DPABI
 % Input:
 %   V0_file: File struct for the original 4D volume 
+%   V0_folder: folder containing the file (necessary for < 2016b
+%   compatibility)
 % Use example:
 %   % Load 4D file:
 %   V0_file = dir(fullfile(input_dir, 'filename*.nii'));
+%   apply_motion_correction(V0_file, input_dir)
 
 % Author: Julian Klug, tensu.wave@gmail.com; 
 % Original idea and script: Giulia Preti
 
 %% Check variables passed
-if nargin < 2
+if nargin < 3
   output_prefix = 'mc';
+end
+if nargin < 2 % this only works in matlab >= 2016b
+   V0_folder = V0_file.folder;
 end
 
     
 %% Load the initial 4D data
-[~, V0_name, V0_ext] = fileparts(fullfile(V0_file.folder, V0_file.name));
-V0_header = spm_vol(fullfile(V0_file.folder, V0_file.name));
+[~, V0_name, V0_ext] = fileparts(fullfile(V0_folder, V0_file.name));
+V0_header = spm_vol(fullfile(V0_folder, V0_file.name));
 V0 = spm_read_vols(V0_header);
 
 %%  Split 4D into multiple 3D volume for SPM realignement
-split_4D_subfolder = fullfile(V0_file.folder, '/4D_split');
+split_4D_subfolder = fullfile(V0_folder, '/4D_split');
 mkdir(split_4D_subfolder);
-spm_file_split(fullfile(V0_file.folder, V0_file.name), split_4D_subfolder);
+spm_file_split(fullfile(V0_folder, V0_file.name), split_4D_subfolder);
 
 %%  Run SPM realignement
 settings = load('motion_correction/settings.mat');
@@ -39,7 +45,7 @@ X=[ones(size(V0,4),1) [1:size(V0,4)]'/size(V0,4) ...
     [1:size(V0,4)].^2'/(size(V0,4)^2)];
 %2. add motion params:
 mot = dir(fullfile(split_4D_subfolder,'rp*.txt'));
-motion_file = fullfile(V0_file.folder, strcat('motion_params_', V0_name, '.txt'));    
+motion_file = fullfile(V0_folder, strcat('motion_params_', V0_name, '.txt'));    
 copyfile(fullfile(split_4D_subfolder, mot(1).name), motion_file);
 
 Cov = load(motion_file);
@@ -62,7 +68,7 @@ V0Cov(isnan(V0Cov)) = 0;
 
 %% Save motion corrected output 
 V0Cov_header = V0_header(1);
-output_file = fullfile(V0_file.folder, strcat(output_prefix, '_', V0_name, '.nii'));
+output_file = fullfile(V0_folder, strcat(output_prefix, '_', V0_name, '.nii'));
 [V0Cov_header.fname] = deal(output_file);
 rest_Write4DNIfTI(V0Cov, V0Cov_header, output_file)
 

@@ -8,7 +8,7 @@
 clear all , clc
 %% Specify paths
 % Main folder containing individual subject folders
-data_path = '/Users/julian/temp/VPCT_extraction_test/pipeline_test';
+data_path = '/Users/julian/temp/VPCT_extraction_test/pipeline_test_compa';
 
 % Options
 do_not_recalculate = true;
@@ -36,15 +36,16 @@ for i = 1: numel(subjects)
     modalities = dir(fullfile(data_path,subjects{i}, 'pCT*'));
     modality = modalities(1).name;
     
-    VPCT_file = dir(fullfile(data_path, subjects{i}, modality, ...
+    CT_folder = fullfile(data_path, subjects{i}, modality);
+    VPCT_file = dir(fullfile(CT_folder, ...
                     strcat('VPCT_', subjects{i}, '*', '.nii*')));
                 
     % Check if subject already processed
-    if do_not_recalculate && exist(fullfile(VPCT_file.folder, strcat('mc_', VPCT_file.name)))
+    if do_not_recalculate && exist(fullfile(CT_folder, strcat('mc_', VPCT_file.name)))
         fprintf('Skipping subject "%s" as normalised files are already present.\n', subjects{i});
         continue;
     end
     
     % Apply motion correction to this file
-    apply_motion_correction(VPCT_file);
+    apply_motion_correction(VPCT_file, CT_folder);
 end
