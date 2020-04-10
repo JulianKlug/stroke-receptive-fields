@@ -8,6 +8,7 @@ from skimage.morphology import remove_small_objects, ball
 from analysis.voxelwise.channel_normalisation import normalise_channel_by_Tmax4, normalise_channel_by_contralateral, normalise_by_contralateral_region
 from analysis.utils import rescale_outliers
 from analysis.dataset_visualization import visualize_dataset
+from models import ReceptiveFieldModel
 
 def threshold_volume(data, threshold):
     tresholded_voxels = np.zeros(data.shape)
@@ -86,6 +87,11 @@ def estimate_perfusion_volumes(data_dir):
                                                             use_region_wise_normalisation=True)
     smooth_cbf30_T4_and_region = smooth(norm_cbf_under_30_withTmax4_and_regional)
 
+    # create a Receptive Field Model with rf 3
+    rfm = ReceptiveFieldModel((3,3,3))
+    rfm = rfm.fit(np.expand_dims(ct_inputs[..., 0], axis=-1), ct_label, mask=brain_masks)
+    tmax_rf3 = rfm.transform(np.expand_dims(ct_inputs[..., 0], axis=-1)) * brain_masks.astype(int)
+    smooth_tmax_rf3 = smooth(tmax_rf3) * brain_masks.astype(int)
 
     # Compute volumes
     tmax_over_6_volume = np.sum(tmax_over_6, axis=(1, 2, 3))
@@ -103,6 +109,9 @@ def estimate_perfusion_volumes(data_dir):
     norm_cbf_under_30_withTmax4_and_regional_volume = np.sum(norm_cbf_under_30_withTmax4_and_regional, axis=(1, 2, 3))
     smooth_cbf30_T4_and_region_volume = np.sum(smooth_cbf30_T4_and_region, axis=(1, 2, 3))
 
+    tmax_rf3_volume = np.sum(tmax_rf3, axis=(1, 2, 3))
+    smooth_tmax_rf3_volume = np.sum(smooth_tmax_rf3, axis=(1, 2, 3))
+
     gt_volume = np.sum(ct_label, axis=(1, 2, 3))
 
     # Record data
@@ -118,6 +127,8 @@ def estimate_perfusion_volumes(data_dir):
     perfusion_volumes['smooth_norm2_cbf_under_30p'] = smooth_cbf30_T4_volume
     perfusion_volumes['norm3_cbf_under_30p'] = norm_cbf_under_30_withTmax4_and_regional_volume
     perfusion_volumes['smooth_norm3_cbf_under_30p'] = smooth_cbf30_T4_and_region_volume
+    perfusion_volumes['tmax_rf3'] = tmax_rf3_volume
+    perfusion_volumes['smooth_tmax_rf3'] = smooth_tmax_rf3_volume
 
     perfusion_volumes['ground_truth'] = gt_volume
 
@@ -134,6 +145,8 @@ def estimate_perfusion_volumes(data_dir):
         norm_cbf_under_30_withoutTmax4, smooth_cbf30_noT4,
         norm_cbf_under_30_withTmax4, smooth_cbf30_T4,
         norm_cbf_under_30_withTmax4_and_regional, smooth_cbf30_T4_and_region,
+        tmax_rf3, smooth_tmax_rf3,
+        brain_masks,
         ct_label
     ), axis=-1)
     stacked_volume_labels = [
@@ -142,6 +155,8 @@ def estimate_perfusion_volumes(data_dir):
         'norm1_cbf_under_30p', 'smooth_norm1_cbf_under_30p',
         'norm2_cbf_under_30p', 'smooth_norm2_cbf_under_30p',
         'norm3_cbf_under_30p', 'smooth_norm3_cbf_under_30p',
+        'tmax_rf3', 'smooth_tmax_rf3',
+        'brain_mask',
         'ground_truth'
     ]
 
