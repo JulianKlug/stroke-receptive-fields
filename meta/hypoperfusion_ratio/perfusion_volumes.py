@@ -89,8 +89,24 @@ def estimate_perfusion_volumes(data_dir):
 
     # create a Receptive Field Model with rf 3
     rfm = ReceptiveFieldModel((3,3,3))
-    rfm = rfm.fit(np.expand_dims(ct_inputs[..., 0], axis=-1), ct_label, mask=brain_masks)
-    tmax_rf3 = rfm.transform(np.expand_dims(ct_inputs[..., 0], axis=-1)) * brain_masks.astype(int)
+    tmax_rf3 = np.zeros(ct_label.shape)
+
+    # limit the number of subjects this is used upon for memory issues
+    for subj in range(ids.size):
+        max_training_samples = 75
+        if ids.size < max_training_samples:
+            max_training_samples = ids.size
+        training_indices = list(range(ct_inputs.shape[0]))
+        training_indices.remove(subj)
+        training_indices = np.random.choice(training_indices, max_training_samples, replace=False)
+
+        # fit on random other subjects
+        rfm = rfm.fit(np.expand_dims(ct_inputs[training_indices, ..., 0], axis=-1), ct_label, mask=brain_masks)
+
+        # predict for this subject
+        tmax_rf3[subj] = rfm.transform(np.expand_dims(ct_inputs[subj, ..., 0], axis=-1)) * brain_masks.astype(int)
+
+
     smooth_tmax_rf3 = smooth(tmax_rf3) * brain_masks.astype(int)
 
     # Compute volumes
