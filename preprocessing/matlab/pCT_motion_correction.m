@@ -43,11 +43,20 @@ for i = 1: numel(subjects)
     CT_folder = fullfile(data_path, subjects{i}, modality);
     VPCT_file = dir(fullfile(CT_folder, ...
                     strcat('VPCT_', subjects{i}, '.nii*')));
-    % Check if subject already processed
-    if do_not_recalculate && exist(fullfile(CT_folder, strcat('mc_', VPCT_file.name)))
-        fprintf('Skipping subject "%s" as normalised files are already present.\n', subjects{i});
-        continue;
+                
+    try 
+        % Check if subject already processed
+        if do_not_recalculate && exist(fullfile(CT_folder, strcat('mc_', VPCT_file.name)))
+            fprintf('Skipping subject "%s" as normalised files are already present.\n', subjects{i});
+            continue;
+        end
+        % Apply motion correction to this file
+        apply_motion_correction(VPCT_file, CT_folder);
+    catch ME
+        % subjects where motion correction fails are gathered in a file
+        fileID = fopen(fullfile(data_path, 'motion_correction_failed.txt'),'at');
+        fprintf(fileID,'%s %s %s %s\n', subjects{i}, ME.stack(1).name, ME.stack(1).line, ME.message);
+        fclose(fileID);
     end
-    % Apply motion correction to this file
-    apply_motion_correction(VPCT_file, CT_folder);
 end
+
