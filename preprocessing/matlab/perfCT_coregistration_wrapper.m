@@ -8,8 +8,8 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/temp/VPCT_extraction_test/pipeline_test';
-spm_path = '/Users/julian/Documents/MATLAB/spm12';
+data_path = '/home/klug/data/original_data/with_pct_2016_2017';
+spm_path = '/home/klug/spm12';
 do_not_recalculate = true; 
 % with_pCT = true;
 
@@ -47,6 +47,10 @@ base_image_ext = '.nii.gz';
 for i = 1: numel ( subjects )
     fprintf('%i/%i (%i%%) \n', i, size(subjects, 1), 100 * i / size(subjects, 1));
     modalities = dir(fullfile(data_path,subjects{i}, 'pCT*'));
+    if length(modalities) < 1
+      fprintf('Skipping "%s" as pCT folder can not be found.\n', subjects{i});
+      continue;
+    end
     modality = modalities(1).name;
 
 % Verify if coreg was already done

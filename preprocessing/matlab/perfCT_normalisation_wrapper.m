@@ -69,6 +69,10 @@ addpath(template_dir, data_path)
 for i = 1: numel ( subjects )
     fprintf('%i/%i (%i%%) \n', i, size(subjects, 1), 100 * i / size(subjects, 1));
     modalities = dir(fullfile(data_path,subjects{i}, 'pCT*'));
+    if length(modalities) < 1
+      fprintf('Skipping "%s" as pCT folder can not be found.\n', subjects{i});
+      continue;
+    end
     modality = modalities(1).name;
 
 % Verify if normalisation was already done
