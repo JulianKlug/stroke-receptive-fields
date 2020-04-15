@@ -1,4 +1,4 @@
-import sys
+import sys, argparse
 sys.path.insert(0, '../../analysis')
 
 import os, subprocess
@@ -67,7 +67,7 @@ def createBrainMask(data_dir, ct_sequences, csf_image_name, save = True, save_na
         nib.save(inverse_labeled_img, os.path.join(data_dir,  'inverse_' + save_name + image_extension))
     return labeled, csf_label
 
-def createBrainMaskWrapper(data_dir, restrict_to_RAPID_maps=True, high_resolution = False):
+def createBrainMaskWrapper(data_dir, restrict_to_RAPID_maps=False, high_resolution=False):
     csf_image_name = 'wreor_CSF_mask.nii'
     ct_sequences = ['wcoreg_Tmax', 'wcoreg_MTT', 'wcoreg_CBV', 'wcoreg_CBF']
     save_name = 'brain_mask'
@@ -98,3 +98,11 @@ def createBrainMaskWrapper(data_dir, restrict_to_RAPID_maps=True, high_resolutio
                     modality_dir = os.path.join(subject_dir, modality)
                     createBrainMask(modality_dir, ct_sequences, csf_image_name, save_name = save_name)
                     print('Processed subject:', subject)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Brain Mask creation')
+    parser.add_argument('input_directory')
+    parser.add_argument("--restrict2Rapid", nargs='?', const=True, default=False, help="Mask parts outside the RAPID maps are discared.")
+    parser.add_argument("--hd", nargs='?', const=True, default=False, help="Use HD version of the files")
+    args = parser.parse_args()
+    createBrainMaskWrapper(args.input_directory, restrict_to_RAPID_maps=args.restrict2Rapid, high_resolution=args.hd)
