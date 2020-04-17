@@ -31,8 +31,9 @@ This is the general pipeline, for specificities for perfusion maps, Angio-CT or 
 
 --> Add this point data can be uploaded to a remote server
 1. skull_strip/skull_strip_wrapper.py : batch skull strip native CTs of multiple patients and segment CSF
-2. matlab/perfCT_coregistration_wrapper.m : coregister perfusion CT to betted native CT
-3. matlab/perfCT_normalisation_wrapper.m : normalise perfusion CT and native CT to CT_MNI (if this needs to be reprocessed, step 2. also needs to be done again)
+2. Unless Perfusion maps are to be excluded, follow the steps in 3.2
+3. matlab/perfCT_coregistration_wrapper.m : coregister perfusion CT to betted native CT
+4. matlab/perfCT_normalisation_wrapper.m : normalise perfusion CT and native CT to CT_MNI (if this needs to be reprocessed, step 2. also needs to be done again)
 
 ##### 3.2 Perfusion maps 
 Map order: Tmax, CBF, MTT, CBV
@@ -63,7 +64,7 @@ Angio Sequence used is Angio_CT_075_Bv40 as the contrast between contrast agent 
 ##### 3.4 4D Perfusion CT
 
 0. Follow all the Data Verification and Extraction steps with the include_pCT setting set to True (organise.py)
-1. matlab/pCT_motion_correction.m: correct for motion in the 4D pCT file
+1. pCT_preprocessing_pipeline: motion correction, coregistration and brain extraction of 4D pCT files
 2. Follow all steps mentioned in the general CT processing (#3.1) with the with_pCT option on (see above)
 
 3. Post-processing (see below)
