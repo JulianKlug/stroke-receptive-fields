@@ -14,6 +14,9 @@ function [] = apply_motion_correction(V0_file, V0_folder, output_prefix)
 % Author: Julian Klug, tensu.wave@gmail.com; 
 % Original idea and script: Giulia Preti
 
+% Issues: In some situations the time dependent signal seems to regress to
+% mean with this motion correction algorithm
+
 %% Check variables passed
 if nargin < 3
   output_prefix = 'mc';

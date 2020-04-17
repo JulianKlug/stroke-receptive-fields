@@ -46,7 +46,6 @@ def get_paths_and_ids(data_dir, ct_sequences, ct_label_sequences, mri_sequences,
                 # Force order specified in ct_sequences
                 for channel in ct_sequences:
                     indices = [i for i, s in enumerate(studies) if s.startswith(channel)]
-                    print(subject, channel, indices)
                     if len(indices) > 1:
                         raise ValueError('Multiple images found for', channel, 'in', studies)
                     if len(indices) == 1:
@@ -166,8 +165,6 @@ def load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_ma
                 image_data = np.nan_to_num(image_data)
 
             if len(first_image_data.shape) == 4:
-                a = image_data.reshape(n_x, n_y, n_z, 1, n_t)
-                print(image_data.shape, a.shape, ct_inputs.shape, ct_inputs[subject, ..., c, :].shape, ct_inputs[subject, ..., c].shape)
                 ct_inputs[subject, ..., c, :] = image_data
             else:
                 ct_inputs[subject, ..., c] = image_data
