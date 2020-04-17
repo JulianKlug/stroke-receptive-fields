@@ -4,18 +4,21 @@
 % be adhered to.
 % Prequisites: DPABI package, spm12
 
+% Issues: In some situations the time dependent signal seems to regress to
+% mean with this motion correction algorithm
+
 %% Clear variables and command window
 clear all , clc
 %% Specify paths
 % Main folder containing individual subject folders
-data_path = '/home/klug/data/original_data/with_pct_2016_2017';
+data_path = '/Users/julian/Desktop/pct_to_reprocess/reworked';
 
 % Options
 do_not_recalculate = true;
 
 % Prequisite paths
-DPABI_path = '/home/klug/utils/DPABI_V4.3_200401';
-spm_path = '/home/klug/spm12';
+DPABI_path = '/Users/julian/Documents/MATLAB/DPABI_V4.3_200301';
+spm_path = '/Users/julian/Documents/MATLAB/spm12';
 script_path = mfilename('fullpath');
 script_folder = script_path(1 : end - size(mfilename, 2));
 addpath(genpath(script_folder));

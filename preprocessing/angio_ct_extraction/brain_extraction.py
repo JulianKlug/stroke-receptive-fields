@@ -1,5 +1,7 @@
-import os
+import os, sys
 import subprocess
+sys.path.insert(0, '../')
+from tools.segmentation.brain_extraction import brain_extraction
 
 def align_FOV(image_to_bet, no_contrast_anatomical, data_dir):
 
@@ -25,16 +27,22 @@ def extract_brain(image_to_bet, no_contrast_anatomical, data_dir, brain_mask=Tru
     coreg_path = os.path.join(data_dir, coreg_name)
 
     if not brain_mask:
-        print('Removing skull of', no_contrast_anatomical)
-        skull_strip_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'skull_strip.sh')
-        subprocess.run([skull_strip_path, '-i', no_contrast_anatomical], cwd = data_dir)
-        mask_path = os.path.join(data_dir, 'betted_' + no_contrast_anatomical + '_Mask.nii.gz')
+        brain_extraction(coreg_path, output_path, no_contrast_anatomical=no_contrast_anatomical)
     else:
-        mask_path = os.path.join(data_dir, 'brain_mask.nii')
+        brain_extraction(coreg_path, output_path, brain_mask=os.path.join(data_dir, 'brain_mask.nii'))
 
-    print('Applying mask')
-    subprocess.run([
-        'fslmaths', coreg_path, '-mas', mask_path, output_path
-    ], cwd = data_dir)
+    # Todo Above brain_extraction tool is not yet tested in this setting, the code below is thus preserved for now
+    # if not brain_mask:
+    #     print('Removing skull of', no_contrast_anatomical)
+    #     skull_strip_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'skull_strip.sh')
+    #     subprocess.run([skull_strip_path, '-i', no_contrast_anatomical], cwd = data_dir)
+    #     mask_path = os.path.join(data_dir, 'betted_' + no_contrast_anatomical + '_Mask.nii.gz')
+    # else:
+    #     mask_path = os.path.join(data_dir, 'brain_mask.nii')
+    #
+    # print('Applying mask')
+    # subprocess.run([
+    #     'fslmaths', coreg_path, '-mas', mask_path, output_path
+    # ], cwd = data_dir)
 
     print('Done with', image_to_bet)
