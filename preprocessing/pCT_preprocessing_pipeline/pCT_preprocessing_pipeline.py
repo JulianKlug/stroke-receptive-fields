@@ -49,7 +49,8 @@ def pCT_preprocessing_pipeline(data_dir, reverse_reading, CT_dirname='pCT',
                          os.path.isfile(os.path.join(modality_dir, i)) and i.startswith(spc_name)
                          and i.endswith('.nii')]
             pCT_files = [i for i in os.listdir(modality_dir) if
-                         os.path.isfile(os.path.join(modality_dir, i)) and i.startswith(pCT_name)
+                         os.path.isfile(os.path.join(modality_dir, i))
+                         and i.startswith(pCT_name + '_' + subject + '.nii')
                          and i.endswith('.nii')]
             brain_mask_files = [i for i in os.listdir(modality_dir) if
                                 os.path.isfile(os.path.join(modality_dir, i)) and i.startswith(brain_mask_name)
@@ -95,7 +96,8 @@ def pCT_preprocessing_pipeline(data_dir, reverse_reading, CT_dirname='pCT',
             selected_brain_mask_file = os.path.join(modality_dir, brain_mask_files[0])
 
             temp_folder = os.path.join(modality_dir, 'temp_pct_preprocessing')
-            os.mkdir(temp_folder)
+            if not os.path.exists(temp_folder):
+                os.mkdir(temp_folder)
 
             # Motion correction
             motion_corrected_pCT = mcflirt(selected_pCT_file, outdir=temp_folder, verbose=True, stages=4)
