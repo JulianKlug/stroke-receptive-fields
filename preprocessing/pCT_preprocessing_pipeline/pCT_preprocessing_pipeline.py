@@ -89,30 +89,31 @@ def pCT_preprocessing_pipeline(data_dir, reverse_reading, CT_dirname='pCT',
                 continue
 
             print('Extracting for', subject)
-            try:
-                selected_pCT_file = os.path.join(modality_dir, pCT_files[0])
-                selected_spc_file = os.path.join(modality_dir, spc_files[0])
-                selected_brain_mask_file = os.path.join(modality_dir, brain_mask_files[0])
+            # try:
+            selected_pCT_file = os.path.join(modality_dir, pCT_files[0])
+            selected_spc_file = os.path.join(modality_dir, spc_files[0])
+            selected_brain_mask_file = os.path.join(modality_dir, brain_mask_files[0])
 
-                temp_folder = os.path.join(modality_dir, 'temp_pct_preprocessing')
-                os.mkdir(temp_folder)
+            temp_folder = os.path.join(modality_dir, 'temp_pct_preprocessing')
+            os.mkdir(temp_folder)
 
-                # Motion correction
-                motion_corrected_pCT = mcflirt(selected_pCT_file, outdir=temp_folder, verbose=True, stages=4)
-                motion_corrected_pCT += '.gz'
+            # Motion correction
+            motion_corrected_pCT = mcflirt(selected_pCT_file, outdir=temp_folder, verbose=True, stages=4)
+            motion_corrected_pCT += '.gz'
 
-                # Coregistration to non-contrast anatomical
-                coregistered_pCT = coregistration_4D(motion_corrected_pCT, selected_spc_file)
+            # Coregistration to non-contrast anatomical
+            coregistered_pCT = coregistration_4D(motion_corrected_pCT, selected_spc_file)
 
-                # Brain extraction
-                output_path = os.path.join(modality_dir, 'p_' + pCT_files[0] + '.gz')
-                brain_extraction(coregistered_pCT, output_path, brain_mask=selected_brain_mask_file)
+            # Brain extraction
+            output_path = os.path.join(modality_dir, 'p_' + pCT_files[0] + '.gz')
+            brain_extraction(coregistered_pCT, output_path, brain_mask=selected_brain_mask_file)
 
-                shutil.rmtree(temp_folder)
-            except Exception as e:
-                error_log_df = error_log_df.append(
-                    pd.DataFrame([[subject, str(e), True]], columns=error_log_columns),
-                    ignore_index=True)
+            shutil.rmtree(temp_folder)
+            # except Exception as e:
+            #     print(e)
+            #     error_log_df = error_log_df.append(
+            #         pd.DataFrame([[subject, str(e), True]], columns=error_log_columns),
+            #         ignore_index=True)
 
             error_log_df.to_excel(os.path.join(data_dir, 'pCT_preprocessing_error_log' + timestamp + '.xlsx'))
 
