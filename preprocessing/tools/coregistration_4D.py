@@ -1,8 +1,9 @@
 import os, shutil, argparse
+import nipype.interfaces.matlab as mlab
 import nipype.interfaces.spm as spm
 from nipype.interfaces.fsl import Split, Merge
 
-def coregistration_4D(source_file, ref, out_file=None):
+def coregistration_4D(source_file, ref, out_file=None, spm_path=None):
     '''
     Coregistration with spm + fsl for 4D files.
     Why? Nor SPM, nor fsl are able to do this by default
@@ -10,6 +11,8 @@ def coregistration_4D(source_file, ref, out_file=None):
     :param ref: reference file to co-register the source-file to
     :return: path to coregistered file
     '''
+    if spm_path is not None:
+        mlab.MatlabCommand.set_default_paths(spm_path)
     main_dir, source_file_name = os.path.split(source_file)
     if out_file is None:
         out_file = os.path.join(main_dir, 'r' + source_file_name)
