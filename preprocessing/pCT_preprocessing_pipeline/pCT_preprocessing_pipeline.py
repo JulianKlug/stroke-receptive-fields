@@ -26,6 +26,7 @@ def pCT_preprocessing_pipeline(data_dir, reverse_reading, CT_dirname='pCT',
     :param brain_mask_suffix: suffix of brain mask image
     :return:
     '''
+    print('yooooo', spm_path)
     error_log_columns = ['subject', 'message', 'excluded']
     error_log_df = pd.DataFrame(columns=error_log_columns)
     timestamp = str(time.time()).split('.')[0]
@@ -105,7 +106,7 @@ def pCT_preprocessing_pipeline(data_dir, reverse_reading, CT_dirname='pCT',
             motion_corrected_pCT += '.gz'
 
             # Coregistration to non-contrast anatomical
-            coregistered_pCT = coregistration_4D(motion_corrected_pCT, selected_spc_file, spm_path)
+            coregistered_pCT = coregistration_4D(motion_corrected_pCT, selected_spc_file, spm_path=spm_path)
 
             # Brain extraction
             output_path = os.path.join(modality_dir, 'p_' + pCT_files[0] + '.gz')
@@ -124,6 +125,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Motion correct and align to native CT')
     parser.add_argument('input_directory')
     parser.add_argument("--reverse", nargs='?', const=True, default=False, help="Read directory in reverse.")
-    parser.add_argument('--spm', action="store", dest='spm_path', help='path to spm')
+    parser.add_argument('--spm', action="store", dest='spm', help='path to spm')
     args = parser.parse_args()
     pCT_preprocessing_pipeline(args.input_directory, args.reverse, spm_path=args.spm)

@@ -13,12 +13,15 @@ def coregistration_4D(source_file, ref, out_file=None, spm_path=None):
     '''
     if spm_path is not None:
         mlab.MatlabCommand.set_default_paths(spm_path)
+    print('yooooo', spm_path)
+    print(spm.SPMCommand().version)  
     main_dir, source_file_name = os.path.split(source_file)
     if out_file is None:
         out_file = os.path.join(main_dir, 'r' + source_file_name)
 
     split_folder = os.path.join(main_dir, '4D_split')
-    os.mkdir(split_folder)
+    if not os.path.exists(os.path.join(main_dir, '4D_split')):
+        os.mkdir(split_folder)
     split = Split(in_file=source_file, dimension='t')
     split.inputs.in_file = source_file
     split.inputs.dimension = 't'
@@ -31,7 +34,7 @@ def coregistration_4D(source_file, ref, out_file=None, spm_path=None):
 
     coreg = spm.Coregister()
     coreg.inputs.target = ref
-    coreg.inputs.mfile = False
+    #coreg.inputs.mfile = False
     coreg.inputs.source = index_file
     coreg.inputs.apply_to_files = split_files
     coreg = coreg.run()
