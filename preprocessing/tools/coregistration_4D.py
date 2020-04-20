@@ -9,12 +9,14 @@ def coregistration_4D(source_file, ref, out_file=None, spm_path=None):
     Why? Nor SPM, nor fsl are able to do this by default
     :param source_file: path to input 4D file
     :param ref: reference file to co-register the source-file to
+    :param out_file: output file
+    :param spm_path: path to spm
     :return: path to coregistered file
     '''
     if spm_path is not None:
         mlab.MatlabCommand.set_default_paths(spm_path)
-    print('yooooo', spm_path)
-    print(spm.SPMCommand().version)  
+    if spm.SPMCommand().version is None:
+        raise Exception('SPM path not set correctly:', spm_path, spm.SPMCommand().version)
     main_dir, source_file_name = os.path.split(source_file)
     if out_file is None:
         out_file = os.path.join(main_dir, 'r' + source_file_name)
@@ -34,7 +36,6 @@ def coregistration_4D(source_file, ref, out_file=None, spm_path=None):
 
     coreg = spm.Coregister()
     coreg.inputs.target = ref
-    #coreg.inputs.mfile = False
     coreg.inputs.source = index_file
     coreg.inputs.apply_to_files = split_files
     coreg = coreg.run()
