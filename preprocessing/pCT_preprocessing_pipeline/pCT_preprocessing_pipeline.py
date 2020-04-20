@@ -42,7 +42,7 @@ def pCT_preprocessing_pipeline(data_dir, reverse_reading, CT_dirname='pCT',
         subjects.reverse()
 
     for i_subj, subject in enumerate(subjects):
-        print(f'Processing folder ${i_subj}/${len(subjects)} (${i_subj/len(subjects)})')
+        print(f'Processing folder {i_subj}/{len(subjects)} ({i_subj/len(subjects)})')
         subject_dir = os.path.join(data_dir, subject)
         modalities = [o for o in os.listdir(subject_dir)
                       if os.path.isdir(os.path.join(subject_dir, o))]
