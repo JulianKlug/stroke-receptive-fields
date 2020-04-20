@@ -46,7 +46,7 @@ sequences = {
     'Tmax'
     };
 
-perfusion_ct_name = 'mc_VPCT'; % VPCT has ben coregistered and motion corrected before
+perfusion_ct_name = 'p_VPCT'; % VPCT has ben coregistered and motion corrected before
 angio_ct_name = 'betted_Angio_CT_075_Bv40';
 angio_vx_ct_name = 'filtered_extracted_betted_Angio_CT_075_Bv40';
 angio_mask_ct_name = 'mask_filtered_extracted_betted_Angio_CT_075_Bv40';
