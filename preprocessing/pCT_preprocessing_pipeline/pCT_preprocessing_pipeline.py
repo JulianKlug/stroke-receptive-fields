@@ -8,7 +8,8 @@ from tools.segmentation.brain_extraction import brain_extraction
 
 def pCT_preprocessing_pipeline(data_dir, reverse_reading, CT_dirname='pCT',
                                 pCT_name='VPCT', spc_name='SPC_301mm',
-                                brain_mask_name='betted_SPC_301mm', brain_mask_suffix='_Mask.nii.gz'):
+                                brain_mask_name='betted_SPC_301mm', brain_mask_suffix='_Mask.nii.gz',
+                               spm_path=None):
     '''
     Preprocessing pipeline for 4D perfusion CT
         - 1. Motion correction
@@ -23,8 +24,12 @@ def pCT_preprocessing_pipeline(data_dir, reverse_reading, CT_dirname='pCT',
     :param spc_name: prefix on anatomical non contrast CT
     :param brain_mask_name: prefix of brain mask image
     :param brain_mask_suffix: suffix of brain mask image
+    :param spm_path: path to spm
     :return:
     '''
+    print('Starting Perfusion CT (4D) preprocessing pipeline')
+    if spm_path is not None:
+        print('SPM path set to', spm_path)
     error_log_columns = ['subject', 'message', 'excluded']
     error_log_df = pd.DataFrame(columns=error_log_columns)
     timestamp = str(time.time()).split('.')[0]
@@ -36,7 +41,8 @@ def pCT_preprocessing_pipeline(data_dir, reverse_reading, CT_dirname='pCT',
     if reverse_reading:
         subjects.reverse()
 
-    for subject in subjects:
+    for i_subj, subject in enumerate(subjects):
+        print(f'Processing folder ${i_subj}/${len(subjects)} (${i_subj/len(subjects)})')
         subject_dir = os.path.join(data_dir, subject)
         modalities = [o for o in os.listdir(subject_dir)
                       if os.path.isdir(os.path.join(subject_dir, o))]
@@ -49,7 +55,8 @@ def pCT_preprocessing_pipeline(data_dir, reverse_reading, CT_dirname='pCT',
                          os.path.isfile(os.path.join(modality_dir, i)) and i.startswith(spc_name)
                          and i.endswith('.nii')]
             pCT_files = [i for i in os.listdir(modality_dir) if
-                         os.path.isfile(os.path.join(modality_dir, i)) and i.startswith(pCT_name)
+                         os.path.isfile(os.path.join(modality_dir, i))
+                         and i.startswith(pCT_name + '_' + subject + '.nii')
                          and i.endswith('.nii')]
             brain_mask_files = [i for i in os.listdir(modality_dir) if
                                 os.path.isfile(os.path.join(modality_dir, i)) and i.startswith(brain_mask_name)
@@ -95,14 +102,15 @@ def pCT_preprocessing_pipeline(data_dir, reverse_reading, CT_dirname='pCT',
                 selected_brain_mask_file = os.path.join(modality_dir, brain_mask_files[0])
 
                 temp_folder = os.path.join(modality_dir, 'temp_pct_preprocessing')
-                os.mkdir(temp_folder)
+                if not os.path.exists(temp_folder):
+                    os.mkdir(temp_folder)
 
                 # Motion correction
                 motion_corrected_pCT = mcflirt(selected_pCT_file, outdir=temp_folder, verbose=True, stages=4)
                 motion_corrected_pCT += '.gz'
 
                 # Coregistration to non-contrast anatomical
-                coregistered_pCT = coregistration_4D(motion_corrected_pCT, selected_spc_file)
+                coregistered_pCT = coregistration_4D(motion_corrected_pCT, selected_spc_file, spm_path=spm_path)
 
                 # Brain extraction
                 output_path = os.path.join(modality_dir, 'p_' + pCT_files[0] + '.gz')
@@ -110,6 +118,7 @@ def pCT_preprocessing_pipeline(data_dir, reverse_reading, CT_dirname='pCT',
 
                 shutil.rmtree(temp_folder)
             except Exception as e:
+                print(e)
                 error_log_df = error_log_df.append(
                     pd.DataFrame([[subject, str(e), True]], columns=error_log_columns),
                     ignore_index=True)
@@ -120,5 +129,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Motion correct and align to native CT')
     parser.add_argument('input_directory')
     parser.add_argument("--reverse", nargs='?', const=True, default=False, help="Read directory in reverse.")
+    parser.add_argument('--spm', action="store", dest='spm', default=None, help='path to spm')
     args = parser.parse_args()
-    pCT_preprocessing_pipeline(args.input_directory, args.reverse)
+    pCT_preprocessing_pipeline(args.input_directory, args.reverse, spm_path=args.spm)

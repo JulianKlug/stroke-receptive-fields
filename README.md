@@ -65,6 +65,8 @@ Angio Sequence used is Angio_CT_075_Bv40 as the contrast between contrast agent 
 
 0. Follow all the Data Verification and Extraction steps with the include_pCT setting set to True (organise.py)
 1. pCT_preprocessing_pipeline: motion correction, coregistration and brain extraction of 4D pCT files
+- if spm is not in matlab default path, it must be set with the spm_path argument
+- If `ValueError: unknown locale: UTF-8` occurs, use `export LC_ALL=en_US.UTF-8` and  `export LANG=en_US.UTF-8` in your terminal
 2. Follow all steps mentioned in the general CT processing (#3.1) with the with_pCT option on (see above)
 
 3. Post-processing (see below)

@@ -1,21 +1,29 @@
 import os, shutil, argparse
+import nipype.interfaces.matlab as mlab
 import nipype.interfaces.spm as spm
 from nipype.interfaces.fsl import Split, Merge
 
-def coregistration_4D(source_file, ref, out_file=None):
+def coregistration_4D(source_file, ref, out_file=None, spm_path=None):
     '''
     Coregistration with spm + fsl for 4D files.
     Why? Nor SPM, nor fsl are able to do this by default
     :param source_file: path to input 4D file
     :param ref: reference file to co-register the source-file to
+    :param out_file: output file
+    :param spm_path: path to spm
     :return: path to coregistered file
     '''
+    if spm_path is not None:
+        mlab.MatlabCommand.set_default_paths(spm_path)
+    if spm.SPMCommand().version is None:
+        raise Exception('SPM path not set correctly:', spm_path, spm.SPMCommand().version)
     main_dir, source_file_name = os.path.split(source_file)
     if out_file is None:
         out_file = os.path.join(main_dir, 'r' + source_file_name)
 
     split_folder = os.path.join(main_dir, '4D_split')
-    os.mkdir(split_folder)
+    if not os.path.exists(os.path.join(main_dir, '4D_split')):
+        os.mkdir(split_folder)
     split = Split(in_file=source_file, dimension='t')
     split.inputs.in_file = source_file
     split.inputs.dimension = 't'
@@ -28,7 +36,6 @@ def coregistration_4D(source_file, ref, out_file=None):
 
     coreg = spm.Coregister()
     coreg.inputs.target = ref
-    coreg.inputs.mfile = False
     coreg.inputs.source = index_file
     coreg.inputs.apply_to_files = split_files
     coreg = coreg.run()
