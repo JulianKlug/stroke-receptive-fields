@@ -1,7 +1,7 @@
 import sys, argparse
 sys.path.insert(0, '../../analysis')
 
-import os, subprocess
+import os
 import nibabel as nib
 import numpy as np
 import skimage.measure as measure
