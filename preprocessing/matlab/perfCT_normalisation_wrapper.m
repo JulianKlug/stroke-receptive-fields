@@ -176,6 +176,9 @@ for i = 1: numel ( subjects )
    %% Add perfusion CT split 4D files to the files to normalise
    if with_pCT
       fprintf('Adding perfusion CT 4D files.\n');
+      zipped_pCT_file = fullfile(data_path, subjects{i}, modality, ...
+                    strcat(perfusion_ct_name, '_' ,subjects{i}, '.nii.gz'));
+      gunzip(zipped_pCT_file)
       pCT_file = fullfile(data_path, subjects{i}, modality, ...
                     strcat(perfusion_ct_name, '_' ,subjects{i}, '.nii'));
       split_4D_subfolder = fullfile(data_path, subjects{i}, modality, '/4D_split');
@@ -233,6 +236,8 @@ for i = 1: numel ( subjects )
 
     % remove subfolder
     rmdir(split_4D_subfolder, 's')
+    % remove unzipped perfusion CT file    
+    delete(pCT_file)
    end
     
 % (SHOULD NOT BE USED ANYMORE) Script based on Clinical_CT toolbox based on SPM8 normalise 
