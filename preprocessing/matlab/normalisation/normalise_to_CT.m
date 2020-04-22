@@ -46,7 +46,7 @@ for idx = 1:numel(c_image_to_conormalize)
     images_to_resample{end +1} = strcat(c_image_to_conormalize{idx}, ',1');
 end
 
-matlabbatch{1}.spm.spatial.normalise.estwrite.subj.vol = {strcat(c_main_image, ',1')}; % {'/Users/julian/master/data/test/spm/SPC_301mm_Std_Barlovic_Radojka_19480907.nii,1'};
+matlabbatch{1}.spm.spatial.normalise.estwrite.subj.vol = {strcat(c_main_image, ',1')}; 
 matlabbatch{1}.spm.spatial.normalise.estwrite.subj.resample = images_to_resample';  %{strcat(c_image_to_conormalize, ',1')};
 
 % OPTIONS FROM CLINICAL_CT TOOLBOX

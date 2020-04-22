@@ -86,6 +86,12 @@ def get_paths_and_ids(data_dir, ct_sequences, ct_label_sequences, mri_sequences,
             ids.append(subject)
             print('Adding', subject)
         else :
+            if len(brain_mask) != 1: print('Brain mask missing.')
+            if n_mri_sequences != len(mri_channels): print('MRI sequence missing.')
+            if len(mri_label_sequences) != len(mri_lesion_map): print('MRI label missing.')
+            if len(ct_sequences) != len(ct_channels): print('CT sequence missing.')
+            if len(ct_label_sequences) != len(ct_lesion_map): print('CT label missing.')
+
             print('Not all images found for this folder. Skipping.', subject)
 
     return (ids, ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_mask_paths)
@@ -102,11 +108,15 @@ def load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_ma
     # get CT dimensions by extracting first image
     first_image = nib.load(ct_paths[0][0])
     first_image_data = first_image.get_data()
-    n_x, n_y, n_z = first_image_data.shape
+    n_x, n_y, n_z = first_image_data.shape[0:3]
+    if len(first_image_data.shape) == 4: # ie. there is a time dimensions
+        n_t = first_image_data.shape[3]
     ct_n_c = len(ct_paths[0])
     print(ct_n_c, 'CT channels found.')
 
     ct_inputs = np.empty((len(ct_paths), n_x, n_y, n_z, ct_n_c))
+    if len(first_image_data.shape) == 4:
+        ct_inputs = np.empty((len(ct_paths), n_x, n_y, n_z, ct_n_c, n_t))
     ct_lesion_outputs = np.empty((len(ct_lesion_paths), n_x, n_y, n_z))
     brain_masks = np.empty((len(ct_lesion_paths), n_x, n_y, n_z), dtype = bool)
 
@@ -154,7 +164,10 @@ def load_images(ct_paths, ct_lesion_paths, mri_paths, mri_lesion_paths, brain_ma
                 print('CT images of', ids[subject], 'contains NaN. Converting to 0.')
                 image_data = np.nan_to_num(image_data)
 
-            ct_inputs[subject, :, :, :, c] = image_data
+            if len(first_image_data.shape) == 4:
+                ct_inputs[subject, ..., c, :] = image_data
+            else:
+                ct_inputs[subject, ..., c] = image_data
 
         # load mri channels
         if mri_paths[0]:
@@ -222,28 +235,30 @@ def load_nifti(main_dir, ct_sequences, label_sequences, mri_sequences, mri_label
 # Save data as compressed numpy array
 def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = None,
                        ct_sequences = [], label_sequences = [], use_mri_sequences = False,
-                       external_memory=False, high_resolution = False, enforce_VOI=True, use_vessels=False,
-                       use_angio=False):
+                       external_memory=False, high_resolution = False, enforce_VOI=True,
+                       use_vessels=False, use_angio=False, use_4d_pct=False):
     """
     Load data
         - Image data (from preprocessed Nifti)
         - Clinical data (from excel)
 
     Args:
-        save_dir : directory to save data_to
-        main_dir : directory containing images
-        clinical_dir (optional) : directory containing clinical data (excel)
-        ct_sequences (optional, array) : array with names of ct sequences
-        label_sequences (optional, array) : array with names of VOI sequences
-        use_mri_sequences (optional, boolean) : boolean determining if mri sequences should be included
-        external_memory (optional, default False): on external memory usage, NaNs need to be converted to -1
-        high_resolution (optional, default False): use non normalized images (patient space instead of MNI space)
-        use_vessels (optional, default False): use vessel masks as ct input
-        use_angio (optional, default False): use angio CT as ct input
+    :param     save_dir : directory to save data_to
+    :param     main_dir : directory containing images
+    :param     clinical_dir (optional) : directory containing clinical data (excel)
+    :param     ct_sequences (optional, array) : array with names of ct sequences
+    :param     label_sequences (optional, array) : array with names of VOI sequences
+    :param     use_mri_sequences (optional, boolean) : boolean determining if mri sequences should be included
+    :param     external_memory (optional, default False): on external memory usage, NaNs need to be converted to -1
+    :param     high_resolution (optional, default False): use non normalized images (patient space instead of MNI space)
+    :param     use_vessels (optional, default False): use vessel masks as ct input
+    :param     use_angio (optional, default False): use angio CT as ct input
+    :param     use_4d_pct (optional, default False): use 4D perfusion CT as input
 
 
     Returns:
-        'clinical_data': numpy array containing the data for each of the patients [patient, (n_parameters)]
+    :return    save data as a date_set file storing
+                (clinical_inputs, ct_inputs, ct_lesion_GT, mri_inputs, mri_lesion_GT, brain_masks, ids, params)
     """
     if len(ct_sequences) < 1:
         ct_sequences = ['wcoreg_Tmax', 'wcoreg_CBF', 'wcoreg_MTT', 'wcoreg_CBV']
@@ -256,6 +271,10 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
             ct_sequences = ['wmask_filtered_extracted_betted_Angio']
             if high_resolution:
                 ct_sequences = ['mask_filtered_extracted_betted_Angio']
+        if use_4d_pct:
+            ct_sequences = ['wp_VPCT']
+            if high_resolution:
+                      ct_sequences = ['p_VPCT']
         if use_angio:
             ct_sequences = ['wbetted_Angio']
             if high_resolution:
@@ -265,7 +284,8 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
         # Import VOI GT with brain mask applied
         # to avoid False negatives in areas that cannot be predicted (as their are not part of the RAPID perf maps)
         label_sequences = ['masked_wcoreg_VOI']
-        if use_vessels or use_angio:
+        
+        if use_vessels or use_angio or use_4d_pct:
             label_sequences = ['wcoreg_VOI']
             if high_resolution:
                 label_sequences = ['coreg_VOI']

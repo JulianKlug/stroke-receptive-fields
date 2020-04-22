@@ -4,13 +4,13 @@ This repository hosts scripts for a research project on prediction of ischemic s
 ## How-to
 ### Pre-processing Pipeline
 
-Extraction Verification
+##### 1. Data Verification
 - pre_verification/find_empty_folders.py : find empty folders in subject directories hinting towards failed exports and save in excel file
 - pre_verification/verify_RAPID37.py : check that all subjects with perfusion CTs have 37 RAPID images (and not 11)
 - utils/extract_unknown_studies_folder.py : extract images saved as an unspecified "study" folder
 - utils/extract_RAPID37_folder.py : extract images saved as an unspecified "RAPID37" folder
 
-Pre :
+##### 2. Data Extraction
 
 0. image_name_config.py : file defining name space of relevant MRI and CT sequences
 1. organise.py : organise into a new working directory, extracting only useful and renaming to something sensible + anonymize patient information
@@ -25,52 +25,74 @@ Verify clinical exclusion criteria:
 - other exclusion criteria: IAT before CT, no treatment received
     - extract_patient_characteristics.py: extract relevant patient characteristics from main excel database
 
-CT :
+#### 3. CT Preprocessing
+##### 3.1 General Pipeline
+This is the general pipeline, for specificities for perfusion maps, Angio-CT or 4D perfusion CT, please read the sections below first.
 
-0. utils/resolve_RAPID_4D_maps: resolve RAPID maps with 4 dimensions
-    - get_RAPID_4D_list: find subjects with 4D RAPID maps
-    - resolve_RAPID_4D_maps : reduce dimensions to 3D of given subjects (subjects may need to be downloaded from the server first as this function requires an Xserver for graphical feedback)
 --> Add this point data can be uploaded to a remote server
 1. skull_strip/skull_strip_wrapper.py : batch skull strip native CTs of multiple patients and segment CSF
-2. matlab/perfCT_coregistration_wrapper.m : coregister perfusion CT to betted native CT
-3. matlab/perfCT_normalisation_wrapper.m : normalise perfusion CT and native CT to CT_MNI (if this needs to be reprocessed, step 2. also needs to be done again)
+2. Unless Perfusion maps are to be excluded, follow the steps in 3.2
+3. matlab/perfCT_coregistration_wrapper.m : coregister perfusion CT to betted native CT
+4. matlab/perfCT_normalisation_wrapper.m : normalise perfusion CT and native CT to CT_MNI (if this needs to be reprocessed, step 2. also needs to be done again)
 
-(Angio-CT):
+##### 3.2 Perfusion maps 
+Map order: Tmax, CBF, MTT, CBV
+
+1. utils/resolve_RAPID_4D_maps: resolve RAPID maps with 4 dimensions
+    - get_RAPID_4D_list: find subjects with 4D RAPID maps
+    - resolve_RAPID_4D_maps : reduce dimensions to 3D of given subjects (subjects may need to be downloaded from the server first as this function requires an Xserver for graphical feedback)
+2. Proceed to the steps described in 3.1
+
+##### 3.3 Angio-CT
 If Angio-CTs are used, the head has to be extracted from the half-body image, after which the skull has to be 
 stripped from the image. Finally vessels are extracted. 
 
 Angio Sequence used is Angio_CT_075_Bv40 as the contrast between contrast agent and brain matter is greater
 
-0. Follow all Pre steps with the include_angio setting set to True (organise.py)
-1. Do the skull_strip step mentioned above for the rest of the CT --> CSF segmentation
+0. Follow all the Data Verification and Extraction steps with the include_angio setting set to True (organise.py)
+1. Do the skull_strip step mentioned above for the rest of the CT (3.1, step 1) --> CSF segmentation
 
 2. angio_ct_extraction/brain_extract_wrapper.py : center FOV on head and extract brain only (applies the priorly obtained CSF mask)
 3. angio_ct_extraction/vx_segmentation/wrapper_vx_extraction.py: extract only brain_vessels (hessian vesselness)
 
-4. Do all the rest of CT processing from step 2 on with the with_angio option for the normalisation (see above)
+4. Do all the rest of CT processing from step 2 (#3.1) on with the with_angio option for the normalisation (see above)
 
 5. Post-processing (see below)
 - masking/brain_mask.py with restrict_to_RAPID_maps set to False
 - Skip lesion_masking 
 
-MRI :
+##### 3.4 4D Perfusion CT
+
+0. Follow all the Data Verification and Extraction steps with the include_pCT setting set to True (organise.py)
+1. pCT_preprocessing_pipeline: motion correction, coregistration and brain extraction of 4D pCT files
+- if spm is not in matlab default path, it must be set with the spm_path argument
+- If `ValueError: unknown locale: UTF-8` occurs, use `export LC_ALL=en_US.UTF-8` and  `export LANG=en_US.UTF-8` in your terminal
+2. Follow all steps mentioned in the general CT processing (#3.1) with the with_pCT option on (see above)
+
+3. Post-processing (see below)
+- masking/brain_mask.py with restrict_to_RAPID_maps set to False
+- Skip lesion_masking 
+
+#### 4. MRI preprocessing
 
 (0. matlab/dwi_mri_coregistration_wrapper.m : if DWI is used, it has to be coregistered to T2 first) 
 1. matlab/mri_coreg_normalisation_wrapper.m : recenter subject CT, co-register T2 to subject CT, co-register T2 to CT-MNI and normalise to CT-MNI
 
-Post:
+#### 5. Post-processing
 As RAPID performs excessive skull-stripping, same crop has to be applied to lesion maps to remove lesions without underlying input data. 
 At the same time the CSF_mask is integrated into the non-brain mask.
 - binarize_maks.py : binarize all masks (lesions and others) by applying a threshold from the maximum value (this is necessary as sometimes drawn lesions are 0-1 or 0-255 and during the normalisation values can be slightly altered)
 - masking/brain_mask.py : create brain masks based on RAPID perfusion maps
+    - restrict_to_RAPID_maps True only if only using RAPID maps
 - masking/mask_lesions.py : apply brain masks to lesions
+    - Skip if using 4D perfusion CT or AngioCT
 - utils/preprocessing_verification : visual verification of preprocessing
 
 ToDo:
 [] Add Rescaling RAPID perfusion maps to post-processing
 
 
-### Additional steps for using HD images 
+#### Additional steps for using HD images 
 
 HD images are not warped to CT-MNI space, and can thus conserve the initial voxel space.
 

@@ -11,10 +11,10 @@
 clear all , clc
 %% Specify paths
 % Experiment folder
-data_path = '/Users/julian/temp/extraction_bv40/trial1';
+data_path = '/home/klug/data/original_data/with_pct_2016_2017';
 spm_path = '/home/klug/spm12';
 do_not_recalculate = true;
-with_VOI = false;
+with_VOI = true;
 with_DWI = false;
 
 script_path = mfilename('fullpath');
@@ -61,6 +61,10 @@ addpath(template_dir, data_path)
 for i = 1: numel ( subjects )
     fprintf('%i/%i (%i%%) \n', i, size(subjects, 1), 100 * i / size(subjects, 1));
     ct_dir = dir(fullfile(data_path,subjects{i}, 'pCT*'));
+    if length(ct_dir) < 1
+      fprintf('Skipping "%s" as pCT folder can not be found.\n', subjects{i});
+      continue;
+    end
     ct_dir = ct_dir.name;
 
     mri_dir = dir(fullfile(data_path,subjects{i}, 'MRI*'));

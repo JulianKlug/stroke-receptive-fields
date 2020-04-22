@@ -1,3 +1,6 @@
+#Nipype autosave
+*pyscript_coregister.m
+
 #Matlab autosave
 *.m~
 
