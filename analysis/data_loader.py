@@ -236,7 +236,7 @@ def load_nifti(main_dir, ct_sequences, label_sequences, mri_sequences, mri_label
 def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = None,
                        ct_sequences = [], label_sequences = [], use_mri_sequences = False,
                        external_memory=False, high_resolution = False, enforce_VOI=True,
-                       use_vessels=False, use_4d_pct=False):
+                       use_vessels=False, use_angio=False, use_4d_pct=False):
     """
     Load data
         - Image data (from preprocessed Nifti)
@@ -252,7 +252,9 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
     :param     external_memory (optional, default False): on external memory usage, NaNs need to be converted to -1
     :param     high_resolution (optional, default False): use non normalized images (patient space instead of MNI space)
     :param     use_vessels (optional, default False): use vessel masks as ct input
+    :param     use_angio (optional, default False): use angio CT as ct input
     :param     use_4d_pct (optional, default False): use 4D perfusion CT as input
+
 
     Returns:
     :return    save data as a date_set file storing
@@ -271,12 +273,19 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
                 ct_sequences = ['mask_filtered_extracted_betted_Angio']
         if use_4d_pct:
             ct_sequences = ['wp_VPCT']
+            if high_resolution:
+                      ct_sequences = ['p_VPCT']
+        if use_angio:
+            ct_sequences = ['wbetted_Angio']
+            if high_resolution:
+                ct_sequences = ['betted_Angio']
 
     if len(label_sequences) < 1 and enforce_VOI:
         # Import VOI GT with brain mask applied
         # to avoid False negatives in areas that cannot be predicted (as their are not part of the RAPID perf maps)
         label_sequences = ['masked_wcoreg_VOI']
-        if use_vessels or use_4d_pct:
+        
+        if use_vessels or use_angio or use_4d_pct:
             label_sequences = ['wcoreg_VOI']
             if high_resolution:
                 label_sequences = ['coreg_VOI']
