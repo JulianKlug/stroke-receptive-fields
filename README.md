@@ -42,6 +42,7 @@ Map order: Tmax, CBF, MTT, CBV
     - get_RAPID_4D_list: find subjects with 4D RAPID maps
     - resolve_RAPID_4D_maps : reduce dimensions to 3D of given subjects (subjects may need to be downloaded from the server first as this function requires an Xserver for graphical feedback)
 2. Proceed to the steps described in 3.1
+3. Dataset post-processing (see 6.1): some maps need intensity rescaling
 
 ##### 3.3 Angio-CT
 If Angio-CTs are used, the head has to be extracted from the half-body image, after which the skull has to be 
@@ -88,8 +89,13 @@ At the same time the CSF_mask is integrated into the non-brain mask.
     - Skip if using 4D perfusion CT or AngioCT
 - utils/preprocessing_verification : visual verification of preprocessing
 
-ToDo:
-[] Add Rescaling RAPID perfusion maps to post-processing
+#### 6. Dataset creation and processing
+
+- Create dataset with data_loader
+
+#### 6.1 Dataset post-processing
+
+- tools/perfusion_maps_tools/rescale_outliers : Intensity rescaling a dataset of RAPID perfusion maps 
 
 
 #### Additional steps for using HD images 

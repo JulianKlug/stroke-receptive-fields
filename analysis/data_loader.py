@@ -343,6 +343,15 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
         clinical_inputs = clinical_data, ct_inputs = ct_inputs, ct_lesion_GT = ct_lesion_GT,
         mri_inputs = mri_inputs, mri_lesion_GT = mri_lesion_GT, brain_masks = brain_masks)
 
+def save_dataset(dataset, outdir, out_file_name='data_set.npz'):
+    (clinical_inputs, ct_inputs, ct_lesion_GT, mri_inputs, mri_lesion_GT, brain_masks, ids, params) = dataset
+
+    print('Saving a total of', ct_inputs.shape[0], 'subjects.')
+    np.savez_compressed(os.path.join(outdir, out_file_name),
+                        params=params, ids=ids, clinical_inputs=clinical_inputs,
+                        ct_inputs=ct_inputs, ct_lesion_GT=ct_lesion_GT,
+                        mri_inputs=mri_inputs, mri_lesion_GT=mri_lesion_GT, brain_masks=brain_masks)
+
 def get_subset(data_dir, size, in_file_name='data_set.npz', out_file_name=None, outdir=None):
     if out_file_name is None:
         out_file_name = f'subset{str(size)}_{in_file_name}'
@@ -366,11 +375,8 @@ def get_subset(data_dir, size, in_file_name='data_set.npz', out_file_name=None, 
     if len(ids) > size:
         ids = ids[0:size]
 
-    print('Saving a total of', ct_inputs.shape[0], 'subjects.')
-    np.savez_compressed(os.path.join(outdir, out_file_name),
-                       params=params, ids=ids, clinical_inputs=clinical_inputs,
-                       ct_inputs=ct_inputs, ct_lesion_GT=ct_lesion_GT,
-                       mri_inputs=mri_inputs, mri_lesion_GT=mri_lesion_GT, brain_masks=brain_masks)
+    dataset = (clinical_inputs, ct_inputs, ct_lesion_GT, mri_inputs, mri_lesion_GT, brain_masks, ids, params)
+    save_dataset(dataset, outdir, out_file_name)
 
 def standardize_data(data_dir, filename = 'data_set.npz'):
     (clinical_inputs, ct_inputs, ct_lesion_GT, mri_inputs, mri_lesion_GT, brain_masks, ids, params) = load_saved_data(data_dir, filename)
