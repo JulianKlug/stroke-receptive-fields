@@ -83,7 +83,9 @@ As RAPID performs excessive skull-stripping, same crop has to be applied to lesi
 At the same time the CSF_mask is integrated into the non-brain mask.
 - binarize_maks.py : binarize all masks (lesions and others) by applying a threshold from the maximum value (this is necessary as sometimes drawn lesions are 0-1 or 0-255 and during the normalisation values can be slightly altered)
 - masking/brain_mask.py : create brain masks based on RAPID perfusion maps
+    - restrict_to_RAPID_maps True only if only using RAPID maps
 - masking/mask_lesions.py : apply brain masks to lesions
+    - Skip if using 4D perfusion CT or AngioCT
 - utils/preprocessing_verification : visual verification of preprocessing
 
 #### Additional steps for using HD images 

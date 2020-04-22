@@ -270,7 +270,7 @@ def load_and_save_data(save_dir, main_dir, clinical_dir = None, clinical_name = 
             if high_resolution:
                 ct_sequences = ['mask_filtered_extracted_betted_Angio']
         if use_4d_pct:
-            ct_sequences = ['wmc_VPCT']
+            ct_sequences = ['wp_VPCT']
 
     if len(label_sequences) < 1 and enforce_VOI:
         # Import VOI GT with brain mask applied
