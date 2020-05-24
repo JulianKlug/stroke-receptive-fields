@@ -1,5 +1,14 @@
-# stroke-predict
-This repository hosts scripts for a research project on prediction of ischemic stroke.
+# Receptive fields for perfusion CT to improve prediction of infarction after stroke
+
+This repository hosts the code for the study of regional perfusion CT (pCT) information (i.e. receptive fields (RF)) in the prediction of infarction after stroke.
+
+Paper will follow soon. 
+
+Follow-up projects:
+- Development on preprocessing pipelines for acute stroke imaging will continue in the form of a new project [GSP, Geneva Stroke Preprocessing](https://github.com/MonsieurWave/Geneva-Stroke-Preprocessing).
+- [A 3D UNet for perfusion CT](https://github.com/MonsieurWave/PerfusionCT-Net)
+- [DualStrokeNet](https://github.com/MonsieurWave/DualStrokeNet), a dual Unet system (CT & MRI) for a continuously learning prediction system for the final lesion in acute stroke
+- The [brains and donuts](https://github.com/MonsieurWave/brains_and_donuts) project, exploring topological data analysis in the context of acute stroke imaging
 
 ## How-to
 ### Pre-processing Pipeline
