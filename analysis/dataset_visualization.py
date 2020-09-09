@@ -56,6 +56,6 @@ def visual_add_center_slice(image, i_subj, i_image, gs, image_id=None):
     # plot image
     ax = plt.subplot(gs[i_row, i_col])
     if image_id is not None: ax.set_title(image_id, fontdict={'fontsize': 10})
-    plt.imshow(image[:, :, center_z].T, cmap='gray', vmin=0, vmax=1)
+    plt.imshow(image[:, :, center_z].T, cmap='gray')
     plt.axis('off')
 
