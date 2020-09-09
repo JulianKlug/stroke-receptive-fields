@@ -2,13 +2,30 @@
 
 This repository hosts the code for the study of regional perfusion CT (pCT) information (i.e. receptive fields (RF)) in the prediction of infarction after stroke.
 
-Paper will follow soon. 
-
 Follow-up projects:
 - Development on preprocessing pipelines for acute stroke imaging will continue in the form of a new project [GSP, Geneva Stroke Preprocessing](https://github.com/MonsieurWave/Geneva-Stroke-Preprocessing).
 - [A 3D UNet for perfusion CT](https://github.com/MonsieurWave/PerfusionCT-Net)
 - [DualStrokeNet](https://github.com/MonsieurWave/DualStrokeNet), a dual Unet system (CT & MRI) for a continuously learning prediction system for the final lesion in acute stroke
 - The [brains and donuts](https://github.com/MonsieurWave/brains_and_donuts) project, exploring topological data analysis in the context of acute stroke imaging
+
+### Reference
+
+If you use this work for your research, please cite this paper:
+
+> Klug J, Dirren E, Preti MG, Machi P, Kleinschmidt A, Vargas MI et al. Integrating regional perfusion CT information to improve prediction of infarction after stroke. J Cereb Blood Flow Metab 2020: 0271678X20924549.
+
+BibTex entry:
+
+```bibtex
+@article{klug2020integrating,
+  title={Integrating regional perfusion CT information to improve prediction of infarction after stroke},
+  author={Klug, Julian and Dirren, Elisabeth and Preti, Maria G and Machi, Paolo and Kleinschmidt, Andreas and Vargas, Maria I and Van De Ville, Dimitri and Carrera, Emmanuel},
+  journal={Journal of Cerebral Blood Flow \& Metabolism},
+  pages={0271678X20924549},
+  year={2020},
+  publisher={SAGE Publications Sage UK: London, England}
+}
+```
 
 ## How-to
 ### Pre-processing Pipeline
